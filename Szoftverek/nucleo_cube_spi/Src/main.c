@@ -52,6 +52,7 @@
 void SystemClock_Config(void);
 void Error_Handler(void);
 uint8_t send8bit_to_uart(UART_HandleTypeDef* huart, uint8_t* data,uint32_t Timeout);
+uint8_t send32bitdecimal_to_uart(UART_HandleTypeDef* huart, uint32_t* data,uint32_t Timeout);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -87,11 +88,14 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(LD2_GPIO_Port,LD2_Pin,GPIO_PIN_RESET);
+ // HAL_ADC_Start(&hadc1);
   uint8_t spidata = 0b00000001;
+  uint32_t adcmeasuredval;
   uint8_t endline;
   endline = 10;
   uint8_t CR;
   CR = 13;
+  uint8_t tab=9;
 
   /* USER CODE END 2 */
 
@@ -102,20 +106,30 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-	  for(int i=0; i<3; i++)
+	  for(int i=0; i<6; i++)
 	  {
 		  HAL_SPI_Transmit(&hspi2,&spidata,sizeof(spidata),10000);
 	  }
+	  HAL_Delay(1);
 	  HAL_GPIO_WritePin(LD2_GPIO_Port,LD2_Pin,GPIO_PIN_SET);
 	  HAL_Delay(1);
 	  HAL_GPIO_WritePin(LD2_GPIO_Port,LD2_Pin,GPIO_PIN_RESET);
-	  spidata=spidata<<1;
-	  if (!spidata)
-		  spidata++;
+	  HAL_Delay(1);
+	  HAL_ADC_Start(&hadc1);
+	  if (HAL_ADC_PollForConversion(&hadc1,100)==HAL_OK)
+		  adcmeasuredval=HAL_ADC_GetValue(&hadc1);
+	  HAL_ADC_Stop(&hadc1);
+	  send32bitdecimal_to_uart(&huart2, &adcmeasuredval, 100000);
+	  HAL_UART_Transmit(&huart2,&tab, sizeof(uint8_t),100000);
+
+	  if (spidata==0b10000000)
+		  spidata=0b00000001;
+	  else
+		  spidata=spidata*2;
 	  send8bit_to_uart(&huart2, &spidata, 100000);
 	  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
 	  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
-	  HAL_Delay(300);
+	  HAL_Delay(100);
 
   }
   /* USER CODE END 3 */
@@ -190,6 +204,30 @@ uint8_t send8bit_to_uart(UART_HandleTypeDef* huart, uint8_t* data,uint32_t Timeo
 	}
 	return 0;
 }
+
+uint8_t send32bitdecimal_to_uart(UART_HandleTypeDef* huart, uint32_t* data,uint32_t Timeout)
+{
+	uint32_t data2 = *data;
+	uint32_t datacopy;
+	uint32_t decimals;
+	uint8_t txbyte;
+	for (int i=10; i>0; i--)
+	{
+		datacopy = data2;
+		decimals=1;
+		for (int j=i-1; j>0; j--)
+		{
+			datacopy=datacopy/10;
+			decimals = decimals*10;
+		}
+		data2 -= datacopy*decimals;
+		txbyte = (uint8_t) (datacopy+48);
+		HAL_UART_Transmit(huart, &txbyte, sizeof(txbyte), Timeout);
+
+	}
+	return 0;
+}
+
 
 /* USER CODE END 4 */
 
