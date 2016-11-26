@@ -66,6 +66,8 @@ uint8_t send32bitdecimal_to_uart(UART_HandleTypeDef* huart, uint32_t* data,uint3
 int main(void)
 
 
+
+
 {
 
   /* USER CODE BEGIN 1 */
@@ -88,10 +90,14 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(LD2_GPIO_Port,LD2_Pin,GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_RESET);
  // HAL_ADC_Start(&hadc1);
   uint8_t spidata = 0b00000001;
   uint32_t adcmeasuredval;
   uint8_t endline;
+  volatile uint8_t line_register=0;
   endline = 10;
   uint8_t CR;
   CR = 13;
@@ -114,7 +120,7 @@ int main(void)
 	  HAL_GPIO_WritePin(LD2_GPIO_Port,LD2_Pin,GPIO_PIN_SET);
 	  HAL_Delay(1);
 	  HAL_GPIO_WritePin(LD2_GPIO_Port,LD2_Pin,GPIO_PIN_RESET);
-	  HAL_Delay(1);
+	  HAL_Delay(10);
 	  HAL_ADC_Start(&hadc1);
 	  if (HAL_ADC_PollForConversion(&hadc1,100)==HAL_OK)
 		  adcmeasuredval=HAL_ADC_GetValue(&hadc1);
@@ -122,14 +128,81 @@ int main(void)
 	  send32bitdecimal_to_uart(&huart2, &adcmeasuredval, 100000);
 	  HAL_UART_Transmit(&huart2,&tab, sizeof(uint8_t),100000);
 
-	  if (spidata==0b10000000)
-		  spidata=0b00000001;
-	  else
-		  spidata=spidata*2;
 	  send8bit_to_uart(&huart2, &spidata, 100000);
-	  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
-	  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
-	  HAL_Delay(100);
+	 HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
+	 HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
+
+	  if (adcmeasuredval>1000)
+		  line_register+=spidata;
+	  if (spidata==0b10000000)
+	  {
+		 /* send8bit_to_uart(&huart2, &line_register, 10000);
+		  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);*/
+		  line_register=0;
+		  spidata=0b00000001;
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_RESET);
+
+	  }
+	  else if (spidata==0b00000001)
+	  {
+		  spidata=0b00000010;
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_RESET);
+
+	  }
+	  else if (spidata==0b00000010)
+	  {
+		  spidata=0b00000100;
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_RESET);
+
+	  }
+	  else if (spidata==0b00000100)
+	  {
+		  spidata=0b00001000;
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_RESET);
+
+	  }
+	  else if (spidata==0b00001000)
+	  {
+		  spidata=0b00010000;
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_SET);
+
+	  }
+	  else if (spidata==0b00010000)
+	  {
+		  spidata=0b00100000;
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_SET);
+
+	  }
+	  else if (spidata==0b00100000)
+	  {
+		  spidata=0b01000000;
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_SET);
+
+	  }
+	  else if (spidata==0b01000000)
+	  {
+		  spidata=0b10000000;
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_SET);
+
+	  }
+
+	  HAL_Delay(10);
 
   }
   /* USER CODE END 3 */

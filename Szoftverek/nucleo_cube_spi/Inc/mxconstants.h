@@ -41,6 +41,10 @@
 
 /* Private define ------------------------------------------------------------*/
 
+#define MUXport GPIOC
+#define MUX1_pin GPIO_PIN_5
+#define MUX2_pin GPIO_PIN_6
+#define MUX3_pin GPIO_PIN_8
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
 #define USART_TX_Pin GPIO_PIN_2
