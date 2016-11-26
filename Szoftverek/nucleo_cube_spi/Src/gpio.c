@@ -63,42 +63,15 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
-  /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_EVT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, MUX1_Pin|MUX2_Pin|LE_Pin|MUX3_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = LD2_Pin;
+  /*Configure GPIO pins : PCPin PCPin PCPin PCPin */
+  GPIO_InitStruct.Pin = MUX1_Pin|MUX2_Pin|LE_Pin|MUX3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
-
-/*Configure GPIO pin: MUX1 */
-GPIO_InitStruct.Pin = MUX1_pin;
-GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-GPIO_InitStruct.Pull = GPIO_NOPULL;
-GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-HAL_GPIO_Init(MUXport, &GPIO_InitStruct);
-
-/*Configure GPIO pin: MUX1 */
-GPIO_InitStruct.Pin = MUX2_pin;
-GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-GPIO_InitStruct.Pull = GPIO_NOPULL;
-GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-HAL_GPIO_Init(MUXport, &GPIO_InitStruct);
-
-/*Configure GPIO pin: MUX1 */
-GPIO_InitStruct.Pin = MUX3_pin;
-GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-GPIO_InitStruct.Pull = GPIO_NOPULL;
-GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-HAL_GPIO_Init(MUXport, &GPIO_InitStruct);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
 }
 
