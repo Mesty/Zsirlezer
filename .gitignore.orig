@@ -1,0 +1,37 @@
+<<<<<<< HEAD
+/Szoftverek/.metadata/
+/Szoftverek/RemoteSystemsTempFiles/
+=======
+
+/Szoftverek/Zsirlezer_kozponti_SW/.metadata
+/Szoftverek/Zsirlezer_kozponti_SW/RemoteSystemsTempFiles
+#ignore thumbnails created by windows
+Thumbs.db
+#Ignore files build by Visual Studio
+*.obj
+*.exe
+*.pdb
+*.user
+*.aps
+*.pch
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.ilk
+*.log
+[Bb]in
+[Dd]ebug*/
+*.lib
+*.sbr
+obj/
+[Rr]elease*/
+_ReSharper*/
+[Tt]est[Rr]esult*
+*Debug
+>>>>>>> f1cd3c28868d72df0cf08e38225400a7bf813072

@@ -51,11 +51,12 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void Error_Handler(void);
-uint8_t send8bit_to_uart(UART_HandleTypeDef* huart, uint8_t* data,uint32_t Timeout);
-uint8_t send32bitdecimal_to_uart(UART_HandleTypeDef* huart, uint32_t* data,uint32_t Timeout);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
+uint8_t send8bit_to_uart(UART_HandleTypeDef* huart, uint8_t* data,uint32_t Timeout);
+uint8_t send32bitdecimal_to_uart(UART_HandleTypeDef* huart, uint32_t* data,uint32_t Timeout);
+uint8_t InitAll();
 
 /* USER CODE END PFP */
 
@@ -65,145 +66,134 @@ uint8_t send32bitdecimal_to_uart(UART_HandleTypeDef* huart, uint32_t* data,uint3
 
 int main(void)
 
-
-
-
 {
 
   /* USER CODE BEGIN 1 */
-
+	InitAll();
   /* USER CODE END 1 */
 
-  /* MCU Configuration----------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
-
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_ADC1_Init();
-  MX_SPI2_Init();
-  MX_USART2_UART_Init();
-
   /* USER CODE BEGIN 2 */
-  HAL_GPIO_WritePin(LD2_GPIO_Port,LD2_Pin,GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_RESET);
- // HAL_ADC_Start(&hadc1);
-  uint8_t spidata = 0b00000001;
+  /*Initialize variables for main()*/
+  uint8_t spidata = 0b00000010;
   uint32_t adcmeasuredval;
-  uint8_t endline;
-  volatile uint8_t line_register=0;
-  endline = 10;
-  uint8_t CR;
-  CR = 13;
+  uint8_t endline=10;
+  uint8_t CR=13;
   uint8_t tab=9;
-
+  uint8_t line_register=0;
   /* USER CODE END 2 */
 
-  /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
+
+	  /*SPI communication*/
+	  /*If only 3 sequence is sent, then something is wrong with the bits (not the good bits are received by the LED drivers.
+	   Dont know, whats the problem.*/
 	  for(int i=0; i<6; i++)
 	  {
 		  HAL_SPI_Transmit(&hspi2,&spidata,sizeof(spidata),10000);
 	  }
+	  /*LE signal output*/
 	  HAL_Delay(1);
 	  HAL_GPIO_WritePin(LD2_GPIO_Port,LD2_Pin,GPIO_PIN_SET);
 	  HAL_Delay(1);
 	  HAL_GPIO_WritePin(LD2_GPIO_Port,LD2_Pin,GPIO_PIN_RESET);
 	  HAL_Delay(10);
+
+	  /*ADC value read in*/
 	  HAL_ADC_Start(&hadc1);
 	  if (HAL_ADC_PollForConversion(&hadc1,100)==HAL_OK)
 		  adcmeasuredval=HAL_ADC_GetValue(&hadc1);
 	  HAL_ADC_Stop(&hadc1);
+
+
 	  send32bitdecimal_to_uart(&huart2, &adcmeasuredval, 100000);
 	  HAL_UART_Transmit(&huart2,&tab, sizeof(uint8_t),100000);
 
-	  send8bit_to_uart(&huart2, &spidata, 100000);
+	 /*send8bit_to_uart(&huart2, &spidata, 100000);
 	 HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
-	 HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
+	 HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);*/
 
+	  /*Threshold the measured value. Measured "line-pattern" is stored in the line regsiter*/
 	  if (adcmeasuredval>1000)
 		  line_register+=spidata;
+
+	  /*State machine (8 state) for SPI data and MUX signals*/
 	  if (spidata==0b10000000)
 	  {
-		 /* send8bit_to_uart(&huart2, &line_register, 10000);
+		  /*send8bit_to_uart(&huart2, &line_register, 10000);
 		  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);*/
+		  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
+		  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
+
 		  line_register=0;
 		  spidata=0b00000001;
-		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_RESET);
-		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_RESET);
-		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_SET);
 
 	  }
 	  else if (spidata==0b00000001)
 	  {
 		  spidata=0b00000010;
-		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_RESET);
-		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_SET);
 
 	  }
 	  else if (spidata==0b00000010)
 	  {
 		  spidata=0b00000100;
-		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_RESET);
-		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_SET);
 
 	  }
 	  else if (spidata==0b00000100)
 	  {
 		  spidata=0b00001000;
-		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_SET);
 
 	  }
 	  else if (spidata==0b00001000)
 	  {
 		  spidata=0b00010000;
-		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_RESET);
-		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_RESET);
-		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_RESET);
 
 	  }
 	  else if (spidata==0b00010000)
 	  {
 		  spidata=0b00100000;
-		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_RESET);
-		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_RESET);
 
 	  }
 	  else if (spidata==0b00100000)
 	  {
 		  spidata=0b01000000;
-		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_RESET);
-		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_RESET);
 
 	  }
 	  else if (spidata==0b01000000)
 	  {
 		  spidata=0b10000000;
-		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_RESET);
 
 	  }
 
 	  HAL_Delay(10);
-
   }
   /* USER CODE END 3 */
 
@@ -262,6 +252,9 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 
+/*Converts 8bit binary number to 8 character (e.g.: 00010001), and sends on UART*/
+/*Warning! Reihenfolge ist umgekehrt!*/
+/*Every current LSB bit is checked with %2, and whole number is shifted with /2 */
 uint8_t send8bit_to_uart(UART_HandleTypeDef* huart, uint8_t* data,uint32_t Timeout)
 {
 	uint8_t data2 = *data;
@@ -278,12 +271,16 @@ uint8_t send8bit_to_uart(UART_HandleTypeDef* huart, uint8_t* data,uint32_t Timeo
 	return 0;
 }
 
+/*Converts 32bit decimal number to 10 character and sends on UART*/
+/*Character order now is right(good)*/
+/*Checks every MSB, substarct it from the number and goes for the next digit*/
 uint8_t send32bitdecimal_to_uart(UART_HandleTypeDef* huart, uint32_t* data,uint32_t Timeout)
 {
 	uint32_t data2 = *data;
 	uint32_t datacopy;
 	uint32_t decimals;
 	uint8_t txbyte;
+	uint8_t issent=0;
 	for (int i=10; i>0; i--)
 	{
 		datacopy = data2;
@@ -295,10 +292,37 @@ uint8_t send32bitdecimal_to_uart(UART_HandleTypeDef* huart, uint32_t* data,uint3
 		}
 		data2 -= datacopy*decimals;
 		txbyte = (uint8_t) (datacopy+48);
-		HAL_UART_Transmit(huart, &txbyte, sizeof(txbyte), Timeout);
+
+		if(datacopy) //send only if not the zeros before the number
+			issent=1;
+		if(issent)
+			HAL_UART_Transmit(huart, &txbyte, sizeof(txbyte), Timeout);
 
 	}
 	return 0;
+}
+
+uint8_t InitAll()
+{
+	  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	  HAL_Init();
+
+	  /* Configure the system clock */
+	  SystemClock_Config();
+
+	  /* Initialize all configured peripherals */
+	  MX_GPIO_Init();
+	  MX_ADC1_Init();
+	  MX_SPI2_Init();
+	  MX_USART2_UART_Init();
+
+	  /*Initialize Latch enbale, MUX signals*/
+	  HAL_GPIO_WritePin(LD2_GPIO_Port,LD2_Pin,GPIO_PIN_RESET);
+	  HAL_GPIO_WritePin(MUXport,MUX1_pin,GPIO_PIN_RESET);
+	  HAL_GPIO_WritePin(MUXport,MUX2_pin,GPIO_PIN_RESET);
+	  HAL_GPIO_WritePin(MUXport,MUX3_pin,GPIO_PIN_RESET);
+
+	  return 0;
 }
 
 
