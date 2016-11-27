@@ -50,7 +50,7 @@
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-
+#define KC 1
 /* USER CODE END Private defines */
 
 /**

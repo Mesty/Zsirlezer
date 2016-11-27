@@ -97,7 +97,8 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  uint16_t vonalpozicio;
+  uint16_t servo_pulse;
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -113,7 +114,7 @@ int main(void)
   MX_ADC1_Init();
   MX_ADC2_Init();
   MX_SPI1_Init();
-  MX_TIM1_Init(6766);
+  MX_TIM1_Init(6707);
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
@@ -134,26 +135,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_Delay(1000);
-	  MX_TIM1_Init(6084);
+	  servo_pulse = (-10*vonalpozicio)*KC+6707;
+	  if (servo_pulse>7407)
+		  servo_pulse=7407;
+	  if (servo_pulse<6007)
+		  servo_pulse=6007;
+	  MX_TIM1_Init(servo_pulse);
 	  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-	  MX_TIM8_Init(5850);
-	  HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
-	  HAL_Delay(1000);
-	  MX_TIM1_Init(6766);
-	  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-	  MX_TIM8_Init(6868);
-	  HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
-	  HAL_Delay(1000);
-	  MX_TIM1_Init(7723);
-	  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-	  MX_TIM8_Init(7723);
-	  HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
-	  HAL_Delay(1000);
-	  MX_TIM1_Init(6766);
-	  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-	  MX_TIM8_Init(6868);
-	  HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
 
   /* USER CODE END WHILE */
 
