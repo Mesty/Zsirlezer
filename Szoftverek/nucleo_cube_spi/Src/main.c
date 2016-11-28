@@ -62,6 +62,7 @@ uint8_t send32bitdecimal_to_uart(UART_HandleTypeDef* huart, uint32_t* data,uint3
 uint8_t send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout);
 uint8_t sendadcvals_to_uart(UART_HandleTypeDef* huart, uint16_t* data1,uint16_t* data2, uint16_t* data3,uint32_t Timeout);
 uint8_t sendlineregisters_to_uart(UART_HandleTypeDef* huart, uint8_t* data1,uint8_t* data2, uint8_t* data3,uint32_t Timeout);
+uint32_t getposition(uint32_t* positionreg, uint16_t* adcfiltervals1, uint16_t* adcfiltervals2, uint16_t* adcfiltervals3);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -108,8 +109,13 @@ int main(void)
   uint16_t adcvalregister1[8];
   uint16_t adcvalregister2[8];
   uint16_t adcvalregister3[8];
-  uint16_t threshold=1000;
+  uint16_t adcfilterregister1[8] = {0,0,0,0,0,0,0,0};
+  uint16_t adcfilterregister2[8] = {0,0,0,0,0,0,0,0};
+  uint16_t adcfilterregister3[8] = {0,0,0,0,0,0,0,0};
+  uint16_t threshold=600;
   uint8_t i=0;
+  uint32_t position=0;
+  uint32_t positionfilter[10] = {0,0,0,0,0,0,0,0,0,0};
 
   /* USER CODE END 2 */
 
@@ -124,12 +130,13 @@ int main(void)
 	  /*SPI communication*/
 	  /*If only 3 sequence is sent, then something is wrong with the bits (not the good bits are received by the LED drivers.
 	   Dont know, whats the problem.*/
-	  for(int i=0; i<6; i++)
+	  for(int q=0; q<6; q++)
 	  {
 		  HAL_SPI_Transmit(&hspi3,&spidata,1,10);
 	  }
+	  /*Valami nem oke a LE outputtal. Ha kiveszem az utolso 2 hal-delay(1)-et, akkor nem vilagit az uccso(elso) TCRT. Ha az egyik bent van a kodban, akkor hol vilaghit, hol nem. Ha mindketto akkor ok.*/
 	  /*LE signal output*/
-	  HAL_Delay(1);
+	  //HAL_Delay(1);
 	  HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_SET);
 	  HAL_Delay(1);
 	  HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_RESET);
@@ -150,18 +157,46 @@ int main(void)
 	  adcvalregister3[i]=adcmeasuredvalues[2];
 
 	  if (adcvalregister1[i]>threshold)
+	  {
 		  line_register1+=spidata;
+	  	  adcfilterregister1[i]=adcvalregister1[i];
+	  }
+	  else
+	  {
+		  adcfilterregister1[i]=0;
+	  }
 	  if (adcvalregister2[i]>threshold)
+	  {
 		  line_register2+=spidata;
+	  	  adcfilterregister2[i]=adcvalregister2[i];
+	  }
+	  else
+	  {
+		  adcfilterregister2[i]=0;
+	  }
 	  if (adcvalregister3[i]>threshold)
-			  line_register3+=spidata;
+	  {
+		  line_register3+=spidata;
+	  	  adcfilterregister3[i]=adcvalregister3[i];
+	  }
+	  else
+	  {
+		  adcfilterregister3[i]=0;
+	  }
 	  i++;
 
 	  /*State machine (8 state) for SPI data and MUX signals*/
 	  if (spidata==0b10000000)
 	  {
-		  sendlineregisters_to_uart(&huart2, &line_register1, &line_register2, &line_register3, 1000);
-		 // sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
+		  //sendlineregisters_to_uart(&huart2, &line_register1, &line_register2, &line_register3, 1000);
+		  //sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
+		  getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
+		  //sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
+		  send32bitdecimal_to_uart(&huart2,&position,10000);
+		  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
+		  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
+
+
 
 		  line_register1=0;
 		  line_register2=0;
@@ -400,6 +435,29 @@ uint8_t sendlineregisters_to_uart(UART_HandleTypeDef* huart, uint8_t* data1,uint
 	send8bit_to_uart(huart,data3,Timeout);
 	HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
 	HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
+	return 0;
+}
+uint32_t getposition(uint32_t* positionreg, uint16_t* adcfiltervals1, uint16_t* adcfiltervals2, uint16_t* adcfiltervals3)
+{
+	uint32_t weight=0;
+	uint16_t* pdata;
+	*positionreg=0;
+	for (int i=1; i<4; i++)
+	{
+		if(i==1)
+			pdata=adcfiltervals1;
+		else if (i==2)
+			pdata=adcfiltervals2;
+		else if(i==3)
+			pdata=adcfiltervals3;
+		for(int j=1; j<9; j++)
+		{
+			*positionreg+=(pdata[j-1]*i*j*100); //*100: for a bigger resoltuion (at dividing data would be lost)
+			weight+=pdata[j-1];
+		}
+
+	}
+	*positionreg= *positionreg/weight;
 	return 0;
 }
 
