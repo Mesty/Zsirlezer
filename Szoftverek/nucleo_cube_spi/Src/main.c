@@ -40,6 +40,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "stdbool.h"
+#define FILTER_DEPTH 16
 
 /* USER CODE END Includes */
 
@@ -49,6 +50,7 @@
 /* Private variables ---------------------------------------------------------*/
  volatile bool adcvalid=false;
  uint16_t adcmeasuredvalues[3];
+ uint32_t WMAfilterarray[FILTER_DEPTH];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -63,6 +65,8 @@ uint8_t send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint3
 uint8_t sendadcvals_to_uart(UART_HandleTypeDef* huart, uint16_t* data1,uint16_t* data2, uint16_t* data3,uint32_t Timeout);
 uint8_t sendlineregisters_to_uart(UART_HandleTypeDef* huart, uint8_t* data1,uint8_t* data2, uint8_t* data3,uint32_t Timeout);
 uint32_t getposition(uint32_t* positionreg, uint16_t* adcfiltervals1, uint16_t* adcfiltervals2, uint16_t* adcfiltervals3);
+void initWMAfilterarray();
+uint8_t handleWMAfilter(uint32_t* filteredposition, uint32_t* newelement);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -98,7 +102,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
   /*Initialize variables for main()*/
   uint8_t spidata = 0b00000010;
-
   uint8_t endline=10;
   uint8_t CR=13;
   uint8_t tab=9;
@@ -115,7 +118,9 @@ int main(void)
   uint16_t threshold=600;
   uint8_t i=0;
   uint32_t position=0;
-  uint32_t positionfilter[10] = {0,0,0,0,0,0,0,0,0,0};
+  uint32_t filteredposition=0;
+
+  initWMAfilterarray();
 
   /* USER CODE END 2 */
 
@@ -192,7 +197,8 @@ int main(void)
 		  //sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
 		  getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
 		  //sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
-		  send32bitdecimal_to_uart(&huart2,&position,10000);
+		  handleWMAfilter(&filteredposition, &position);
+		  send32bitdecimal_to_uart(&huart2,&filteredposition,10000);
 		  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
 		  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
 
@@ -442,22 +448,45 @@ uint32_t getposition(uint32_t* positionreg, uint16_t* adcfiltervals1, uint16_t* 
 	uint32_t weight=0;
 	uint16_t* pdata;
 	*positionreg=0;
-	for (int i=1; i<4; i++)
+	for (int i=0; i<3; i++)
 	{
-		if(i==1)
+		if(i==0)
 			pdata=adcfiltervals1;
-		else if (i==2)
+		else if (i==1)
 			pdata=adcfiltervals2;
-		else if(i==3)
+		else if(i==2)
 			pdata=adcfiltervals3;
 		for(int j=1; j<9; j++)
 		{
-			*positionreg+=(pdata[j-1]*i*j*100); //*100: for a bigger resoltuion (at dividing data would be lost)
+			*positionreg=*positionreg+(pdata[j-1]*100*((i*8)+j)); //*100: for a bigger resoltuion (at dividing data would be lost)
 			weight+=pdata[j-1];
 		}
 
 	}
 	*positionreg= *positionreg/weight;
+	return 0;
+}
+void initWMAfilterarray()
+{
+	for(int i=0; i<FILTER_DEPTH; i++)
+			WMAfilterarray[i]=1200;
+
+}
+uint8_t handleWMAfilter(uint32_t* filteredposition, uint32_t* newelement) //put a new element into the FIFO, and calculate the new average (WeightedMovingAverage)
+{
+	*filteredposition=0;
+	uint32_t coeffsum=0;
+	for(int i=0; i<FILTER_DEPTH-1; i++)
+	{
+		WMAfilterarray[i]=WMAfilterarray[i+1];
+		*filteredposition+=WMAfilterarray[i]*(i+1);
+		coeffsum+=(i+1);
+	}
+	WMAfilterarray[FILTER_DEPTH-1]=*newelement;
+	*filteredposition+=WMAfilterarray[FILTER_DEPTH-1]*(FILTER_DEPTH);
+	coeffsum+=(FILTER_DEPTH);
+	*filteredposition=*filteredposition/coeffsum;
+
 	return 0;
 }
 
