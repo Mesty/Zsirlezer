@@ -97,7 +97,8 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  uint16_t vonalpozicio;
+  uint16_t servo_pulse;
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -113,7 +114,7 @@ int main(void)
   MX_ADC1_Init();
   MX_ADC2_Init();
   MX_SPI1_Init();
-  MX_TIM1_Init(6766);
+  MX_TIM1_Init(6707);
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
@@ -134,26 +135,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_Delay(1000);
-	  MX_TIM1_Init(6084);
+	  servo_pulse = (-10*vonalpozicio)*KC+6707;
+	  if (servo_pulse>7407)
+		  servo_pulse=7407;
+	  if (servo_pulse<6007)
+		  servo_pulse=6007;
+	  MX_TIM1_Init(servo_pulse);
 	  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-	  MX_TIM8_Init(5850);
-	  HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
-	  HAL_Delay(1000);
-	  MX_TIM1_Init(6766);
-	  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-	  MX_TIM8_Init(6868);
-	  HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
-	  HAL_Delay(1000);
-	  MX_TIM1_Init(7723);
-	  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-	  MX_TIM8_Init(7723);
-	  HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
-	  HAL_Delay(1000);
-	  MX_TIM1_Init(6766);
-	  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-	  MX_TIM8_Init(6868);
-	  HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
 
   /* USER CODE END WHILE */
 
@@ -630,7 +618,7 @@ static void MX_TIM12_Init(void)
 /* UART4 init function */
 static void MX_UART4_Init(void)
 {
-
+  __HAL_RCC_UART4_CLK_ENABLE();
   huart4.Instance = UART4;
   huart4.Init.BaudRate = 115200;
   huart4.Init.WordLength = UART_WORDLENGTH_8B;
@@ -744,6 +732,20 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF3_TIM8;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF8_UART4;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  GPIO_InitStruct.Pin = GPIO_PIN_1;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF8_UART4;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
