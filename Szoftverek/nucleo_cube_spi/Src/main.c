@@ -31,16 +31,21 @@
   ******************************************************************************
   */
 /* Includes ------------------------------------------------------------------*/
+#include "main.h"
 #include "stm32f4xx_hal.h"
 #include "adc.h"
 #include "dma.h"
 #include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
 #include "stdbool.h"
+#include "stm32f4xx_hal_tim.h"
 #define FILTER_DEPTH 16
+#define SERVO_KOZEP 6707
+#define KC 1
 
 /* USER CODE END Includes */
 
@@ -67,6 +72,7 @@ uint8_t sendlineregisters_to_uart(UART_HandleTypeDef* huart, uint8_t* data1,uint
 uint32_t getposition(uint32_t* positionreg, uint16_t* adcfiltervals1, uint16_t* adcfiltervals2, uint16_t* adcfiltervals3);
 void initWMAfilterarray();
 uint8_t handleWMAfilter(uint32_t* filteredposition, uint32_t* newelement);
+void szervoPszabalyozo(int16_t vonalpozicio);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -98,6 +104,8 @@ int main(void)
   MX_ADC1_Init();
   MX_USART2_UART_Init();
   MX_SPI3_Init();
+  MX_TIM1_Init(SERVO_KOZEP); //szervo kozepallas
+  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
 
   /* USER CODE BEGIN 2 */
   /*Initialize variables for main()*/
@@ -119,6 +127,8 @@ int main(void)
   uint8_t i=0;
   uint32_t position=0;
   uint32_t filteredposition=0;
+  uint32_t prevfilteredposition=0;
+  int32_t Pszabalyozopozicio=0;
 
   initWMAfilterarray();
 
@@ -198,6 +208,13 @@ int main(void)
 		  getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
 		  //sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
 		  handleWMAfilter(&filteredposition, &position);
+		  if(!filteredposition)
+			  filteredposition=prevfilteredposition;
+		  else
+			  prevfilteredposition=filteredposition;
+		  Pszabalyozopozicio=(((filteredposition-100)*140)/2300)-70;
+		  szervoPszabalyozo((int16_t)Pszabalyozopozicio);
+
 		  send32bitdecimal_to_uart(&huart2,&filteredposition,10000);
 		  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
 		  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
@@ -285,10 +302,14 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct;
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
 
+    /**Configure the main internal regulator output voltage 
+    */
   __HAL_RCC_PWR_CLK_ENABLE();
 
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
+    /**Initializes the CPU, AHB and APB busses clocks 
+    */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
@@ -303,24 +324,33 @@ void SystemClock_Config(void)
     Error_Handler();
   }
 
+    /**Activate the Over-Drive mode 
+    */
   if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
     Error_Handler();
   }
 
+    /**Initializes the CPU, AHB and APB busses clocks 
+    */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
   {
     Error_Handler();
   }
 
+    /**Configure the Systick interrupt time 
+    */
   HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
 
+    /**Configure the Systick 
+    */
   HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
   /* SysTick_IRQn interrupt configuration */
@@ -488,6 +518,31 @@ uint8_t handleWMAfilter(uint32_t* filteredposition, uint32_t* newelement) //put 
 	*filteredposition=*filteredposition/coeffsum;
 
 	return 0;
+}
+void szervoPszabalyozo(int16_t vonalpozicio)
+{
+	  TIM_OC_InitTypeDef sConfigOC;
+	  int16_t servo_pulse;
+	  servo_pulse = (-30.1*vonalpozicio)*KC+6707;
+	  if (servo_pulse>8814)
+		  servo_pulse=8814;
+	  if (servo_pulse<4600)
+		  servo_pulse=4600;
+
+	  	sConfigOC.OCMode = TIM_OCMODE_PWM1;
+		sConfigOC.Pulse = servo_pulse;
+		sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+		sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+		sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+		sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+		sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+		if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+		{
+		  Error_Handler();
+		}
+		HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+	 // MX_TIM1_Init(servo_pulse);
+	//  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
 }
 
 

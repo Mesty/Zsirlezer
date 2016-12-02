@@ -97,8 +97,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  uint16_t vonalpozicio;
-  uint16_t servo_pulse;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -133,15 +132,10 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+
   while (1)
   {
-	  servo_pulse = (-10*vonalpozicio)*KC+6707;
-	  if (servo_pulse>7407)
-		  servo_pulse=7407;
-	  if (servo_pulse<6007)
-		  servo_pulse=6007;
-	  MX_TIM1_Init(servo_pulse);
-	  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
 
   /* USER CODE END WHILE */
 
@@ -753,6 +747,18 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void szervoPszabalyozo(int16_t *vonalpozicio)
+{
+	  uint16_t servo_pulse;
+	  servo_pulse = (-10*(*vonalpozicio))*KC+6707;
+	  if (servo_pulse>7407)
+		  servo_pulse=7407;
+	  if (servo_pulse<6007)
+		  servo_pulse=6007;
+	  MX_TIM1_Init(servo_pulse);
+	  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+}
+
 
 /* USER CODE END 4 */
 
