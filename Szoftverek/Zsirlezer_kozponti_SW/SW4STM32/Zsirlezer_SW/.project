@@ -25,6 +25,26 @@
 		<nature>fr.ac6.mcu.ide.core.MCUProjectNature</nature>
 	</natures>
 	<linkedResources><link>
+			<name>Application/User/tim.c</name>
+			<type>1</type>
+			<location>PARENT-2-PROJECT_LOC/Src/tim.c</location>
+		</link><link>
+			<name>Application/User/usart.c</name>
+			<type>1</type>
+			<location>PARENT-2-PROJECT_LOC/Src/usart.c</location>
+		</link><link>
+			<name>Application/User/gpio.c</name>
+			<type>1</type>
+			<location>PARENT-2-PROJECT_LOC/Src/gpio.c</location>
+		</link><link>
+			<name>Application/User/spi.c</name>
+			<type>1</type>
+			<location>PARENT-2-PROJECT_LOC/Src/spi.c</location>
+		</link><link>
+			<name>Application/User/adc.c</name>
+			<type>1</type>
+			<location>PARENT-2-PROJECT_LOC/Src/adc.c</location>
+		</link><link>
 			<name>Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_pwr.c</name>
 			<type>1</type>
 			<location>PARENT-2-PROJECT_LOC/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c</location>
