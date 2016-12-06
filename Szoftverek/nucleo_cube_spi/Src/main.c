@@ -44,8 +44,15 @@
 #include "stdbool.h"
 #include "stm32f4xx_hal_tim.h"
 #define FILTER_DEPTH 16
-#define SERVO_KOZEP 6707
+#define SERVO_KOZEP 7497
 #define KC 1
+
+#define NOLINE 0
+#define ONELINE 1
+#define TWOLINE 2
+#define THREELINE 3
+#define LINERROR 10
+
 
 /* USER CODE END Includes */
 
@@ -67,9 +74,11 @@ void Error_Handler(void);
 uint8_t send8bit_to_uart(UART_HandleTypeDef* huart, uint8_t* data,uint32_t Timeout);
 uint8_t send32bitdecimal_to_uart(UART_HandleTypeDef* huart, uint32_t* data,uint32_t Timeout);
 uint8_t send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout);
+uint8_t send8bitdecimal_to_uart(UART_HandleTypeDef* huart, uint8_t* data,uint32_t Timeout);
 uint8_t sendadcvals_to_uart(UART_HandleTypeDef* huart, uint16_t* data1,uint16_t* data2, uint16_t* data3,uint32_t Timeout);
 uint8_t sendlineregisters_to_uart(UART_HandleTypeDef* huart, uint8_t* data1,uint8_t* data2, uint8_t* data3,uint32_t Timeout);
 uint32_t getposition(uint32_t* positionreg, uint16_t* adcfiltervals1, uint16_t* adcfiltervals2, uint16_t* adcfiltervals3);
+uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, uint16_t* adcvals3, uint16_t* threshold);
 void initWMAfilterarray();
 uint8_t handleWMAfilter(uint32_t* filteredposition, uint32_t* newelement);
 void szervoPszabalyozo(int16_t vonalpozicio);
@@ -114,9 +123,11 @@ int main(void)
   uint8_t CR=13;
   uint8_t tab=9;
   uint8_t space=32;
-  uint8_t line_register1=0;
+  uint8_t line_register1=0;			//Tarolja hogy hol erzekelnek vonalat a TCRT-k
   uint8_t line_register2=0;
   uint8_t line_register3=0;
+  uint8_t line_count=0;				//Szamolja hogy hany TCRT erzekel vonalat
+  uint8_t linetype;
   uint16_t adcvalregister1[8];
   uint16_t adcvalregister2[8];
   uint16_t adcvalregister3[8];
@@ -124,6 +135,7 @@ int main(void)
   uint16_t adcfilterregister2[8] = {0,0,0,0,0,0,0,0};
   uint16_t adcfilterregister3[8] = {0,0,0,0,0,0,0,0};
   uint16_t threshold=600;
+  uint16_t thresholdforlinetype=threshold;
   uint8_t i=0;
   uint32_t position=0;
   uint32_t filteredposition=0;
@@ -157,6 +169,7 @@ int main(void)
 	  HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_RESET);
 	  HAL_Delay(1);
 
+	  //ADC inditasa, majd varakozas a konverzio vegere
 	  adcvalid=false;
 	  HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adcmeasuredvalues, 3);
 	  while (!adcvalid);
@@ -167,13 +180,18 @@ int main(void)
 		  adcmeasuredval=HAL_ADC_GetValue(&hadc1);
 	  HAL_ADC_Stop(&hadc1);*/
 
+	  //mert ADC ertekek eltarolasa
 	  adcvalregister1[i]=adcmeasuredvalues[0];
 	  adcvalregister2[i]=adcmeasuredvalues[1];
 	  adcvalregister3[i]=adcmeasuredvalues[2];
 
+
+	  //Az ADC ertekek thresholdozasa: a minimalis szint alatti ertekeket nem vesszuk figyelembe i 0tol 7ig fut
+	  //line register: 3 sima 8 bites tarolo, melyben taroljuk, hogy hol latunk vonalat.
 	  if (adcvalregister1[i]>threshold)
 	  {
 		  line_register1+=spidata;
+		  line_count++;
 	  	  adcfilterregister1[i]=adcvalregister1[i];
 	  }
 	  else
@@ -183,6 +201,7 @@ int main(void)
 	  if (adcvalregister2[i]>threshold)
 	  {
 		  line_register2+=spidata;
+		  line_count++;
 	  	  adcfilterregister2[i]=adcvalregister2[i];
 	  }
 	  else
@@ -192,6 +211,7 @@ int main(void)
 	  if (adcvalregister3[i]>threshold)
 	  {
 		  line_register3+=spidata;
+		  line_count++;
 	  	  adcfilterregister3[i]=adcvalregister3[i];
 	  }
 	  else
@@ -200,23 +220,34 @@ int main(void)
 	  }
 	  i++;
 
-	  /*State machine (8 state) for SPI data and MUX signals*/
+	  /*State machine (8 state) for SPI data (LED drivers output) and MUX signals (MUX for analog input)*/
 	  if (spidata==0b10000000)
 	  {
 		  //sendlineregisters_to_uart(&huart2, &line_register1, &line_register2, &line_register3, 1000);
 		  //sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
 		  getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
-		  //sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
-		  handleWMAfilter(&filteredposition, &position);
-		  if(!filteredposition)
-			  filteredposition=prevfilteredposition;
-		  else
-			  prevfilteredposition=filteredposition;
-		  Pszabalyozopozicio=(((filteredposition-100)*140)/2300)-70;
-		  szervoPszabalyozo((int16_t)Pszabalyozopozicio);
+		  getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);
 
-		  send32bitdecimal_to_uart(&huart2,&filteredposition,10000);
+		  send8bitdecimal_to_uart(&huart2, &linetype, 1000);
 		  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
+		  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
+		  sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
+
+		  if(!position) //Szaturacional==vonalelhagyasnal uccso erteket jegyezze meg.
+			  position=prevfilteredposition;
+		  else
+			  prevfilteredposition=position;
+		  handleWMAfilter(&filteredposition, &position);				//pozicio idobeli szurese
+
+		//  Pszabalyozopozicio=(((filteredposition-100)*140)/2300)-70;	//2400 100 tartomany (filteredposition ertektartomanya) illesztese a -70 70 tartomanyhoz (Pszab bemeneti ertektartomany)
+		//  szervoPszabalyozo((int16_t)Pszabalyozopozicio);				//szabalyozo PWM kezelojenek meghivasa
+		  szervoPszabalyozo((int16_t)filteredposition);				//szabalyozo PWM kezelojenek meghivasa
+
+
+		 /*send32bitdecimal_to_uart(&huart2,&filteredposition,10000);
+		  HAL_UART_Transmit(&huart2,&tab, sizeof(uint8_t), 100000);
+		  send8bitdecimal_to_uart(&huart2, &line_count, 1000);
+		 */ HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
 		  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
 
 
@@ -224,6 +255,7 @@ int main(void)
 		  line_register1=0;
 		  line_register2=0;
 		  line_register3=0;
+		  line_count=0;
 		  spidata=0b00000001;
 		  i=0;
 		  HAL_GPIO_WritePin(MUX1_GPIO_Port,MUX1_Pin,GPIO_PIN_SET);
@@ -438,6 +470,36 @@ uint8_t send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint3
 	return 0;
 }
 
+uint8_t send8bitdecimal_to_uart(UART_HandleTypeDef* huart, uint8_t* data,uint32_t Timeout)
+{
+	uint8_t data2 = *data;
+	uint8_t datacopy;
+	uint32_t decimals;
+	uint8_t txbyte;
+	uint8_t issent=0;
+	uint8_t space=32;
+	for (int i=3; i>0; i--)
+	{
+		datacopy = data2;
+		decimals=1;
+		for (int j=i-1; j>0; j--)
+		{
+			datacopy=datacopy/10;
+			decimals = decimals*10;
+		}
+		data2 -= datacopy*decimals;
+		txbyte = (uint8_t) (datacopy+48);
+
+		if(datacopy) //send spaces if zeros before the number
+			issent=1;
+		if(issent)
+			HAL_UART_Transmit(huart, &txbyte, sizeof(txbyte), Timeout);
+		else
+			HAL_UART_Transmit(huart, &space, sizeof(txbyte), Timeout);
+	}
+	return 0;
+}
+
 uint8_t sendadcvals_to_uart(UART_HandleTypeDef* huart, uint16_t* data1,uint16_t* data2, uint16_t* data3,uint32_t Timeout)
 {
 	uint8_t space=32;
@@ -519,16 +581,64 @@ uint8_t handleWMAfilter(uint32_t* filteredposition, uint32_t* newelement) //put 
 
 	return 0;
 }
+
+uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, uint16_t* adcvals3, uint16_t* threshold)
+{
+	bool isline=false;
+	bool islineprev=false;
+	uint8_t edgenumber=0;
+	uint16_t* pdata;
+	for (int i=0; i<3; i++)
+	{
+		if(i==0)
+			pdata=adcvals1;
+		else if (i==1)
+			pdata=adcvals2;
+		else if(i==2)
+			pdata=adcvals3;
+		for(int j=1; j<9; j++)
+		{
+			if(pdata[j-1]>(*threshold))
+			{
+				isline=true;
+			}
+			else
+			{
+				isline=false;
+			}
+			if(isline^islineprev)
+			{
+				edgenumber++;
+			}
+			islineprev=isline;
+		}
+	}
+	if(edgenumber==0)
+		*linetype=NOLINE;
+	else if(edgenumber==1 || edgenumber==2)
+		*linetype=ONELINE;
+	else if(edgenumber==3 || edgenumber==4)
+		*linetype=TWOLINE;
+	else if(edgenumber==5 || edgenumber==6)
+		*linetype=THREELINE;
+	else
+		*linetype=LINERROR;
+
+
+	return 0;
+}
+
 void szervoPszabalyozo(int16_t vonalpozicio)
 {
 	  TIM_OC_InitTypeDef sConfigOC;
 	  int16_t servo_pulse;
-	  servo_pulse = (-30.1*vonalpozicio)*KC+6707;
-	  if (servo_pulse>8814)
-		  servo_pulse=8814;
-	  if (servo_pulse<4600)
-		  servo_pulse=4600;
-
+	  servo_pulse = -((784*vonalpozicio*KC)/575)+(211631/23);
+	  //servo_pulse = (-30.1*vonalpozicio)*KC+6707;
+	  if (servo_pulse>9000)
+		  servo_pulse=9000;
+	  if (servo_pulse<6000)
+		  servo_pulse=6000;
+//__HAL_TIM_SET_COMPARE()
 	  	sConfigOC.OCMode = TIM_OCMODE_PWM1;
 		sConfigOC.Pulse = servo_pulse;
 		sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
