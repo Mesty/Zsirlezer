@@ -62,6 +62,7 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
  volatile bool adcvalid=false;
+ volatile bool adcwaitdone=false;
  uint16_t adcmeasuredvalues[3];
  uint32_t WMAfilterarray[FILTER_DEPTH];
  /*Encoder vars*/
@@ -72,6 +73,9 @@
  uint32_t dir;
  int32_t velocity;
  uint32_t velocityabs;
+
+ uint32_t TIM6CNT;
+ uint32_t TIM6CNTprev=0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -86,6 +90,7 @@ uint8_t send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint3
 uint8_t send8bitdecimal_to_uart(UART_HandleTypeDef* huart, uint8_t* data,uint32_t Timeout);
 uint8_t sendadcvals_to_uart(UART_HandleTypeDef* huart, uint16_t* data1,uint16_t* data2, uint16_t* data3,uint32_t Timeout);
 uint8_t sendlineregisters_to_uart(UART_HandleTypeDef* huart, uint8_t* data1,uint8_t* data2, uint8_t* data3,uint32_t Timeout);
+void medianfilterW3(uint16_t* data1,uint16_t* data2, uint16_t* data3);
 uint32_t getposition(uint32_t* positionreg, uint16_t* adcfiltervals1, uint16_t* adcfiltervals2, uint16_t* adcfiltervals3);
 uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, uint16_t* adcvals3, uint16_t* threshold);
 void initWMAfilterarray();
@@ -97,6 +102,13 @@ void szervoPszabalyozo(int16_t vonalpozicio);
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
 	adcvalid = true;
+}
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
+{
+	if (htim->Instance == TIM6)
+	{
+		adcwaitdone = true;
+	}
 }
 
 /* USER CODE END 0 */
@@ -127,6 +139,8 @@ int main(void)
   MX_TIM6_Init();
 
   /* USER CODE BEGIN 2 */
+
+
   /*Initialize variables for main()*/
   uint8_t spidata = 0b00000010;
   uint8_t endline=10;
@@ -154,6 +168,7 @@ int main(void)
   int32_t Pszabalyozopozicio=0;
   uint8_t string[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   initWMAfilterarray();
+
 
   /* USER CODE END 2 */
 
@@ -194,23 +209,66 @@ int main(void)
 	  }
 
 	  /*Valami nem oke a LE outputtal. Ha kiveszem az utolso 2 hal-delay(1)-et, akkor nem vilagit az uccso(elso) TCRT. Ha az egyik bent van a kodban, akkor hol vilaghit, hol nem. Ha mindketto akkor ok.*/
+	  /*Elobbi megoldottnak tunik*/
 	  /*LE signal output*/
-	  HAL_Delay(20);
 	  HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_SET);
-	 // HAL_Delay(1);
 	  HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_RESET);
-	  HAL_Delay(10);
+
+	  adcwaitdone=false;
+	  __HAL_TIM_SET_COUNTER(&htim6, 0);
+	  HAL_TIM_Base_Start_IT(&htim6);
+	  /*TCRT:280usec varakozas kezdete---------------------------------------------------------------------*/
+
+	  if(spidata==0b00000001)
+	  {
+
+		  //sendlineregisters_to_uart(&huart2, &line_register1, &line_register2, &line_register3, 1000);
+		  medianfilterW3(adcvalregister1, adcvalregister2, adcvalregister3);
+		  sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
+		  getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
+		  getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);
+
+		  //send8bitdecimal_to_uart(&huart2, &linetype, 1000);
+			  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
+			  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
+		  //sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
+
+		  if(!position) //Szaturacional==vonalelhagyasnal uccso erteket jegyezze meg.
+			  position=prevfilteredposition;
+		  else
+			  prevfilteredposition=position;
+		  handleWMAfilter(&filteredposition, &position);				//pozicio idobeli szurese
+
+		//  Pszabalyozopozicio=(((filteredposition-100)*140)/2300)-70;	//2400 100 tartomany (filteredposition ertektartomanya) illesztese a -70 70 tartomanyhoz (Pszab bemeneti ertektartomany)
+		//  szervoPszabalyozo((int16_t)Pszabalyozopozicio);				//szabalyozo PWM kezelojenek meghivasa
+		  szervoPszabalyozo((int16_t)filteredposition);				//szabalyozo PWM kezelojenek meghivasa
+
+
+		 /*send32bitdecimal_to_uart(&huart2,&filteredposition,10000);
+		  HAL_UART_Transmit(&huart2,&tab, sizeof(uint8_t), 100000);
+		  send8bitdecimal_to_uart(&huart2, &line_count, 1000);
+
+		  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
+		  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);*/
+
+
+
+		  line_register1=0;
+		  line_register2=0;
+		  line_register3=0;
+		  line_count=0;
+		  i=0;
+	  }
+
+
+	  while(!adcwaitdone);
+	  /*TCRT:280usec varakozas vege---------------------------------------------------------------------*/
+	  HAL_TIM_Base_Stop_IT(&htim6);
 
 	  //ADC inditasa, majd varakozas a konverzio vegere
 	  adcvalid=false;
 	  HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adcmeasuredvalues, 3);
 	  while (!adcvalid);
-
-	  /*ADC single value read in*/
-	  /*HAL_ADC_Start(&hadc1);
-	  if (HAL_ADC_PollForConversion(&hadc1,100)==HAL_OK)
-		  adcmeasuredval=HAL_ADC_GetValue(&hadc1);
-	  HAL_ADC_Stop(&hadc1);*/
 
 	  //mert ADC ertekek eltarolasa
 	  adcvalregister1[i]=adcmeasuredvalues[0];
@@ -255,42 +313,7 @@ int main(void)
 	  /*State machine (8 state) for SPI data (LED drivers output) and MUX signals (MUX for analog input)*/
 	  if (spidata==0b10000000)
 	  {
-		  //sendlineregisters_to_uart(&huart2, &line_register1, &line_register2, &line_register3, 1000);
-		  sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
-		  getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
-		  getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);
-
-		  //send8bitdecimal_to_uart(&huart2, &linetype, 1000);
-		  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
-		  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
-		  //sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
-
-		  if(!position) //Szaturacional==vonalelhagyasnal uccso erteket jegyezze meg.
-			  position=prevfilteredposition;
-		  else
-			  prevfilteredposition=position;
-		  handleWMAfilter(&filteredposition, &position);				//pozicio idobeli szurese
-
-		//  Pszabalyozopozicio=(((filteredposition-100)*140)/2300)-70;	//2400 100 tartomany (filteredposition ertektartomanya) illesztese a -70 70 tartomanyhoz (Pszab bemeneti ertektartomany)
-		//  szervoPszabalyozo((int16_t)Pszabalyozopozicio);				//szabalyozo PWM kezelojenek meghivasa
-		  szervoPszabalyozo((int16_t)filteredposition);				//szabalyozo PWM kezelojenek meghivasa
-
-
-		 /*send32bitdecimal_to_uart(&huart2,&filteredposition,10000);
-		  HAL_UART_Transmit(&huart2,&tab, sizeof(uint8_t), 100000);
-		  send8bitdecimal_to_uart(&huart2, &line_count, 1000);
-
-		  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
-		  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);*/
-
-
-
-		  line_register1=0;
-		  line_register2=0;
-		  line_register3=0;
-		  line_count=0;
 		  spidata=0b00000001;
-		  i=0;
 		  HAL_GPIO_WritePin(MUX1_GPIO_Port,MUX1_Pin,GPIO_PIN_SET);
 		  HAL_GPIO_WritePin(MUX2_GPIO_Port,MUX2_Pin,GPIO_PIN_SET);
 		  HAL_GPIO_WritePin(MUX3_GPIO_Port,MUX3_Pin,GPIO_PIN_SET);
@@ -597,6 +620,64 @@ void initWMAfilterarray()
 			WMAfilterarray[i]=1200;
 
 }
+
+void medianfilterW3(uint16_t* data1,uint16_t* data2, uint16_t* data3)
+{
+	uint16_t data[24];
+	uint16_t* pdata;
+	uint16_t bigger;
+	uint16_t smaller;
+	uint16_t middle;
+	uint16_t window[3] = {0,0,0};
+	int i;
+	//Make one big array from 3 small
+	for (i=0; i<3; i++)
+		{
+			if(i==0)
+				pdata=data1;
+			else if (i==1)
+				pdata=data2;
+			else if(i==2)
+				pdata=data3;
+			for(int j=0; j<8; j++)
+			{
+				data[i*8+j]=pdata[j];
+			}
+
+		}
+	//Go from index 1 to 22
+	for(i=1; i<23; i++)
+	{
+		window[0]=data[i-1];
+		window[1]=data[i];
+		window[2]=data[i+1];
+		//Sort
+		if(window[0]>window[1])
+		{
+			bigger=window[0];
+			smaller=window[1];
+		}
+		else
+		{
+			bigger=window[1];
+			smaller=window[0];
+		}
+		if(window[2]>bigger)
+			middle=bigger;
+		else if(window[2]>smaller)
+			middle=window[2];
+		else
+			middle=smaller;
+		//write back
+		if((i/8)==0)
+			data1[i%8]=middle;
+		else if ((i/8)==1)
+			data2[i%8]=middle;
+		else
+			data3[i%8]=middle;
+	}
+}
+
 uint8_t handleWMAfilter(uint32_t* filteredposition, uint32_t* newelement) //put a new element into the FIFO, and calculate the new average (WeightedMovingAverage)
 {
 	*filteredposition=0;
