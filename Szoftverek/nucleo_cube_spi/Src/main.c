@@ -43,6 +43,7 @@
 /* USER CODE BEGIN Includes */
 #include "stdbool.h"
 #include "stm32f4xx_hal_tim.h"
+#include "inttypes.h"
 #define FILTER_DEPTH 16
 #define SERVO_KOZEP 7497
 #define KC 1
@@ -63,6 +64,14 @@
  volatile bool adcvalid=false;
  uint16_t adcmeasuredvalues[3];
  uint32_t WMAfilterarray[FILTER_DEPTH];
+ /*Encoder vars*/
+ uint32_t encoder1;
+ HAL_TIM_StateTypeDef state;
+ uint32_t encoderprev=0;
+ int32_t encoderdiff;
+ uint32_t dir;
+ int32_t velocity;
+ uint32_t velocityabs;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -113,8 +122,9 @@ int main(void)
   MX_ADC1_Init();
   MX_USART2_UART_Init();
   MX_SPI3_Init();
-  MX_TIM1_Init(SERVO_KOZEP); //szervo kozepallas
-  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+  MX_TIM1_Init();
+  MX_TIM2_Init();
+  MX_TIM6_Init();
 
   /* USER CODE BEGIN 2 */
   /*Initialize variables for main()*/
@@ -123,6 +133,7 @@ int main(void)
   uint8_t CR=13;
   uint8_t tab=9;
   uint8_t space=32;
+  uint8_t minusz=45;
   uint8_t line_register1=0;			//Tarolja hogy hol erzekelnek vonalat a TCRT-k
   uint8_t line_register2=0;
   uint8_t line_register3=0;
@@ -141,7 +152,7 @@ int main(void)
   uint32_t filteredposition=0;
   uint32_t prevfilteredposition=0;
   int32_t Pszabalyozopozicio=0;
-
+  uint8_t string[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   initWMAfilterarray();
 
   /* USER CODE END 2 */
@@ -153,21 +164,42 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
+	  /*Encoder test*/
+
+	  /*HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
+	  while(1)
+	  {
+		  state = HAL_TIM_Encoder_GetState(&htim2);
+
+		  encoder1 = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
+		  dir = __HAL_TIM_DIRECTION_STATUS(&htim2);
+		  encoderdiff=encoder1-encoderprev;
+		  velocity=((encoderdiff*1000)/743); //v[mm/s]
+		  encoderprev=encoder1;
+		  sprintf(string, "%"PRId32 "\n\r", velocity);
+		  HAL_UART_Transmit(&huart2, string, sizeof(string), 10000);
+		  HAL_Delay(100);
+	  }*/
+
+
+
 
 	  /*SPI communication*/
 	  /*If only 3 sequence is sent, then something is wrong with the bits (not the good bits are received by the LED drivers.
 	   Dont know, whats the problem.*/
-	  for(int q=0; q<6; q++)
+
+	  for(int q=0; q<3; q++)
 	  {
-		  HAL_SPI_Transmit(&hspi3,&spidata,1,10);
+		  HAL_SPI_Transmit(&hspi3,&spidata,1,100);
 	  }
+
 	  /*Valami nem oke a LE outputtal. Ha kiveszem az utolso 2 hal-delay(1)-et, akkor nem vilagit az uccso(elso) TCRT. Ha az egyik bent van a kodban, akkor hol vilaghit, hol nem. Ha mindketto akkor ok.*/
 	  /*LE signal output*/
-	  //HAL_Delay(1);
+	  HAL_Delay(20);
 	  HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_SET);
-	  HAL_Delay(1);
+	 // HAL_Delay(1);
 	  HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_RESET);
-	  HAL_Delay(1);
+	  HAL_Delay(10);
 
 	  //ADC inditasa, majd varakozas a konverzio vegere
 	  adcvalid=false;
@@ -224,14 +256,14 @@ int main(void)
 	  if (spidata==0b10000000)
 	  {
 		  //sendlineregisters_to_uart(&huart2, &line_register1, &line_register2, &line_register3, 1000);
-		  //sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
+		  sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
 		  getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
 		  getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);
 
-		  send8bitdecimal_to_uart(&huart2, &linetype, 1000);
+		  //send8bitdecimal_to_uart(&huart2, &linetype, 1000);
 		  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
 		  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
-		  sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
+		  //sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
 
 		  if(!position) //Szaturacional==vonalelhagyasnal uccso erteket jegyezze meg.
 			  position=prevfilteredposition;
@@ -247,8 +279,9 @@ int main(void)
 		 /*send32bitdecimal_to_uart(&huart2,&filteredposition,10000);
 		  HAL_UART_Transmit(&huart2,&tab, sizeof(uint8_t), 100000);
 		  send8bitdecimal_to_uart(&huart2, &line_count, 1000);
-		 */ HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
-		  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
+
+		  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
+		  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);*/
 
 
 
