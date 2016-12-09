@@ -45,6 +45,7 @@
 #include "stm32f4xx_hal_tim.h"
 #include "inttypes.h"
 #define FILTER_DEPTH 16
+#define VELOCITY_FILTER_DEPTH 4
 #define SERVO_KOZEP 7497
 #define KC 1
 
@@ -63,8 +64,12 @@
 /* Private variables ---------------------------------------------------------*/
  volatile bool adcvalid=false;
  volatile bool adcwaitdone=false;
+ volatile bool dovelocitymeasurement=false;
+ volatile uint32_t actualencoderval=0;
  uint16_t adcmeasuredvalues[3];
- uint32_t WMAfilterarray[FILTER_DEPTH];
+ uint32_t WMAfilterarray[FILTER_DEPTH]; //vonalpoziciohoz
+
+
  /*Encoder vars*/
  uint32_t encoder1;
  HAL_TIM_StateTypeDef state;
@@ -72,10 +77,10 @@
  int32_t encoderdiff;
  uint32_t dir;
  int32_t velocity;
+ int32_t filteredvelocity;
+ int32_t velocityarray[VELOCITY_FILTER_DEPTH]={0,0,0,0}; //Kis csalas, akkor jo, ha VELOCITY_FILTER_DEPTH = 4
  uint32_t velocityabs;
 
- uint32_t TIM6CNT;
- uint32_t TIM6CNTprev=0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -93,6 +98,7 @@ uint8_t sendlineregisters_to_uart(UART_HandleTypeDef* huart, uint8_t* data1,uint
 void medianfilterW3(uint16_t* data1,uint16_t* data2, uint16_t* data3);
 uint32_t getposition(uint32_t* positionreg, uint16_t* adcfiltervals1, uint16_t* adcfiltervals2, uint16_t* adcfiltervals3);
 uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, uint16_t* adcvals3, uint16_t* threshold);
+void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth);
 void initWMAfilterarray();
 uint8_t handleWMAfilter(uint32_t* filteredposition, uint32_t* newelement);
 void szervoPszabalyozo(int16_t vonalpozicio);
@@ -108,6 +114,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 	if (htim->Instance == TIM6)
 	{
 		adcwaitdone = true;
+	}
+	if(htim->Instance == TIM7)
+	{
+		actualencoderval=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
+		dovelocitymeasurement=true;
 	}
 }
 
@@ -137,6 +148,7 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM6_Init();
+  MX_TIM7_Init();
 
   /* USER CODE BEGIN 2 */
 
@@ -168,7 +180,8 @@ int main(void)
   int32_t Pszabalyozopozicio=0;
   uint8_t string[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   initWMAfilterarray();
-
+  HAL_TIM_Base_Start_IT(&htim7);
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -187,6 +200,7 @@ int main(void)
 		  state = HAL_TIM_Encoder_GetState(&htim2);
 
 		  encoder1 = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
+		  HAL_TIM
 		  dir = __HAL_TIM_DIRECTION_STATUS(&htim2);
 		  encoderdiff=encoder1-encoderprev;
 		  velocity=((encoderdiff*1000)/743); //v[mm/s]
@@ -224,20 +238,49 @@ int main(void)
 
 		  //sendlineregisters_to_uart(&huart2, &line_register1, &line_register2, &line_register3, 1000);
 		  medianfilterW3(adcvalregister1, adcvalregister2, adcvalregister3);
-		  sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
+		 // sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
 		  getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
 		  getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);
 
 		  //send8bitdecimal_to_uart(&huart2, &linetype, 1000);
-			  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
-			  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
+		//	  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
+		//	  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
 		  //sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
 
 		  if(!position) //Szaturacional==vonalelhagyasnal uccso erteket jegyezze meg.
 			  position=prevfilteredposition;
 		  else
 			  prevfilteredposition=position;
+
 		  handleWMAfilter(&filteredposition, &position);				//pozicio idobeli szurese
+
+		  if(dovelocitymeasurement) //v=[mm/s], delta t = 10ms
+		  {//valami szamitas hibas, wma filter furi.
+			  state = HAL_TIM_Encoder_GetState(&htim2);
+			  if(state==HAL_TIM_STATE_READY)
+			  {
+				  //dir = __HAL_TIM_DIRECTION_STATUS(&htim2);
+				  encoder1=actualencoderval;
+				  encoderdiff=encoder1-encoderprev;
+				  velocity=((encoderdiff*10000)/743); //v[mm/s]
+				  WMAfilter(&filteredvelocity, &velocity, velocityarray, VELOCITY_FILTER_DEPTH);
+				  if(filteredvelocity>=0)
+					  velocityabs = filteredvelocity;
+				  else
+					  velocityabs = -filteredvelocity;
+				  encoderprev=encoder1;
+				  for(int q=0; q<20; q++)
+					  string[q]=0;
+				  sprintf(string, "%"PRId32 "\n\r", filteredvelocity);
+				  HAL_UART_Transmit(&huart2, string, sizeof(string), 10000);
+				  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
+				  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
+			  }
+			  else
+			  {
+
+			  }
+		  }
 
 		//  Pszabalyozopozicio=(((filteredposition-100)*140)/2300)-70;	//2400 100 tartomany (filteredposition ertektartomanya) illesztese a -70 70 tartomanyhoz (Pszab bemeneti ertektartomany)
 		//  szervoPszabalyozo((int16_t)Pszabalyozopozicio);				//szabalyozo PWM kezelojenek meghivasa
@@ -694,6 +737,23 @@ uint8_t handleWMAfilter(uint32_t* filteredposition, uint32_t* newelement) //put 
 	*filteredposition=*filteredposition/coeffsum;
 
 	return 0;
+}
+
+void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth)
+{
+	*filteredval=0;
+	uint32_t coeffsum=0;
+
+	for(int i=0; i<filter_depth-1; i++)
+	{
+		array[i]=array[i+1];
+		*filteredval+=array[i]*(i+1);
+		coeffsum+=(i+1);
+	}
+	array[filter_depth-1]=*newelement;
+	*filteredval+=array[filter_depth-1]*(filter_depth);
+	coeffsum+=(filter_depth);
+	*filteredval=*filteredval/coeffsum;
 }
 
 uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, uint16_t* adcvals3, uint16_t* threshold)
