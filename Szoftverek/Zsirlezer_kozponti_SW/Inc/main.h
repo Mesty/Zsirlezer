@@ -51,6 +51,10 @@
 #define SWO_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 #define KC 1
+#define ROBOTSTATE_STATUS_DEFAULT 0
+#define ROBOTSTATE_STATUS_RESET 1
+#define ROBOTSTATE_STATUS_STOPPING 2
+#define ROBOTSTATE_STATUS_ACCELERATE 3
 /* USER CODE END Private defines */
 
 /**

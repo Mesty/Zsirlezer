@@ -40,10 +40,7 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
-#define ROBOTSTATE_STATUS_DEFAULT 0
-#define ROBOTSTATE_STATUS_RESET 1
-#define ROBOTSTATE_STATUS_STOPPING 2
-#define ROBOTSTATE_STATUS_ACCELERATE 3
+
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -57,6 +54,15 @@ float RobotState_x;
 float RobotState_v;
 float RobotState_a;
 uint8_t RobotState_light;
+volatile uint8_t tick;
+volatile uint8_t dataReady;
+uint8_t inputStream[25];
+uint32_t receivedState_status;
+uint64_t receivedState_timestamp;
+float receivedState_x;
+float receivedState_v;
+float receivedState_a;
+uint8_t receivedState_light;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -68,6 +74,8 @@ void Error_Handler(void);
 void Simulator_start(float intervalsec);
 void Simulator_tick();
 void Simulator_dataReady();
+void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint64_t timestamp, float x, float v, float a, uint8_t light, uint32_t Timeout);
+void Simulator_ReadFrom();
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -105,10 +113,13 @@ int main(void)
   MX_UART4_Init();
   MX_UART5_Init();
   MX_USART1_UART_Init();
+  MX_TIM6_Init();
 
   /* USER CODE BEGIN 2 */
-  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-  HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
+  //HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+  //HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
+  HAL_TIM_Base_Start_IT(&htim6);
+  Simulator_start(90000000/1373/65501);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -117,6 +128,16 @@ int main(void)
 
   while (1)
   {
+	  if(tick == 1)
+	  {
+		  Simulator_tick();
+		  tick = 0;
+	  }
+	  if(dataReady == 1)
+	  {
+		  Simulator_dataReady();
+		  dataReady = 0;
+	  }
 
   /* USER CODE END WHILE */
 
@@ -256,12 +277,41 @@ void Simulator_tick()
 	default:
 		break;
 	}
+
+	Uart_sendstate(&huart4, RobotState_status, RobotState_timestamp, RobotState_x, RobotState_v, RobotState_a, RobotState_light, 100000);
 }
 void Simulator_dataReady()
 {
+	Simulator_ReadFrom();
 
+	switch(receivedState_status)
+	{
+	case ROBOTSTATE_STATUS_DEFAULT:
+		break;
+	case ROBOTSTATE_STATUS_RESET:
+		RobotState_status = ROBOTSTATE_STATUS_RESET;
+		break;
+	case ROBOTSTATE_STATUS_STOPPING:
+		RobotState_status = ROBOTSTATE_STATUS_STOPPING;
+		break;
+	case ROBOTSTATE_STATUS_ACCELERATE:
+		RobotState_status = ROBOTSTATE_STATUS_DEFAULT;
+		RobotState_a = receivedState_a;
+		break;
+	default:
+		break;
+	}
 }
-void szervoPszabalyozo(int16_t *vonalpozicio)
+void Simulator_ReadFrom()
+{
+	receivedState_status = *(&(inputStream[0]));
+	receivedState_timestamp = *(&(inputStream[4]));
+	receivedState_x = *(&(inputStream[12]));
+	receivedState_v = *(&(inputStream[16]));
+	receivedState_a = *(&(inputStream[20]));
+	receivedState_light = inputStream[24];
+}
+/*void szervoPszabalyozo(int16_t *vonalpozicio)
 {
 	  uint16_t servo_pulse;
 	  servo_pulse = (-10*(*vonalpozicio))*KC+6707;
@@ -271,8 +321,49 @@ void szervoPszabalyozo(int16_t *vonalpozicio)
 		  servo_pulse=6007;
 	  MX_TIM1_Init(servo_pulse);
 	  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+}*/
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if(htim->Instance == TIM6)
+	{
+		tick = 1;
+	}
 }
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance == UART4)
+	{
+		HAL_UART_Receive_IT(huart, inputStream, sizeof(inputStream));
+		dataReady = 1;
+	}
+}
+void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint64_t timestamp, float x, float v, float a, uint8_t light, uint32_t Timeout)
+{
+	uint8_t i;
+	uint8_t state[25];
+	for(i = 0; i < 4; ++i)
+	{
+		state[i] = *((&status)+i);
+	}
+	for(i = 0; i < 8; ++i)
+	{
+		state[i+4] = *((&timestamp)+i);
+	}
+	for(i = 0; i < 4; ++i)
+	{
+		state[i+12] = *((&x)+i);
+	}
+	for(i = 0; i < 4; ++i)
+	{
+		state[i+16] = *((&v)+i);
+	}
+	for(i = 0; i < 4; ++i)
+	{
+		state[i+20] = *((&a)+i);
+	}
+	state[24] = light;
+	HAL_UART_Transmit(huart, state, sizeof(state), Timeout);
+}
 /* USER CODE END 4 */
 
 /**
