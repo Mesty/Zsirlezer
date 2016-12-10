@@ -279,7 +279,6 @@ void Simulator_tick()
 	}
 
 	Uart_sendstate(&huart4, RobotState_status, RobotState_timestamp, RobotState_x, RobotState_v, RobotState_a, RobotState_light, 100000);
-
 }
 void Simulator_dataReady()
 {
