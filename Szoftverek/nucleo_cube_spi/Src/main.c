@@ -49,6 +49,12 @@
 #define SERVO_KOZEP 7497
 #define KC 1
 
+#define L_FROM_ROTATION_AXIS 220 //Vonalszenzor tavolsaga a forgastengelytol [mm]
+#define TD_COEFF 15				 //Coefficiens 10-szerese a TD-hez
+#define KD -5					//Kd 10-szerese a szabalyzohoz
+#define TSRECIP	333				//Ts mintavetelezesi ido reciproka
+
+
 #define NOLINE 0
 #define ONELINE 1
 #define TWOLINE 2
@@ -102,6 +108,7 @@ void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32
 void initWMAfilterarray();
 uint8_t handleWMAfilter(uint32_t* filteredposition, uint32_t* newelement);
 void szervoPszabalyozo(int16_t vonalpozicio);
+void szervoPDszabalyozo(uint32_t vonalpozicio, int32_t sebesseg);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -149,6 +156,7 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM6_Init();
   MX_TIM7_Init();
+  MX_UART4_Init();
 
   /* USER CODE BEGIN 2 */
 
@@ -182,6 +190,9 @@ int main(void)
   initWMAfilterarray();
   HAL_TIM_Base_Start_IT(&htim7);
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
+  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2 , SERVO_KOZEP);
+  //HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
 
   /* USER CODE END 2 */
 
@@ -200,7 +211,6 @@ int main(void)
 		  state = HAL_TIM_Encoder_GetState(&htim2);
 
 		  encoder1 = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
-		  HAL_TIM
 		  dir = __HAL_TIM_DIRECTION_STATUS(&htim2);
 		  encoderdiff=encoder1-encoderprev;
 		  velocity=((encoderdiff*1000)/743); //v[mm/s]
@@ -269,23 +279,27 @@ int main(void)
 				  else
 					  velocityabs = -filteredvelocity;
 				  encoderprev=encoder1;
-				  for(int q=0; q<20; q++)
+				  /*for(int q=0; q<20; q++)
 					  string[q]=0;
 				  sprintf(string, "%"PRId32 "\n\r", filteredvelocity);
 				  HAL_UART_Transmit(&huart2, string, sizeof(string), 10000);
-				  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
-				  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
+				  HAL_UART_Transmit(&huart4, string, sizeof(string), 10000);*/
+				  //HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
+				  //HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
 			  }
 			  else
 			  {
-
+				  //error handling...
 			  }
+			  dovelocitymeasurement=false;
 		  }
 
 		//  Pszabalyozopozicio=(((filteredposition-100)*140)/2300)-70;	//2400 100 tartomany (filteredposition ertektartomanya) illesztese a -70 70 tartomanyhoz (Pszab bemeneti ertektartomany)
 		//  szervoPszabalyozo((int16_t)Pszabalyozopozicio);				//szabalyozo PWM kezelojenek meghivasa
 		  szervoPszabalyozo((int16_t)filteredposition);				//szabalyozo PWM kezelojenek meghivasa
 
+		 // if(filteredvelocity!=0)
+			//  szervoPDszabalyozo(filteredposition, 1000);
 
 		 /*send32bitdecimal_to_uart(&huart2,&filteredposition,10000);
 		  HAL_UART_Transmit(&huart2,&tab, sizeof(uint8_t), 100000);
@@ -742,16 +756,16 @@ uint8_t handleWMAfilter(uint32_t* filteredposition, uint32_t* newelement) //put 
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth)
 {
 	*filteredval=0;
-	uint32_t coeffsum=0;
+	int32_t coeffsum=0;
 
 	for(int i=0; i<filter_depth-1; i++)
 	{
 		array[i]=array[i+1];
-		*filteredval+=array[i]*(i+1);
+		*filteredval=*filteredval+array[i]*(i+1);
 		coeffsum+=(i+1);
 	}
 	array[filter_depth-1]=*newelement;
-	*filteredval+=array[filter_depth-1]*(filter_depth);
+	*filteredval=*filteredval+array[filter_depth-1]*(filter_depth);
 	coeffsum+=(filter_depth);
 	*filteredval=*filteredval/coeffsum;
 }
@@ -827,6 +841,54 @@ void szervoPszabalyozo(int16_t vonalpozicio)
 		HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
 	 // MX_TIM1_Init(servo_pulse);
 	//  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+}
+void szervoPDszabalyozo(uint32_t vonalpozicio, int32_t sebesseg)
+{
+	//szabalyzobol jovo u:beavatkozojel mertekegysege [rad], ertektartomanya: [-0,34;+0,34] (-20;+20 fok)
+	//u szamitasahoz hasznaljuk a sebesseget[mm/s], es a poziciot [mm]
+	//A vonalpoziciot is at kell szamolni mm-be [-70,70], jelenleg [100,2400] az ertektartomanya
+	//A szervoba [6000,9000] ertektartomanyu PWM-et kell beadni.
+
+
+	uint8_t endline = 10;
+	uint8_t CR = 13;
+	static float elozopozicioMM = 0.0;
+	float pozicioMM;
+	float szabalyozokimenetRAD;
+	float pulsePWM;
+	uint32_t uintpulsePWM;
+	//TIM_OC_InitTypeDef sConfigOC;
+
+	pozicioMM = ((float)vonalpozicio-100.0)*140.0/2300.0-70.0;
+	szabalyozokimenetRAD = ( (1.0 + (( TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0)) )*pozicioMM - ((TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0))*elozopozicioMM ) *KD/L_FROM_ROTATION_AXIS/10.0;
+	pulsePWM = (szabalyozokimenetRAD + 0.34)*(3000/0.68)+6000;
+	if (pulsePWM>9000.0)
+		pulsePWM=9000.0;
+	if (pulsePWM<6000.0)
+		pulsePWM=6000.0;
+  	uintpulsePWM = (uint32_t) pulsePWM;
+
+
+	/*sConfigOC.OCMode = TIM_OCMODE_PWM1;
+	sConfigOC.Pulse = uintpulsePWM;
+	sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+	sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+	sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+	sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+	if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+	{
+	  Error_Handler();
+	}
+	HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);*/
+
+	send32bitdecimal_to_uart(&huart2, &uintpulsePWM, 10000 );
+	HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
+	HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
+
+	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2 , (uint32_t) pulsePWM);
+	//HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+	elozopozicioMM=pozicioMM;
 }
 
 
