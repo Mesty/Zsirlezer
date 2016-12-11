@@ -46,20 +46,20 @@
 #include "inttypes.h"
 //MotorPWM
 #define MOTOR_0MPERS 6932
-#define MOTOR_1P7MPERS 7470
+#define MOTOR_1P7MPERS 7362
 #define MOTOR_3MPERS 7578 //Nem ennyi
 #define MOTOR_6MPERS 8224 //Nem biztos h ennyi
 
-#define SEB_LASSU 1000
-#define SEB_GYORS 2000
+#define SEB_LASSU 1100
+#define SEB_GYORS 1300
 
 //Szurok
 #define FILTER_DEPTH 16
 #define VELOCITY_FILTER_DEPTH 4
 //Szervo
-#define SERVO_KOZEP 6766
-#define SERVO_BAL 5829
-#define SERVO_JOBB 7638
+#define SERVO_KOZEP 6914
+#define SERVO_BAL 5944
+#define SERVO_JOBB 7883
 //P szab
 #define KC 1
 
@@ -280,7 +280,7 @@ int main(void)
 		  medianfilterW3(adcvalregister1, adcvalregister2, adcvalregister3);
 		 // sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
 		  getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
-		 // getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);
+		  getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);//-----------------------------------
 
 		  //send8bitdecimal_to_uart(&huart2, &linetype, 1000);
 		//	  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
@@ -309,11 +309,11 @@ int main(void)
 				  else
 					  velocityabs = -filteredvelocity;
 				  encoderprev=encoder1;
-				  for(int q=0; q<20; q++)
+				/*  for(int q=0; q<20; q++)
 					  string[q]=0;
 				  sprintf(string, "%"PRId32 "\t\n\r", filteredvelocity);
 				  HAL_UART_Transmit(&huart2, string, sizeof(string), 10000);
-				  HAL_UART_Transmit(&huart4, string, sizeof(string), 10000);
+				  HAL_UART_Transmit(&huart4, string, sizeof(string), 10000);*/
 				  //HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
 				  //HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
 			  }
@@ -323,14 +323,15 @@ int main(void)
 			  }
 			  dovelocitymeasurement=false;
 		  }
-		  sebessegto(1000);
+		 /* sebessegto(1000);*///-------------------------------------------------------------
 
 		//  Pszabalyozopozicio=(((filteredposition-100)*140)/2300)-70;	//2400 100 tartomany (filteredposition ertektartomanya) illesztese a -70 70 tartomanyhoz (Pszab bemeneti ertektartomany)
 		//  szervoPszabalyozo((int16_t)Pszabalyozopozicio);				//szabalyozo PWM kezelojenek meghivasa
 		 // szervoPszabalyozo((int16_t)filteredposition);				//szabalyozo PWM kezelojenek meghivasa
 
-		 // if(filteredvelocity!=0)
-			//  szervoPDszabalyozo(filteredposition, 1000);
+		  if(filteredvelocity!=0)
+			  szervoPDszabalyozo(filteredposition, filteredvelocity);
+		  //szervoPDszabalyozo(filteredposition, 1000);
 
 		 /*send32bitdecimal_to_uart(&huart2,&filteredposition,10000);
 		  HAL_UART_Transmit(&huart2,&tab, sizeof(uint8_t), 100000);
@@ -869,7 +870,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 				sebessegto(SEB_GYORS);
 
 			}
-			else if(state== UNKNOWN && encodervalue1-encodervalue0 > 7430)//Ha 1m-ota van 3 vonal -> lassito
+			else if(state== UNKNOWN && encodervalue1-encodervalue0 > 2500)//Ha ~35cm-ota van 3 vonal -> lassito
 			{
 				state = END_FAST;
 				sebessegto(SEB_LASSU);
@@ -956,8 +957,13 @@ void szervoPDszabalyozo(uint32_t vonalpozicio, int32_t sebesseg)
 	//TIM_OC_InitTypeDef sConfigOC;
 
 	pozicioMM = ((float)vonalpozicio-100.0)*140.0/2300.0-70.0;
-	szabalyozokimenetRAD = ( (1.0 + (( TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0)) )*pozicioMM - ((TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0))*elozopozicioMM ) *KD/L_FROM_ROTATION_AXIS/10.0;
+	//szabalyozokimenetRAD = ( (1.0 + (( TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0)) )*pozicioMM - ((TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0))*elozopozicioMM ) *KD/L_FROM_ROTATION_AXIS/10.0;
+	szabalyozokimenetRAD = ( (3.0 + (( TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0)) )*pozicioMM - ((TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0))*elozopozicioMM ) *KD/L_FROM_ROTATION_AXIS/10.0;
+
 	pulsePWM = (szabalyozokimenetRAD + 0.34)*((SERVO_JOBB-SERVO_BAL)/0.68)+SERVO_BAL;
+	//Mok, hogy szelesebb legyen a tartomany, amin mozgat, mert most statikusan nem mozgat balra rendesen
+
+
 	if (pulsePWM > (float)SERVO_JOBB)
 		pulsePWM = (float)SERVO_JOBB;
 	if (pulsePWM < (float)SERVO_BAL)
@@ -981,15 +987,15 @@ void sebessegto(int32_t mmpersec)
 	int32_t motorpulsePWM;
 	motorpulsePWM = (mmpersec*(MOTOR_1P7MPERS-MOTOR_0MPERS))/1700 + MOTOR_0MPERS;
 	//vedelem: ne legyen negativ sebesseg
-	if (motorpulsePWM < 6932)
-		motorpulsePWM=6932;
+	if (motorpulsePWM < MOTOR_0MPERS)
+		motorpulsePWM=MOTOR_0MPERS;
 	//vedelem: max sebesseg
-	if(motorpulsePWM > 7362) //Korulbelul 2m/s
-		motorpulsePWM = 7362;
+	if(motorpulsePWM > 7500) //Korulbelul 2m/s , korabban 7326 volt
+		motorpulsePWM = 7500;
 
 	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
-	send32bitdecimal_to_uart(&huart4, &motorpulsePWM, 10000);
-	send32bitdecimal_to_uart(&huart2, &motorpulsePWM, 10000);
+	/*send32bitdecimal_to_uart(&huart4, &motorpulsePWM, 10000);
+	send32bitdecimal_to_uart(&huart2, &motorpulsePWM, 10000);*/
 }
 
 
