@@ -46,8 +46,12 @@
 #include "inttypes.h"
 //MotorPWM
 #define MOTOR_0MPERS 6932
-#define MOTOR_3MPERS 7578
+#define MOTOR_1P7MPERS 7470
+#define MOTOR_3MPERS 7578 //Nem ennyi
 #define MOTOR_6MPERS 8224 //Nem biztos h ennyi
+
+#define SEB_LASSU 1000
+#define SEB_GYORS 2000
 
 //Szurok
 #define FILTER_DEPTH 16
@@ -216,6 +220,7 @@ int main(void)
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
   HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
+  HAL_Delay(5000);
   //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2 , SERVO_KOZEP);
   //HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
 
@@ -318,7 +323,7 @@ int main(void)
 			  }
 			  dovelocitymeasurement=false;
 		  }
-		  sebessegto(3000);
+		  sebessegto(1000);
 
 		//  Pszabalyozopozicio=(((filteredposition-100)*140)/2300)-70;	//2400 100 tartomany (filteredposition ertektartomanya) illesztese a -70 70 tartomanyhoz (Pszab bemeneti ertektartomany)
 		//  szervoPszabalyozo((int16_t)Pszabalyozopozicio);				//szabalyozo PWM kezelojenek meghivasa
@@ -804,8 +809,8 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 	uint16_t* pdata;
 	static uint32_t encodervalue0;		//encoder ertek a vonal-objektum elejen
  	uint32_t encodervalue1;				//koztes encoder ertek
-	uint8_t state;
-	bool object_observe=false;
+	static uint8_t state=NORMAL;
+	static bool object_observe=false;
 
 	for (int i=0; i<3; i++)
 	{
@@ -844,9 +849,10 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 		*linetype=LINERROR;
 
 	//Gyorsito, lassitoszakasz erzekeles
-	if (linetype==THREELINE)
+	//Tipp: object observe valtozo nem kell: true if state!=NORMAL, else false
+	if (*linetype==THREELINE)
 	{
-		if(object_observe==false)
+		if(object_observe==false) //Valamelyik kezdete, nem tudni mi
 		{
 			object_observe=true;
 			state=UNKNOWN;
@@ -854,16 +860,55 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 		}
 		if(object_observe==true)
 		{
+			encodervalue1=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
 
 
+			if(state==ONESTRIPE && encodervalue1-encodervalue0 > 371 && encodervalue1-encodervalue0 < 817) //Ha 1 kis stripeot lattunk, akkor gyanus hogy gyorsito, itt megnezzuk, hogy tenyleg az e (van e kb ugyanakkor kihagyas a kovi stripeig)
+			{
+				state=START_FAST;
+				sebessegto(SEB_GYORS);
+
+			}
+			else if(state== UNKNOWN && encodervalue1-encodervalue0 > 7430)//Ha 1m-ota van 3 vonal -> lassito
+			{
+				state = END_FAST;
+				sebessegto(SEB_LASSU);
+			}
 		}
 
 	}
-	if(linetype==ONELINE && object_observe==true)
+	if(*linetype==ONELINE && object_observe==true)
 	{
-
+		if(state == END_FAST) //Ha lassito volt, akkor vege van aza objektumnak 1 vonalnal
+			{
+				object_observe=false;
+				state = NORMAL;
+			}
+		else if(state == UNKNOWN) //Ha megfigyekjuk, de semmit nem tudunk (eddig 3 vonal volt), most pedig egy vonal -> valszeg gyorsito
+		{
+			encodervalue1=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
+			if (encodervalue1-encodervalue0 > 371 &&  encodervalue1-encodervalue0 < 817) //Ha 1 stripe-nyi (50-110mm) a 3 vonalas korabbi resz -> valszeg gyorsito
+			{
+				encodervalue0=encodervalue1; //encodervalue0-ba kerül az aktualis pozicio, a kovetkezo stripe elejenel ezzel szamolunk
+				state=ONESTRIPE;
+			}
+			else //Ha tul rovid a csik, vagy tul nagy (bar utobbi kb lehetetlen)
+			{
+				state=NORMAL;
+				object_observe=false;
+			}
+		}
+		else if(state == START_FAST) //gyorsito szakasz objektum vege
+		{ //Ha eleg sokaig csak egy vonal van, akkor vege van.
+		//Ha diff > 11cm -> akkor vege
+			encodervalue1=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
+			if(encodervalue1-encodervalue0 > 817)
+			{
+				state=NORMAL;
+				object_observe=false;
+			}
+		}
 	}
-
 	return 0;
 }
 
@@ -932,9 +977,9 @@ void szervoPDszabalyozo(uint32_t vonalpozicio, int32_t sebesseg)
 void sebessegto(int32_t mmpersec)
 {
 	//Atkonvertalja a mm/s erteket PWM Compare ertekre
-	// 0m/s-6m/s kozotti erteket var (0-6000), de igazabol jol szamol afelett is
+	// meres: 1700 mm/s-re volt 7470 pulse a PWM, ez alapjan allitjuk be a "kovertalasi" egyenest
 	int32_t motorpulsePWM;
-	motorpulsePWM = (mmpersec*(MOTOR_6MPERS-MOTOR_0MPERS))/6000 + MOTOR_0MPERS;
+	motorpulsePWM = (mmpersec*(MOTOR_1P7MPERS-MOTOR_0MPERS))/1700 + MOTOR_0MPERS;
 	//vedelem: ne legyen negativ sebesseg
 	if (motorpulsePWM < 6932)
 		motorpulsePWM=6932;
@@ -942,8 +987,8 @@ void sebessegto(int32_t mmpersec)
 	if(motorpulsePWM > 7362) //Korulbelul 2m/s
 		motorpulsePWM = 7362;
 
-	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (64614-motorpulsePWM)); //Negalva mukodik 3v3 5v konverzio miatt
-	send32bitdecimal_to_uart(&huart4, &motorpulsePWM, 10000 );
+	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
+	send32bitdecimal_to_uart(&huart4, &motorpulsePWM, 10000);
 	send32bitdecimal_to_uart(&huart2, &motorpulsePWM, 10000);
 }
 
