@@ -40,6 +40,7 @@
 /* USER CODE END Includes */
 
 /* Private define ------------------------------------------------------------*/
+#define UINT32_MAX 0xffffffff
 
 #define USART_TX_Pin GPIO_PIN_2
 #define USART_TX_GPIO_Port GPIOA

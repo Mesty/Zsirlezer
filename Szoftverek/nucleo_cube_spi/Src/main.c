@@ -44,15 +44,48 @@
 #include "stdbool.h"
 #include "stm32f4xx_hal_tim.h"
 #include "inttypes.h"
+//MotorPWM
+#define MOTOR_0MPERS 6932
+#define MOTOR_1P7MPERS 7362
+#define MOTOR_3MPERS 7578 //Nem ennyi
+#define MOTOR_6MPERS 8224 //Nem biztos h ennyi
+
+#define SEB_LASSU 900
+#define SEB_GYORS 1200
+
+//Szurok
 #define FILTER_DEPTH 16
-#define SERVO_KOZEP 7497
+#define VELOCITY_FILTER_DEPTH 4
+//Szervo
+#define SERVO_KOZEP 6914
+#define SERVO_BAL 5644//5944
+#define SERVO_JOBB 7883
+//P szab
 #define KC 1
 
+//Szervo ertekek:
+/*Elozo meres: 6000, 7497, 9000
+ Jelenlegi: 5829, 6766, 7638*/
+
+//PD szab
+#define L_FROM_ROTATION_AXIS 220 //Vonalszenzor tavolsaga a forgastengelytol [mm]
+#define TD_COEFF 23			//15,5, 50 20,20, 20	 //Coefficiens 10-szerese a TD-hez
+#define KD -11				//5 ,10, -1, 3,1, -5	//Kd 10-szerese a szabalyzohoz
+#define TSRECIP	333				//Ts mintavetelezesi ido reciproka
+
+//Linetype defines
 #define NOLINE 0
 #define ONELINE 1
 #define TWOLINE 2
 #define THREELINE 3
 #define LINERROR 10
+//Lineobject observing state defines
+#define NORMAL 0
+#define UNKNOWN 1
+#define END_FAST 2
+#define ONESTRIPE 3
+#define TWOSTRIPE 4
+#define START_FAST 5
 
 
 /* USER CODE END Includes */
@@ -63,8 +96,12 @@
 /* Private variables ---------------------------------------------------------*/
  volatile bool adcvalid=false;
  volatile bool adcwaitdone=false;
+ volatile bool dovelocitymeasurement=false;
+ volatile uint32_t actualencoderval=0;
  uint16_t adcmeasuredvalues[3];
- uint32_t WMAfilterarray[FILTER_DEPTH];
+ uint32_t WMAfilterarray[FILTER_DEPTH]; //vonalpoziciohoz
+
+
  /*Encoder vars*/
  uint32_t encoder1;
  HAL_TIM_StateTypeDef state;
@@ -72,10 +109,10 @@
  int32_t encoderdiff;
  uint32_t dir;
  int32_t velocity;
+ int32_t filteredvelocity;
+ int32_t velocityarray[VELOCITY_FILTER_DEPTH]={0,0,0,0}; //Kis csalas, akkor jo, ha VELOCITY_FILTER_DEPTH = 4
  uint32_t velocityabs;
 
- uint32_t TIM6CNT;
- uint32_t TIM6CNTprev=0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -93,9 +130,12 @@ uint8_t sendlineregisters_to_uart(UART_HandleTypeDef* huart, uint8_t* data1,uint
 void medianfilterW3(uint16_t* data1,uint16_t* data2, uint16_t* data3);
 uint32_t getposition(uint32_t* positionreg, uint16_t* adcfiltervals1, uint16_t* adcfiltervals2, uint16_t* adcfiltervals3);
 uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, uint16_t* adcvals3, uint16_t* threshold);
+void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth);
 void initWMAfilterarray();
 uint8_t handleWMAfilter(uint32_t* filteredposition, uint32_t* newelement);
 void szervoPszabalyozo(int16_t vonalpozicio);
+void szervoPDszabalyozo(uint32_t vonalpozicio, int32_t sebesseg);
+void sebessegto(int32_t mmpersec);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -109,9 +149,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 	{
 		adcwaitdone = true;
 	}
+	if(htim->Instance == TIM7)
+	{
+		actualencoderval=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
+		dovelocitymeasurement=true;
+	}
 }
 
 /* USER CODE END 0 */
+
 
 int main(void)
 {
@@ -137,6 +183,9 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM6_Init();
+  MX_TIM7_Init();
+  MX_UART4_Init();
+  MX_TIM8_Init();
 
   /* USER CODE BEGIN 2 */
 
@@ -159,8 +208,8 @@ int main(void)
   uint16_t adcfilterregister1[8] = {0,0,0,0,0,0,0,0};
   uint16_t adcfilterregister2[8] = {0,0,0,0,0,0,0,0};
   uint16_t adcfilterregister3[8] = {0,0,0,0,0,0,0,0};
-  uint16_t threshold=600;
-  uint16_t thresholdforlinetype=threshold;
+  uint16_t threshold=1200; //TODO 1000-1100? //Vedekezni kell a koszok ellen, ezert nagyobb
+  uint16_t thresholdforlinetype=800; //A vonalakat viszont eszre kell venni
   uint8_t i=0;
   uint32_t position=0;
   uint32_t filteredposition=0;
@@ -168,7 +217,14 @@ int main(void)
   int32_t Pszabalyozopozicio=0;
   uint8_t string[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   initWMAfilterarray();
-
+  HAL_TIM_Base_Start_IT(&htim7);
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
+  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+  HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
+  HAL_Delay(5000);
+  sebessegto(SEB_LASSU);
+  //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2 , SERVO_KOZEP);
+  //HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
 
   /* USER CODE END 2 */
 
@@ -221,28 +277,66 @@ int main(void)
 
 	  if(spidata==0b00000001)
 	  {
+		  // medianfilterW3(adcvalregister1, adcvalregister2, adcvalregister3); //kicsit thresholdal jo lehet
+		  getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);//-----------------------------------
 
 		  //sendlineregisters_to_uart(&huart2, &line_register1, &line_register2, &line_register3, 1000);
-		  medianfilterW3(adcvalregister1, adcvalregister2, adcvalregister3);
-		  sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
-		  getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
-		  getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);
+		  //sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
 
+		  // medianfilterW3(adcfilterregister1, adcfilterregister2, adcfilterregister3); //Medianhoz kisebb threshold
+		  getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
+		 /* HAL_UART_Transmit(&huart4,&endline, sizeof(uint8_t), 100000);
+		  HAL_UART_Transmit(&huart4,&CR, sizeof(uint8_t), 100000);*/
 		  //send8bitdecimal_to_uart(&huart2, &linetype, 1000);
-			  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
-			  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
-		  //sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
+		//	  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
+		//	  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
+		 // sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
 
 		  if(!position) //Szaturacional==vonalelhagyasnal uccso erteket jegyezze meg.
 			  position=prevfilteredposition;
 		  else
 			  prevfilteredposition=position;
+
 		  handleWMAfilter(&filteredposition, &position);				//pozicio idobeli szurese
+
+		  if(dovelocitymeasurement) //v=[mm/s], delta t = 10ms
+		  {//valami szamitas hibas, wma filter furi.
+			  state = HAL_TIM_Encoder_GetState(&htim2);
+			  if(state==HAL_TIM_STATE_READY)
+			  {
+				  //dir = __HAL_TIM_DIRECTION_STATUS(&htim2);
+				  encoder1=actualencoderval;
+				  encoderdiff=encoder1-encoderprev;
+				  velocity=((encoderdiff*10000)/743); //v[mm/s]
+				  WMAfilter(&filteredvelocity, &velocity, velocityarray, VELOCITY_FILTER_DEPTH);
+				  if(filteredvelocity>=0)
+					  velocityabs = filteredvelocity;
+				  else
+					  velocityabs = -filteredvelocity;
+				  encoderprev=encoder1;
+				/*  for(int q=0; q<20; q++)
+					  string[q]=0;
+				  sprintf(string, "%"PRId32 "\t\n\r", filteredvelocity);
+				  HAL_UART_Transmit(&huart2, string, sizeof(string), 10000);
+				  HAL_UART_Transmit(&huart4, string, sizeof(string), 10000);*/
+				  //HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
+				  //HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
+			  }
+			  else
+			  {
+				  //error handling...
+			  }
+			  dovelocitymeasurement=false;
+		  }
+		 /* sebessegto(1000);*///-------------------------------------------------------------
 
 		//  Pszabalyozopozicio=(((filteredposition-100)*140)/2300)-70;	//2400 100 tartomany (filteredposition ertektartomanya) illesztese a -70 70 tartomanyhoz (Pszab bemeneti ertektartomany)
 		//  szervoPszabalyozo((int16_t)Pszabalyozopozicio);				//szabalyozo PWM kezelojenek meghivasa
-		  szervoPszabalyozo((int16_t)filteredposition);				//szabalyozo PWM kezelojenek meghivasa
+		 // szervoPszabalyozo((int16_t)filteredposition);				//szabalyozo PWM kezelojenek meghivasa
 
+		  if(filteredvelocity!=0)
+			  szervoPDszabalyozo(filteredposition, filteredvelocity);
+		  //szervoPDszabalyozo(filteredposition, 1000);
 
 		 /*send32bitdecimal_to_uart(&huart2,&filteredposition,10000);
 		  HAL_UART_Transmit(&huart2,&tab, sizeof(uint8_t), 100000);
@@ -274,6 +368,8 @@ int main(void)
 	  adcvalregister1[i]=adcmeasuredvalues[0];
 	  adcvalregister2[i]=adcmeasuredvalues[1];
 	  adcvalregister3[i]=adcmeasuredvalues[2];
+	  if(i==4)
+		  adcvalregister3[4]=adcvalregister3[4]-300; //20. TCRT kicsit erosebb, a zajt jobban athozza----------------------
 
 
 	  //Az ADC ertekek thresholdozasa: a minimalis szint alatti ertekeket nem vesszuk figyelembe i 0tol 7ig fut
@@ -696,12 +792,35 @@ uint8_t handleWMAfilter(uint32_t* filteredposition, uint32_t* newelement) //put 
 	return 0;
 }
 
+void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth)
+{
+	*filteredval=0;
+	int32_t coeffsum=0;
+
+	for(int i=0; i<filter_depth-1; i++)
+	{
+		array[i]=array[i+1];
+		*filteredval=*filteredval+array[i]*(i+1);
+		coeffsum+=(i+1);
+	}
+	array[filter_depth-1]=*newelement;
+	*filteredval=*filteredval+array[filter_depth-1]*(filter_depth);
+	coeffsum+=(filter_depth);
+	*filteredval=*filteredval/coeffsum;
+}
+
 uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, uint16_t* adcvals3, uint16_t* threshold)
 {
 	bool isline=false;
 	bool islineprev=false;
 	uint8_t edgenumber=0;
 	uint16_t* pdata;
+	static uint32_t encodervalue0;		//encoder ertek a vonal-objektum elejen
+ 	uint32_t encodervalue1=0;				//koztes encoder ertek
+	static uint8_t state=NORMAL;
+	static bool object_observe=false;
+	uint8_t tab=9;
+
 	for (int i=0; i<3; i++)
 	{
 		if(i==0)
@@ -737,7 +856,82 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 		*linetype=THREELINE;
 	else
 		*linetype=LINERROR;
+	/*send8bitdecimal_to_uart(&huart4, linetype, 10000);
+	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 1000);*/
+	//Gyorsito, lassitoszakasz erzekeles
+	//Tipp: object observe valtozo nem kell: true if state!=NORMAL, else false
+	if (*linetype==THREELINE)
+	{
+		if(object_observe==false) //Valamelyik kezdete, nem tudni mi
+		{
+			object_observe=true;
+			state=UNKNOWN;
+			encodervalue0=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
+		}
+		if(object_observe==true)
+		{
+			encodervalue1=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
 
+
+			if(state==ONESTRIPE && encodervalue1-encodervalue0 > 371 && encodervalue1-encodervalue0 < 817) //Ha 1 kis stripeot lattunk, akkor gyanus hogy gyorsito, itt megnezzuk, hogy tenyleg az e (van e kb ugyanakkor kihagyas a kovi stripeig)
+			{
+				state=START_FAST;
+				sebessegto(SEB_GYORS);
+				encodervalue0=encodervalue1; //encodervalue0-ba kerül az aktualis pozicio, a kovetkezo stripe elejenel ezzel szamolunk
+
+			}
+			else if(state== UNKNOWN && encodervalue1-encodervalue0 > 2000)//Ha ~27cm-ota van 3 vonal -> lassito
+			{
+				state = END_FAST;
+				sebessegto(0);
+			}
+			else if(state==START_FAST)
+			{
+				encodervalue1=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
+				encodervalue0=encodervalue1; //encodervalue0-ba kerül az aktualis pozicio, a kovetkezo stripe elejenel ezzel szamolunk
+			}
+		}
+
+	}
+	if(*linetype==ONELINE && object_observe==true)
+	{
+		if(state == END_FAST) //Ha lassito volt, akkor vege van aza objektumnak 1 vonalnal
+			{
+				object_observe=false;
+				state = NORMAL;
+			}
+		else if(state == UNKNOWN) //Ha megfigyekjuk, de semmit nem tudunk (eddig 3 vonal volt), most pedig egy vonal -> valszeg gyorsito
+		{
+			encodervalue1=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
+			if (encodervalue1-encodervalue0 > 371 &&  encodervalue1-encodervalue0 < 817) //Ha 1 stripe-nyi (50-110mm) a 3 vonalas korabbi resz -> valszeg gyorsito
+			{
+				encodervalue0=encodervalue1; //encodervalue0-ba kerül az aktualis pozicio, a kovetkezo stripe elejenel ezzel szamolunk
+				state=ONESTRIPE;
+			}
+			else //Ha tul rovid a csik, vagy tul nagy (bar utobbi kb lehetetlen)
+			{
+				state=NORMAL;
+				object_observe=false;
+			}
+		}
+		else if(state == START_FAST) //gyorsito szakasz objektum vege
+		{ //Ha eleg sokaig csak egy vonal van, akkor vege van.
+		//Ha diff > 16cm -> akkor vege
+			encodervalue1=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
+			if(encodervalue1-encodervalue0 > 1184)
+			{
+				///ha tul hamar adjuk ki a gyorsitast, akkor itt is lehet adni
+				state=NORMAL;
+				object_observe=false;
+			}
+		}
+	}
+
+/*	send32bitdecimal_to_uart(&huart4, &encodervalue0, 10000);
+	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 10000);
+	send32bitdecimal_to_uart(&huart4, &encodervalue1, 10000);
+	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 10000);
+	send8bitdecimal_to_uart(&huart4, &state, 10000);*/
 
 	return 0;
 }
@@ -767,6 +961,69 @@ void szervoPszabalyozo(int16_t vonalpozicio)
 		HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
 	 // MX_TIM1_Init(servo_pulse);
 	//  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+}
+void szervoPDszabalyozo(uint32_t vonalpozicio, int32_t sebesseg)
+{
+	//szabalyzobol jovo u:beavatkozojel mertekegysege [rad], ertektartomanya: [-0,34;+0,34] (-20;+20 fok)
+	//u szamitasahoz hasznaljuk a sebesseget[mm/s], es a poziciot [mm]
+	//A vonalpoziciot is at kell szamolni mm-be [-70,70], jelenleg [100,2400] az ertektartomanya
+	//A szervoba [SERVO_BAL,SERVO_JOBB] ertektartomanyu PWM-et kell beadni.
+
+
+	uint8_t endline = 10;
+	uint8_t CR = 13;
+	static float elozopozicioMM = 0.0;
+	float pozicioMM;
+	float szabalyozokimenetRAD;
+	float pulsePWM;
+	uint32_t uintpulsePWM;
+	//TIM_OC_InitTypeDef sConfigOC;
+
+	pozicioMM = ((float)vonalpozicio-100.0)*140.0/2300.0-70.0;
+	szabalyozokimenetRAD = ( (1.0 + (( TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0)) )*pozicioMM - ((TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0))*elozopozicioMM ) *KD/L_FROM_ROTATION_AXIS/10.0;
+	//szabalyozokimenetRAD = ( (3.0 + (( TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0)) )*pozicioMM - ((TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0))*elozopozicioMM ) *KD/L_FROM_ROTATION_AXIS/10.0;
+
+	//Mok, hogy szelesebb legyen a tartomany, amin mozgat, mert most statikusan nem mozgat balra rendesen
+	if (szabalyozokimenetRAD < 0)
+		szabalyozokimenetRAD=szabalyozokimenetRAD*1.15;
+
+
+	pulsePWM = (szabalyozokimenetRAD + 0.34)*((SERVO_JOBB-SERVO_BAL)/0.68)+SERVO_BAL;
+
+
+
+	if (pulsePWM > (float)SERVO_JOBB-30)
+		pulsePWM = (float)SERVO_JOBB-30;
+	if (pulsePWM < (float)SERVO_BAL+30)
+		pulsePWM = (float)SERVO_BAL+30;
+  	uintpulsePWM = (uint32_t) pulsePWM;
+
+	/*send32bitdecimal_to_uart(&huart2, &uintpulsePWM, 10000 );
+	HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
+	HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);*/
+
+	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2 , (uint32_t) pulsePWM);
+	elozopozicioMM=pozicioMM;
+}
+
+//TODO:negativ ertekek is legyenek jok
+
+void sebessegto(int32_t mmpersec)
+{
+	//Atkonvertalja a mm/s erteket PWM Compare ertekre
+	// meres: 1700 mm/s-re volt 7470 pulse a PWM, ez alapjan allitjuk be a "kovertalasi" egyenest
+	int32_t motorpulsePWM;
+	motorpulsePWM = (mmpersec*(MOTOR_1P7MPERS-MOTOR_0MPERS))/1700 + MOTOR_0MPERS;
+	//vedelem: ne legyen negativ sebesseg
+	if (motorpulsePWM < MOTOR_0MPERS)
+		motorpulsePWM=MOTOR_0MPERS;
+	//vedelem: max sebesseg
+	if(motorpulsePWM > 7500) //Korulbelul 2m/s , korabban 7326 volt
+		motorpulsePWM = 7500;
+
+	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
+	//send32bitdecimal_to_uart(&huart4, &motorpulsePWM, 10000);
+	//send32bitdecimal_to_uart(&huart2, &motorpulsePWM, 10000);
 }
 
 
