@@ -50,8 +50,8 @@
 #define MOTOR_3MPERS 7578 //Nem ennyi
 #define MOTOR_6MPERS 8224 //Nem biztos h ennyi
 
-#define SEB_LASSU 900
-#define SEB_GYORS 1200
+#define SEB_LASSU 1500
+#define SEB_GYORS 1750
 
 //Szurok
 #define FILTER_DEPTH 16
@@ -69,8 +69,10 @@
 
 //PD szab
 #define L_FROM_ROTATION_AXIS 220 //Vonalszenzor tavolsaga a forgastengelytol [mm]
-#define TD_COEFF 23			//15,5, 50 20,20, 20	 //Coefficiens 10-szerese a TD-hez
-#define KD -11				//5 ,10, -1, 3,1, -5	//Kd 10-szerese a szabalyzohoz
+#define TD_COEFF_FAST 105		 //Coefficiens 10-szerese a TD-hez
+#define TD_COEFF_SLOW 20
+#define KD_FAST -2				//Kd 10-szerese a szabalyzohoz
+#define KD_SLOW -11
 #define TSRECIP	333				//Ts mintavetelezesi ido reciproka
 
 //Linetype defines
@@ -86,6 +88,12 @@
 #define ONESTRIPE 3
 #define TWOSTRIPE 4
 #define START_FAST 5
+//PD parameter pair identifiers
+#define PD_FAST 1
+#define PD_SLOW 2
+//velocity defines
+#define FAST 10
+#define SLOW 20
 
 
 /* USER CODE END Includes */
@@ -100,6 +108,10 @@
  volatile uint32_t actualencoderval=0;
  uint16_t adcmeasuredvalues[3];
  uint32_t WMAfilterarray[FILTER_DEPTH]; //vonalpoziciohoz
+ //PD parameterei
+ int32_t KD=-8;
+ int32_t TD_COEFF=40;
+ uint8_t velocity_state;
 
 
  /*Encoder vars*/
@@ -136,6 +148,7 @@ uint8_t handleWMAfilter(uint32_t* filteredposition, uint32_t* newelement);
 void szervoPszabalyozo(int16_t vonalpozicio);
 void szervoPDszabalyozo(uint32_t vonalpozicio, int32_t sebesseg);
 void sebessegto(int32_t mmpersec);
+void setPD(uint32_t PD_type);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -223,6 +236,7 @@ int main(void)
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
   HAL_Delay(5000);
   sebessegto(SEB_LASSU);
+  velocity_state=SLOW;
   //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2 , SERVO_KOZEP);
   //HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
 
@@ -278,7 +292,7 @@ int main(void)
 	  if(spidata==0b00000001)
 	  {
 		  // medianfilterW3(adcvalregister1, adcvalregister2, adcvalregister3); //kicsit thresholdal jo lehet
-		  getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);//-----------------------------------
+		 // getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);//-----------------------------------
 
 		  //sendlineregisters_to_uart(&huart2, &line_register1, &line_register2, &line_register3, 1000);
 		  //sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
@@ -819,7 +833,11 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
  	uint32_t encodervalue1=0;				//koztes encoder ertek
 	static uint8_t state=NORMAL;
 	static bool object_observe=false;
+	static uint8_t end_fast_counter=0;  //Figyeljuk hohy hany lassito szakasz van. ha 5, megallunk
 	uint8_t tab=9;
+
+	if (end_fast_counter==5)
+		sebessegto(0);
 
 	for (int i=0; i<3; i++)
 	{
@@ -860,6 +878,19 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 1000);*/
 	//Gyorsito, lassitoszakasz erzekeles
 	//Tipp: object observe valtozo nem kell: true if state!=NORMAL, else false
+	//Mok:
+
+	//Mok vege
+	/*if(*linetype==TWOLINE && velocity_state==FAST)
+	{
+		encodervalue0=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
+		sebessegto(SEB_LASSU);
+		velocity_state=SLOW;
+		state=END_FAST;
+		setPD(PD_SLOW);
+
+	}*/
+
 	if (*linetype==THREELINE)
 	{
 		if(object_observe==false) //Valamelyik kezdete, nem tudni mi
@@ -873,17 +904,22 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 			encodervalue1=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
 
 
-			if(state==ONESTRIPE && encodervalue1-encodervalue0 > 371 && encodervalue1-encodervalue0 < 817) //Ha 1 kis stripeot lattunk, akkor gyanus hogy gyorsito, itt megnezzuk, hogy tenyleg az e (van e kb ugyanakkor kihagyas a kovi stripeig)
+			if(state==ONESTRIPE && encodervalue1-encodervalue0 > 200 && encodervalue1-encodervalue0 < 817) //Ha 1 kis stripeot lattunk, akkor gyanus hogy gyorsito, itt megnezzuk, hogy tenyleg az e (van e kb ugyanakkor kihagyas a kovi stripeig)
 			{
 				state=START_FAST;
 				sebessegto(SEB_GYORS);
+				//velocity_state=FAST;
+				setPD(PD_FAST);//gyors parameterek
 				encodervalue0=encodervalue1; //encodervalue0-ba kerül az aktualis pozicio, a kovetkezo stripe elejenel ezzel szamolunk
 
 			}
-			else if(state== UNKNOWN && encodervalue1-encodervalue0 > 2000)//Ha ~27cm-ota van 3 vonal -> lassito
+			else if((state== UNKNOWN && encodervalue1-encodervalue0 > 1500))//Ha 800=? cm (2000=~27cm) -ota van 3 vonal -> lassito
 			{
 				state = END_FAST;
-				sebessegto(0);
+				end_fast_counter++;
+				sebessegto(SEB_LASSU);
+				//velocity_state=SLOW;
+				//setPD(PD_SLOW); //lassu parameterek
 			}
 			else if(state==START_FAST)
 			{
@@ -895,15 +931,17 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 	}
 	if(*linetype==ONELINE && object_observe==true)
 	{
-		if(state == END_FAST) //Ha lassito volt, akkor vege van aza objektumnak 1 vonalnal
+		if(state == END_FAST) //Ha lassito volt, akkor vege van az objektumnak 1 vonalnal
 			{
 				object_observe=false;
 				state = NORMAL;
+				setPD(PD_SLOW); //lassu parameterek
+				//sebessegto(0);//mOOOOK
 			}
-		else if(state == UNKNOWN) //Ha megfigyekjuk, de semmit nem tudunk (eddig 3 vonal volt), most pedig egy vonal -> valszeg gyorsito
+		else if(state == UNKNOWN) //Ha megfigyeljuk, de semmit nem tudunk (eddig 3 vonal volt), most pedig egy vonal -> valszeg gyorsito
 		{
 			encodervalue1=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
-			if (encodervalue1-encodervalue0 > 371 &&  encodervalue1-encodervalue0 < 817) //Ha 1 stripe-nyi (50-110mm) a 3 vonalas korabbi resz -> valszeg gyorsito
+			if (encodervalue1-encodervalue0 > 200 &&  encodervalue1-encodervalue0 < 817) //Ha 1 stripe-nyi (50-110mm) a 3 vonalas korabbi resz -> valszeg gyorsito
 			{
 				encodervalue0=encodervalue1; //encodervalue0-ba kerül az aktualis pozicio, a kovetkezo stripe elejenel ezzel szamolunk
 				state=ONESTRIPE;
@@ -920,7 +958,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 			encodervalue1=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
 			if(encodervalue1-encodervalue0 > 1184)
 			{
-				///ha tul hamar adjuk ki a gyorsitast, akkor itt is lehet adni
+				///ha tul hamar adjuk ki a gyorsitast, akkor itt is lehet adni, ha kesobb szerenenk (csikozott vonal vege itt)
 				state=NORMAL;
 				object_observe=false;
 			}
@@ -1004,6 +1042,20 @@ void szervoPDszabalyozo(uint32_t vonalpozicio, int32_t sebesseg)
 
 	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2 , (uint32_t) pulsePWM);
 	elozopozicioMM=pozicioMM;
+}
+void setPD(uint32_t PD_type)
+{
+	if(PD_type==PD_SLOW)
+	{
+		KD=KD_SLOW;
+		TD_COEFF=TD_COEFF_SLOW;
+	}
+	else if(PD_type==PD_FAST)
+	{
+		KD=KD_FAST;
+		TD_COEFF=TD_COEFF_FAST;
+	}
+
 }
 
 //TODO:negativ ertekek is legyenek jok
