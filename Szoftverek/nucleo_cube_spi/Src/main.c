@@ -50,7 +50,7 @@
 #define MOTOR_3MPERS 7578 //Nem ennyi
 #define MOTOR_6MPERS 8224 //Nem biztos h ennyi
 
-#define SEB_LASSU 1100
+#define SEB_LASSU 1000
 #define SEB_GYORS 1650
 
 //Szurok
@@ -72,7 +72,7 @@
 #define TD_COEFF_FAST 105		 //Coefficiens 10-szerese a TD-hez
 #define TD_COEFF_SLOW 20
 #define KD_FAST -2				//Kd 10-szerese a szabalyzohoz
-#define KD_SLOW -11
+#define KD_SLOW -13//-11
 #define TSRECIP	333				//Ts mintavetelezesi ido reciproka
 
 //Linetype defines
@@ -235,7 +235,7 @@ int main(void)
   HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
   HAL_Delay(5000);
-  sebessegto(SEB_LASSU);
+  sebessegto(SEB_LASSU+300);
   velocity_state=SLOW;
   //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2 , SERVO_KOZEP);
   //HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
