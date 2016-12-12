@@ -51,7 +51,7 @@
 #define MOTOR_6MPERS 8224 //Nem biztos h ennyi
 
 #define SEB_LASSU 1100
-#define SEB_GYORS 1650
+#define SEB_GYORS 1760
 
 //Szurok
 #define FILTER_DEPTH 16
@@ -922,7 +922,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 			{
 				state = END_FAST;
 				//end_fast_counter++;
-				sebessegto(SEB_LASSU-500);
+				sebessegto(SEB_LASSU-1050);
 				//velocity_state=SLOW;
 				//setPD(PD_SLOW); //lassu parameterek
 			}
@@ -941,7 +941,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 				object_observe=false;
 				state = NORMAL;
 				setPD(PD_SLOW); //lassu parameterek
-				sebessegto(SEB_LASSU+200);
+				sebessegto(SEB_LASSU+400);
 				//sebessegto(0);//mOOOOK
 			}
 		else if(state == UNKNOWN) //Ha megfigyeljuk, de semmit nem tudunk (eddig 3 vonal volt), most pedig egy vonal -> valszeg gyorsito
@@ -1029,7 +1029,7 @@ void szervoPDszabalyozo(uint32_t vonalpozicio, int32_t sebesseg)
 
 	//Mok, hogy szelesebb legyen a tartomany, amin mozgat, mert most statikusan nem mozgat balra rendesen
 	if (szabalyozokimenetRAD < 0)
-		szabalyozokimenetRAD=szabalyozokimenetRAD*1.15;
+		szabalyozokimenetRAD=szabalyozokimenetRAD*1.35;
 
 
 	pulsePWM = (szabalyozokimenetRAD + 0.34)*((SERVO_JOBB-SERVO_BAL)/0.68)+SERVO_BAL;

@@ -5070,7 +5070,7 @@ OUTPUT(nucleo_cube_spi.elf elf32-littlearm)
  .debug_line    0x0000f3a4      0xa37 Src/tim.o
  .debug_line    0x0000fddb      0x93c Src/usart.o
 
-.debug_info     0x00000000    0x142c3
+.debug_info     0x00000000    0x142c2
  .debug_info    0x00000000       0xdf Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f446xx.o
  .debug_info    0x000000df      0x4e4 Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.o
  .debug_info    0x000005c3      0x941 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.o
@@ -5088,12 +5088,12 @@ OUTPUT(nucleo_cube_spi.elf elf32-littlearm)
  .debug_info    0x0000d253      0xa88 Src/adc.o
  .debug_info    0x0000dcdb      0x55f Src/dma.o
  .debug_info    0x0000e23a      0x496 Src/gpio.o
- .debug_info    0x0000e6d0     0x2a89 Src/main.o
- .debug_info    0x00011159      0x9de Src/spi.o
- .debug_info    0x00011b37      0x412 Src/stm32f4xx_hal_msp.o
- .debug_info    0x00011f49      0x673 Src/stm32f4xx_it.o
- .debug_info    0x000125bc     0x1333 Src/tim.o
- .debug_info    0x000138ef      0x9d4 Src/usart.o
+ .debug_info    0x0000e6d0     0x2a88 Src/main.o
+ .debug_info    0x00011158      0x9de Src/spi.o
+ .debug_info    0x00011b36      0x412 Src/stm32f4xx_hal_msp.o
+ .debug_info    0x00011f48      0x673 Src/stm32f4xx_it.o
+ .debug_info    0x000125bb     0x1333 Src/tim.o
+ .debug_info    0x000138ee      0x9d4 Src/usart.o
 
 .debug_abbrev   0x00000000     0x2c7a
  .debug_abbrev  0x00000000       0x12 Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f446xx.o
