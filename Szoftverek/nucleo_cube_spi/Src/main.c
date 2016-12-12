@@ -50,8 +50,8 @@
 #define MOTOR_3MPERS 7578 //Nem ennyi
 #define MOTOR_6MPERS 8224 //Nem biztos h ennyi
 
-#define SEB_LASSU 1500
-#define SEB_GYORS 1750
+#define SEB_LASSU 1100
+#define SEB_GYORS 1650
 
 //Szurok
 #define FILTER_DEPTH 16
@@ -109,8 +109,8 @@
  uint16_t adcmeasuredvalues[3];
  uint32_t WMAfilterarray[FILTER_DEPTH]; //vonalpoziciohoz
  //PD parameterei
- int32_t KD=-8;
- int32_t TD_COEFF=40;
+ int32_t KD=-11;
+ int32_t TD_COEFF=20;
  uint8_t velocity_state;
 
 
@@ -292,7 +292,7 @@ int main(void)
 	  if(spidata==0b00000001)
 	  {
 		  // medianfilterW3(adcvalregister1, adcvalregister2, adcvalregister3); //kicsit thresholdal jo lehet
-		 // getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);//-----------------------------------
+		  getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);//-----------------------------------
 
 		  //sendlineregisters_to_uart(&huart2, &line_register1, &line_register2, &line_register3, 1000);
 		  //sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
@@ -874,6 +874,11 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 		*linetype=THREELINE;
 	else
 		*linetype=LINERROR;
+
+
+
+
+
 	/*send8bitdecimal_to_uart(&huart4, linetype, 10000);
 	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 1000);*/
 	//Gyorsito, lassitoszakasz erzekeles
@@ -916,7 +921,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 			else if((state== UNKNOWN && encodervalue1-encodervalue0 > 1500))//Ha 800=? cm (2000=~27cm) -ota van 3 vonal -> lassito
 			{
 				state = END_FAST;
-				end_fast_counter++;
+				//end_fast_counter++;
 				sebessegto(SEB_LASSU);
 				//velocity_state=SLOW;
 				//setPD(PD_SLOW); //lassu parameterek
