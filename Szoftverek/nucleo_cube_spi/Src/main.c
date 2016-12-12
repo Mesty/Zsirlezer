@@ -50,7 +50,7 @@
 #define MOTOR_3MPERS 7578 //Nem ennyi
 #define MOTOR_6MPERS 8224 //Nem biztos h ennyi
 
-#define SEB_LASSU 1000
+#define SEB_LASSU 1100
 #define SEB_GYORS 1650
 
 //Szurok
@@ -235,7 +235,7 @@ int main(void)
   HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
   HAL_Delay(5000);
-  sebessegto(SEB_LASSU+300);
+  sebessegto(SEB_LASSU+600);
   velocity_state=SLOW;
   //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2 , SERVO_KOZEP);
   //HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
@@ -922,7 +922,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 			{
 				state = END_FAST;
 				//end_fast_counter++;
-				sebessegto(SEB_LASSU);
+				sebessegto(SEB_LASSU-500);
 				//velocity_state=SLOW;
 				//setPD(PD_SLOW); //lassu parameterek
 			}
@@ -941,6 +941,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 				object_observe=false;
 				state = NORMAL;
 				setPD(PD_SLOW); //lassu parameterek
+				sebessegto(SEB_LASSU+200);
 				//sebessegto(0);//mOOOOK
 			}
 		else if(state == UNKNOWN) //Ha megfigyeljuk, de semmit nem tudunk (eddig 3 vonal volt), most pedig egy vonal -> valszeg gyorsito
