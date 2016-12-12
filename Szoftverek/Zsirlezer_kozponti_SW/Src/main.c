@@ -106,14 +106,13 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
-  MX_TIM5_Init();
   MX_TIM8_Init();
-  MX_TIM9_Init();
   MX_TIM12_Init();
   MX_UART4_Init();
   MX_UART5_Init();
   MX_USART1_UART_Init();
   MX_TIM6_Init();
+  MX_USART2_UART_Init();
 
   /* USER CODE BEGIN 2 */
   //HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
@@ -213,7 +212,7 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 void Simulator_start(float intervalsec)
-{
+{   // Kukori, Kotkoda, tojásból lesz a csoda
 	Simulator_dt = intervalsec;
 	RobotState_status = ROBOTSTATE_STATUS_DEFAULT;
 	RobotState_timestamp = 0;
@@ -223,7 +222,7 @@ void Simulator_start(float intervalsec)
 	RobotState_light = 0;
 }
 void Simulator_tick()
-{
+{   // A szoftvertervezés az egy biztos pont. Biztos nem jó.
 	RobotState_timestamp = RobotState_timestamp + Simulator_dt;
 	RobotState_x = RobotState_x + RobotState_v * Simulator_dt;
 	RobotState_v = RobotState_v + RobotState_a * Simulator_dt;
@@ -278,10 +277,10 @@ void Simulator_tick()
 		break;
 	}
 
-	Uart_sendstate(&huart4, RobotState_status, RobotState_timestamp, RobotState_x, RobotState_v, RobotState_a, RobotState_light, 100000);
+	Uart_sendstate(&huart2, RobotState_status, RobotState_timestamp, RobotState_x, RobotState_v, RobotState_a, RobotState_light, 100000);
 }
 void Simulator_dataReady()
-{
+{   // Gyé éppen ír egy e-mailt az AUTókásoknak, mert õk kiszedték a gyári szervót a kocsiból
 	Simulator_ReadFrom();
 
 	switch(receivedState_status)
@@ -331,7 +330,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 }
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	if(huart->Instance == UART4)
+	if(huart->Instance == USART2)
 	{
 		HAL_UART_Receive_IT(huart, inputStream, sizeof(inputStream));
 		dataReady = 1;
@@ -339,30 +338,56 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 }
 void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint64_t timestamp, float x, float v, float a, uint8_t light, uint32_t Timeout)
 {
-	uint8_t i;
-	uint8_t state[25];
-	for(i = 0; i < 4; ++i)
+	uint8_t i = 26;
+//	uint8_t state[26];
+//	state[0] = 26;
+	HAL_UART_Transmit(huart, &i, sizeof(i), Timeout);
+	HAL_UART_Transmit(huart, (uint8_t *)&status, sizeof(status), Timeout);
+	HAL_UART_Transmit(huart, (uint8_t *)&timestamp, sizeof(timestamp), Timeout);
+	HAL_UART_Transmit(huart, (uint8_t *)&x, sizeof(x), Timeout);
+	HAL_UART_Transmit(huart, (uint8_t *)&v, sizeof(v), Timeout);
+	HAL_UART_Transmit(huart, (uint8_t *)&a, sizeof(a), Timeout);
+	HAL_UART_Transmit(huart, &light, sizeof(light), Timeout);
+/*	i = 1;
+	HAL_UART_Transmit(huart, &i, sizeof(i), Timeout);
+	HAL_UART_Transmit(huart, (uint8_t *)&status, sizeof(status), Timeout);
+	i = 2;
+	HAL_UART_Transmit(huart, &i, sizeof(i), Timeout);
+	HAL_UART_Transmit(huart, (uint8_t *)&timestamp, sizeof(timestamp), Timeout);
+	i = 3;
+	HAL_UART_Transmit(huart, &i, sizeof(i), Timeout);
+	HAL_UART_Transmit(huart, (uint8_t *)&x, sizeof(x), Timeout);
+	i = 4;
+	HAL_UART_Transmit(huart, &i, sizeof(i), Timeout);
+	HAL_UART_Transmit(huart, (uint8_t *)&v, sizeof(v), Timeout);
+	i = 5;
+	HAL_UART_Transmit(huart, &i, sizeof(i), Timeout);
+	HAL_UART_Transmit(huart, (uint8_t *)&a, sizeof(a), Timeout);
+	i = 6;
+	HAL_UART_Transmit(huart, &i, sizeof(i), Timeout);
+	HAL_UART_Transmit(huart, &light, sizeof(light), Timeout);*/
+/*	for(i = 0; i < 4; ++i)
 	{
-		state[i] = *((&status)+i);
+		state[i+1] = *(((uint8_t *)&status)+3-i);
 	}
 	for(i = 0; i < 8; ++i)
 	{
-		state[i+4] = *((&timestamp)+i);
+		state[i+5] = *(((uint8_t *)&timestamp)+7-i);
 	}
 	for(i = 0; i < 4; ++i)
 	{
-		state[i+12] = *((&x)+i);
+		state[i+13] = *(((uint8_t *)&x)+3-i);
 	}
 	for(i = 0; i < 4; ++i)
 	{
-		state[i+16] = *((&v)+i);
+		state[i+17] = *(((uint8_t *)&v)+3-i);
 	}
 	for(i = 0; i < 4; ++i)
 	{
-		state[i+20] = *((&a)+i);
+		state[i+21] = *(((uint8_t *)&a)+3-i);
 	}
-	state[24] = light;
-	HAL_UART_Transmit(huart, state, sizeof(state), Timeout);
+	state[25] = light;
+	HAL_UART_Transmit(huart, state, sizeof(state), Timeout);*/
 }
 /* USER CODE END 4 */
 
