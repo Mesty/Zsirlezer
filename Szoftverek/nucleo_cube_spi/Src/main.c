@@ -51,7 +51,7 @@
 #define MOTOR_6MPERS 8224 //Nem biztos h ennyi
 
 #define SEB_LASSU 1100
-#define SEB_GYORS 3100
+#define SEB_GYORS 3300
 
 //Szurok
 #define FILTER_DEPTH 16
