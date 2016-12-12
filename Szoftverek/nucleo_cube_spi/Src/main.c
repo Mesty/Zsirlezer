@@ -58,7 +58,7 @@
 #define VELOCITY_FILTER_DEPTH 4
 //Szervo
 #define SERVO_KOZEP 6914
-#define SERVO_BAL 5944
+#define SERVO_BAL 5644//5944
 #define SERVO_JOBB 7883
 //P szab
 #define KC 1
@@ -69,8 +69,8 @@
 
 //PD szab
 #define L_FROM_ROTATION_AXIS 220 //Vonalszenzor tavolsaga a forgastengelytol [mm]
-#define TD_COEFF 15				 //Coefficiens 10-szerese a TD-hez
-#define KD -5					//Kd 10-szerese a szabalyzohoz
+#define TD_COEFF 50			//15,5, 50 20,20, 20	 //Coefficiens 10-szerese a TD-hez
+#define KD -1				//5 ,10, -1, 3,1, -5	//Kd 10-szerese a szabalyzohoz
 #define TSRECIP	333				//Ts mintavetelezesi ido reciproka
 
 //Linetype defines
@@ -158,6 +158,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 
 /* USER CODE END 0 */
 
+
 int main(void)
 {
 
@@ -207,7 +208,7 @@ int main(void)
   uint16_t adcfilterregister1[8] = {0,0,0,0,0,0,0,0};
   uint16_t adcfilterregister2[8] = {0,0,0,0,0,0,0,0};
   uint16_t adcfilterregister3[8] = {0,0,0,0,0,0,0,0};
-  uint16_t threshold=600;
+  uint16_t threshold=1200; //TODO 1000-1100?
   uint16_t thresholdforlinetype=threshold;
   uint8_t i=0;
   uint32_t position=0;
@@ -221,6 +222,7 @@ int main(void)
   HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
   HAL_Delay(5000);
+  sebessegto(SEB_LASSU);
   //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2 , SERVO_KOZEP);
   //HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
 
@@ -281,11 +283,12 @@ int main(void)
 		 // sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
 		  getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
 		  getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);//-----------------------------------
-
+		  HAL_UART_Transmit(&huart4,&endline, sizeof(uint8_t), 100000);
+		  HAL_UART_Transmit(&huart4,&CR, sizeof(uint8_t), 100000);
 		  //send8bitdecimal_to_uart(&huart2, &linetype, 1000);
 		//	  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
 		//	  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
-		  //sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
+		 // sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
 
 		  if(!position) //Szaturacional==vonalelhagyasnal uccso erteket jegyezze meg.
 			  position=prevfilteredposition;
@@ -809,9 +812,10 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 	uint8_t edgenumber=0;
 	uint16_t* pdata;
 	static uint32_t encodervalue0;		//encoder ertek a vonal-objektum elejen
- 	uint32_t encodervalue1;				//koztes encoder ertek
+ 	uint32_t encodervalue1=0;				//koztes encoder ertek
 	static uint8_t state=NORMAL;
 	static bool object_observe=false;
+	uint8_t tab=9;
 
 	for (int i=0; i<3; i++)
 	{
@@ -848,7 +852,8 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 		*linetype=THREELINE;
 	else
 		*linetype=LINERROR;
-
+	send8bitdecimal_to_uart(&huart4, linetype, 10000);
+	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 1000);
 	//Gyorsito, lassitoszakasz erzekeles
 	//Tipp: object observe valtozo nem kell: true if state!=NORMAL, else false
 	if (*linetype==THREELINE)
@@ -870,7 +875,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 				sebessegto(SEB_GYORS);
 
 			}
-			else if(state== UNKNOWN && encodervalue1-encodervalue0 > 2500)//Ha ~35cm-ota van 3 vonal -> lassito
+			else if(state== UNKNOWN && encodervalue1-encodervalue0 > 2000)//Ha ~27cm-ota van 3 vonal -> lassito
 			{
 				state = END_FAST;
 				sebessegto(SEB_LASSU);
@@ -910,6 +915,13 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 			}
 		}
 	}
+
+	send32bitdecimal_to_uart(&huart4, &encodervalue0, 10000);
+	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 10000);
+	send32bitdecimal_to_uart(&huart4, &encodervalue1, 10000);
+	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 10000);
+	send8bitdecimal_to_uart(&huart4, &state, 10000);
+
 	return 0;
 }
 
@@ -957,17 +969,22 @@ void szervoPDszabalyozo(uint32_t vonalpozicio, int32_t sebesseg)
 	//TIM_OC_InitTypeDef sConfigOC;
 
 	pozicioMM = ((float)vonalpozicio-100.0)*140.0/2300.0-70.0;
-	//szabalyozokimenetRAD = ( (1.0 + (( TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0)) )*pozicioMM - ((TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0))*elozopozicioMM ) *KD/L_FROM_ROTATION_AXIS/10.0;
-	szabalyozokimenetRAD = ( (3.0 + (( TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0)) )*pozicioMM - ((TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0))*elozopozicioMM ) *KD/L_FROM_ROTATION_AXIS/10.0;
+	szabalyozokimenetRAD = ( (1.0 + (( TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0)) )*pozicioMM - ((TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0))*elozopozicioMM ) *KD/L_FROM_ROTATION_AXIS/10.0;
+	//szabalyozokimenetRAD = ( (3.0 + (( TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0)) )*pozicioMM - ((TD_COEFF*L_FROM_ROTATION_AXIS*TSRECIP) / ((float)sebesseg*10.0))*elozopozicioMM ) *KD/L_FROM_ROTATION_AXIS/10.0;
+
+	//Mok, hogy szelesebb legyen a tartomany, amin mozgat, mert most statikusan nem mozgat balra rendesen
+	if (szabalyozokimenetRAD < 0)
+		szabalyozokimenetRAD=szabalyozokimenetRAD*1.15;
+
 
 	pulsePWM = (szabalyozokimenetRAD + 0.34)*((SERVO_JOBB-SERVO_BAL)/0.68)+SERVO_BAL;
-	//Mok, hogy szelesebb legyen a tartomany, amin mozgat, mert most statikusan nem mozgat balra rendesen
 
 
-	if (pulsePWM > (float)SERVO_JOBB)
-		pulsePWM = (float)SERVO_JOBB;
-	if (pulsePWM < (float)SERVO_BAL)
-		pulsePWM = (float)SERVO_BAL;
+
+	if (pulsePWM > (float)SERVO_JOBB-30)
+		pulsePWM = (float)SERVO_JOBB-30;
+	if (pulsePWM < (float)SERVO_BAL+30)
+		pulsePWM = (float)SERVO_BAL+30;
   	uintpulsePWM = (uint32_t) pulsePWM;
 
 	/*send32bitdecimal_to_uart(&huart2, &uintpulsePWM, 10000 );
@@ -994,8 +1011,8 @@ void sebessegto(int32_t mmpersec)
 		motorpulsePWM = 7500;
 
 	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
-	/*send32bitdecimal_to_uart(&huart4, &motorpulsePWM, 10000);
-	send32bitdecimal_to_uart(&huart2, &motorpulsePWM, 10000);*/
+	//send32bitdecimal_to_uart(&huart4, &motorpulsePWM, 10000);
+	send32bitdecimal_to_uart(&huart2, &motorpulsePWM, 10000);
 }
 
 
