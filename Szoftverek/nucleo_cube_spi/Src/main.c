@@ -51,7 +51,7 @@
 #define MOTOR_6MPERS 8224 //Nem biztos h ennyi
 
 #define SEB_LASSU 1100
-#define SEB_GYORS 2600
+#define SEB_GYORS 3100
 
 //Szurok
 #define FILTER_DEPTH 16
@@ -922,7 +922,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 			{
 				state = END_FAST;
 				//end_fast_counter++;
-				sebessegto(SEB_LASSU-3000);
+				sebessegto(SEB_LASSU-10000);
 				//velocity_state=SLOW;
 				//setPD(PD_SLOW); //lassu parameterek
 			}
@@ -933,7 +933,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 			}
 			else if(state==END_FAST && (filteredvelocity < SEB_LASSU-400))
 			{
-				sebessegto(SEB_LASSU+200);
+				sebessegto(SEB_LASSU);
 			}
 		}
 
@@ -945,7 +945,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 				object_observe=false;
 				state = NORMAL;
 				setPD(PD_SLOW); //lassu parameterek
-				sebessegto(SEB_LASSU+200);
+				sebessegto(SEB_LASSU+450);
 				//sebessegto(0);//mOOOOK
 			}
 		else if(state == UNKNOWN) //Ha megfigyeljuk, de semmit nem tudunk (eddig 3 vonal volt), most pedig egy vonal -> valszeg gyorsito
@@ -1076,12 +1076,12 @@ void sebessegto(int32_t mmpersec)
 	// meres: 1700 mm/s-re volt 7470 pulse a PWM, ez alapjan allitjuk be a "kovertalasi" egyenest
 	int32_t motorpulsePWM;
 	motorpulsePWM = (mmpersec*(MOTOR_1P7MPERS-MOTOR_0MPERS))/1700 + MOTOR_0MPERS;
-	//vedelem: ne legyen negativ sebesseg
-	if (motorpulsePWM < MOTOR_0MPERS-1500)
-		motorpulsePWM=MOTOR_0MPERS-1500;
+	//vedelem: ne legyen tul nagy sebesseg negativ iranyba
+	if (motorpulsePWM < 3692)
+		motorpulsePWM=3692;
 	//vedelem: max sebesseg
-	if(motorpulsePWM > 8500) //volt: 7500: Korulbelul 2m/s , korabban 7326 volt
-		motorpulsePWM = 8500;
+	if(motorpulsePWM > 10150) //volt: 7500: Korulbelul 2m/s , korabban 7326 volt
+		motorpulsePWM = 10150;
 
 	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
 	//send32bitdecimal_to_uart(&huart4, &motorpulsePWM, 10000);
