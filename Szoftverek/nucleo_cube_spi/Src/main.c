@@ -50,8 +50,8 @@
 #define MOTOR_3MPERS 7578 //Nem ennyi
 #define MOTOR_6MPERS 8224 //Nem biztos h ennyi
 
-#define SEB_LASSU 1100
-#define SEB_GYORS 1300
+#define SEB_LASSU 900
+#define SEB_GYORS 1200
 
 //Szurok
 #define FILTER_DEPTH 16
@@ -69,8 +69,8 @@
 
 //PD szab
 #define L_FROM_ROTATION_AXIS 220 //Vonalszenzor tavolsaga a forgastengelytol [mm]
-#define TD_COEFF 50			//15,5, 50 20,20, 20	 //Coefficiens 10-szerese a TD-hez
-#define KD -1				//5 ,10, -1, 3,1, -5	//Kd 10-szerese a szabalyzohoz
+#define TD_COEFF 23			//15,5, 50 20,20, 20	 //Coefficiens 10-szerese a TD-hez
+#define KD -11				//5 ,10, -1, 3,1, -5	//Kd 10-szerese a szabalyzohoz
 #define TSRECIP	333				//Ts mintavetelezesi ido reciproka
 
 //Linetype defines
@@ -208,8 +208,8 @@ int main(void)
   uint16_t adcfilterregister1[8] = {0,0,0,0,0,0,0,0};
   uint16_t adcfilterregister2[8] = {0,0,0,0,0,0,0,0};
   uint16_t adcfilterregister3[8] = {0,0,0,0,0,0,0,0};
-  uint16_t threshold=1200; //TODO 1000-1100?
-  uint16_t thresholdforlinetype=threshold;
+  uint16_t threshold=1200; //TODO 1000-1100? //Vedekezni kell a koszok ellen, ezert nagyobb
+  uint16_t thresholdforlinetype=800; //A vonalakat viszont eszre kell venni
   uint8_t i=0;
   uint32_t position=0;
   uint32_t filteredposition=0;
@@ -277,14 +277,16 @@ int main(void)
 
 	  if(spidata==0b00000001)
 	  {
+		  // medianfilterW3(adcvalregister1, adcvalregister2, adcvalregister3); //kicsit thresholdal jo lehet
+		  getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);//-----------------------------------
 
 		  //sendlineregisters_to_uart(&huart2, &line_register1, &line_register2, &line_register3, 1000);
-		  medianfilterW3(adcvalregister1, adcvalregister2, adcvalregister3);
-		 // sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
+		  //sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
+
+		  // medianfilterW3(adcfilterregister1, adcfilterregister2, adcfilterregister3); //Medianhoz kisebb threshold
 		  getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
-		  getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);//-----------------------------------
-		  HAL_UART_Transmit(&huart4,&endline, sizeof(uint8_t), 100000);
-		  HAL_UART_Transmit(&huart4,&CR, sizeof(uint8_t), 100000);
+		 /* HAL_UART_Transmit(&huart4,&endline, sizeof(uint8_t), 100000);
+		  HAL_UART_Transmit(&huart4,&CR, sizeof(uint8_t), 100000);*/
 		  //send8bitdecimal_to_uart(&huart2, &linetype, 1000);
 		//	  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 100000);
 		//	  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
@@ -366,6 +368,8 @@ int main(void)
 	  adcvalregister1[i]=adcmeasuredvalues[0];
 	  adcvalregister2[i]=adcmeasuredvalues[1];
 	  adcvalregister3[i]=adcmeasuredvalues[2];
+	  if(i==4)
+		  adcvalregister3[4]=adcvalregister3[4]-300; //20. TCRT kicsit erosebb, a zajt jobban athozza----------------------
 
 
 	  //Az ADC ertekek thresholdozasa: a minimalis szint alatti ertekeket nem vesszuk figyelembe i 0tol 7ig fut
@@ -852,8 +856,8 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 		*linetype=THREELINE;
 	else
 		*linetype=LINERROR;
-	send8bitdecimal_to_uart(&huart4, linetype, 10000);
-	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 1000);
+	/*send8bitdecimal_to_uart(&huart4, linetype, 10000);
+	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 1000);*/
 	//Gyorsito, lassitoszakasz erzekeles
 	//Tipp: object observe valtozo nem kell: true if state!=NORMAL, else false
 	if (*linetype==THREELINE)
@@ -873,12 +877,18 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 			{
 				state=START_FAST;
 				sebessegto(SEB_GYORS);
+				encodervalue0=encodervalue1; //encodervalue0-ba kerül az aktualis pozicio, a kovetkezo stripe elejenel ezzel szamolunk
 
 			}
 			else if(state== UNKNOWN && encodervalue1-encodervalue0 > 2000)//Ha ~27cm-ota van 3 vonal -> lassito
 			{
 				state = END_FAST;
-				sebessegto(SEB_LASSU);
+				sebessegto(0);
+			}
+			else if(state==START_FAST)
+			{
+				encodervalue1=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
+				encodervalue0=encodervalue1; //encodervalue0-ba kerül az aktualis pozicio, a kovetkezo stripe elejenel ezzel szamolunk
 			}
 		}
 
@@ -906,21 +916,22 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 		}
 		else if(state == START_FAST) //gyorsito szakasz objektum vege
 		{ //Ha eleg sokaig csak egy vonal van, akkor vege van.
-		//Ha diff > 11cm -> akkor vege
+		//Ha diff > 16cm -> akkor vege
 			encodervalue1=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
-			if(encodervalue1-encodervalue0 > 817)
+			if(encodervalue1-encodervalue0 > 1184)
 			{
+				///ha tul hamar adjuk ki a gyorsitast, akkor itt is lehet adni
 				state=NORMAL;
 				object_observe=false;
 			}
 		}
 	}
 
-	send32bitdecimal_to_uart(&huart4, &encodervalue0, 10000);
+/*	send32bitdecimal_to_uart(&huart4, &encodervalue0, 10000);
 	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 10000);
 	send32bitdecimal_to_uart(&huart4, &encodervalue1, 10000);
 	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 10000);
-	send8bitdecimal_to_uart(&huart4, &state, 10000);
+	send8bitdecimal_to_uart(&huart4, &state, 10000);*/
 
 	return 0;
 }
@@ -1012,7 +1023,7 @@ void sebessegto(int32_t mmpersec)
 
 	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
 	//send32bitdecimal_to_uart(&huart4, &motorpulsePWM, 10000);
-	send32bitdecimal_to_uart(&huart2, &motorpulsePWM, 10000);
+	//send32bitdecimal_to_uart(&huart2, &motorpulsePWM, 10000);
 }
 
 
