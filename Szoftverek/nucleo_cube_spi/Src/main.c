@@ -151,7 +151,7 @@ void szervoPDszabalyozo(uint32_t vonalpozicio, int32_t sebesseg);
 void sebessegto(int32_t mmpersec);
 void setPD(uint32_t PD_type);
 uint32_t reverse_byte_order_32(uint32_t value);
-void dili_telemetria(UART_HandleTypeDef *huart, uint32_t linestatus, uint32_t velocitystatus, float x, float v, float a, uint32_t light, uint32_t Timeout);
+void dili_telemetria(UART_HandleTypeDef *huart, uint32_t linestatus, uint32_t velocitystatus, float x, float v, float a, uint32_t position, uint32_t timestamp, uint32_t Timeout);
 
 /* USER CODE END PFP */
 
@@ -1097,16 +1097,17 @@ void sebessegto(int32_t mmpersec)
 	//send32bitdecimal_to_uart(&huart4, &motorpulsePWM, 10000);
 	//send32bitdecimal_to_uart(&huart2, &motorpulsePWM, 10000);
 }
-void dili_telemetria(UART_HandleTypeDef *huart, uint32_t linestatus, uint32_t velocitystatus, float x, float v, float a, uint32_t light, uint32_t Timeout)
+void dili_telemetria(UART_HandleTypeDef *huart, uint32_t linestatus, uint32_t velocitystatus, float x, float v, float a, uint32_t position, uint32_t timestamp, uint32_t Timeout)
 {
-		uint32_t state[7];
+		uint32_t state[8];
 		state[0] = reverse_byte_order_32(sizeof(state));
 		state[1] = reverse_byte_order_32(linestatus);
 		state[2] = reverse_byte_order_32(velocitystatus);
 		state[3] = reverse_byte_order_32((uint32_t *)&x);
 		state[4] = reverse_byte_order_32((uint32_t *)&v);
 		state[5] = reverse_byte_order_32((uint32_t *)&a);
-		state[6] = reverse_byte_order_32(light);
+		state[6] = reverse_byte_order_32(position);
+		state[7] = reverse_byte_order_32(timestamp);
 		HAL_UART_Transmit(huart, (uint8_t*) state, sizeof(state), Timeout);
 }
 
