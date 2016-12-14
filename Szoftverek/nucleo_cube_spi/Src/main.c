@@ -122,6 +122,7 @@
  uint32_t dir;
  int32_t velocity;
  int32_t filteredvelocity;
+ int32_t filteredvelocitydiff;
  int32_t velocityarray[VELOCITY_FILTER_DEPTH]={0,0,0,0}; //Kis csalas, akkor jo, ha VELOCITY_FILTER_DEPTH = 4
  uint32_t velocityabs;
 
@@ -149,6 +150,9 @@ void szervoPszabalyozo(int16_t vonalpozicio);
 void szervoPDszabalyozo(uint32_t vonalpozicio, int32_t sebesseg);
 void sebessegto(int32_t mmpersec);
 void setPD(uint32_t PD_type);
+uint32_t reverse_byte_order_32(uint32_t value);
+void dili_telemetria(UART_HandleTypeDef *huart, uint32_t linestatus, uint32_t velocitystatus, float x, float v, float a, uint32_t light, uint32_t Timeout);
+
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -228,6 +232,7 @@ int main(void)
   uint32_t filteredposition=0;
   uint32_t prevfilteredposition=0;
   int32_t Pszabalyozopozicio=0;
+  uint32_t timestamp=0;
   uint8_t string[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   initWMAfilterarray();
   HAL_TIM_Base_Start_IT(&htim7);
@@ -322,12 +327,14 @@ int main(void)
 				  encoder1=actualencoderval;
 				  encoderdiff=encoder1-encoderprev;
 				  velocity=((encoderdiff*10000)/743); //v[mm/s]
+				  filteredvelocitydiff=-filteredvelocity;
 				  WMAfilter(&filteredvelocity, &velocity, velocityarray, VELOCITY_FILTER_DEPTH);
 				  if(filteredvelocity>=0)
 					  velocityabs = filteredvelocity;
 				  else
 					  velocityabs = -filteredvelocity;
 				  encoderprev=encoder1;
+				  filteredvelocitydiff+=filteredvelocity;
 				/*  for(int q=0; q<20; q++)
 					  string[q]=0;
 				  sprintf(string, "%"PRId32 "\t\n\r", filteredvelocity);
@@ -341,6 +348,8 @@ int main(void)
 				  //error handling...
 			  }
 			  dovelocitymeasurement=false;
+			  timestamp++;
+			  dili_telemetria(&huart4, (uint32_t) linetype, (uint32_t) velocity_state, (float) actualencoderval/7430, (float) filteredvelocity/1000, (float) filteredvelocitydiff*100, filteredposition, timestamp, 1000);
 		  }
 		 /* sebessegto(1000);*///-------------------------------------------------------------
 
@@ -879,6 +888,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 
 
 
+
 	/*send8bitdecimal_to_uart(&huart4, linetype, 10000);
 	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 1000);*/
 	//Gyorsito, lassitoszakasz erzekeles
@@ -913,7 +923,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 			{
 				state=START_FAST;
 				sebessegto(SEB_GYORS);
-				//velocity_state=FAST;
+				velocity_state=FAST;
 				setPD(PD_FAST);//gyors parameterek
 				encodervalue0=encodervalue1; //encodervalue0-ba kerül az aktualis pozicio, a kovetkezo stripe elejenel ezzel szamolunk
 
@@ -923,7 +933,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 				state = END_FAST;
 				//end_fast_counter++;
 				sebessegto(SEB_LASSU-10000);
-				//velocity_state=SLOW;
+				velocity_state=SLOW;
 				//setPD(PD_SLOW); //lassu parameterek
 			}
 			else if(state==START_FAST)
@@ -981,7 +991,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 10000);
 	send8bitdecimal_to_uart(&huart4, &state, 10000);*/
 
-	return 0;
+	return *linetype;
 }
 
 void szervoPszabalyozo(int16_t vonalpozicio)
@@ -1086,6 +1096,27 @@ void sebessegto(int32_t mmpersec)
 	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
 	//send32bitdecimal_to_uart(&huart4, &motorpulsePWM, 10000);
 	//send32bitdecimal_to_uart(&huart2, &motorpulsePWM, 10000);
+}
+void dili_telemetria(UART_HandleTypeDef *huart, uint32_t linestatus, uint32_t velocitystatus, float x, float v, float a, uint32_t light, uint32_t Timeout)
+{
+		uint32_t state[7];
+		state[0] = reverse_byte_order_32(sizeof(state));
+		state[1] = reverse_byte_order_32(linestatus);
+		state[2] = reverse_byte_order_32(velocitystatus);
+		state[3] = reverse_byte_order_32((uint32_t *)&x);
+		state[4] = reverse_byte_order_32((uint32_t *)&v);
+		state[5] = reverse_byte_order_32((uint32_t *)&a);
+		state[6] = reverse_byte_order_32(light);
+		HAL_UART_Transmit(huart, (uint8_t*) state, sizeof(state), Timeout);
+}
+
+uint32_t reverse_byte_order_32(uint32_t value)
+{
+	uint8_t lolo = (value >> 0) & 0xFF;
+	uint8_t lohi = (value >> 8) & 0xFF;
+	uint8_t hilo = (value >> 16) & 0xFF;
+	uint8_t hihi = (value >> 24) & 0xFF;
+	return (hihi << 0) | (hilo << 8) | (lohi << 16) | (lolo << 24);
 }
 
 
