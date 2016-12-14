@@ -49,20 +49,20 @@
 /* Private variables ---------------------------------------------------------*/
 float Simulator_dt;
 uint32_t RobotState_status;
-uint64_t RobotState_timestamp;
+uint32_t RobotState_timestamp;
 float RobotState_x;
 float RobotState_v;
 float RobotState_a;
-uint8_t RobotState_light;
+uint32_t RobotState_light;
 volatile uint8_t tick;
 volatile uint8_t dataReady;
-uint8_t inputStream[25];
+uint32_t inputStream[7]={0,0,0,0,0,0,0};
 uint32_t receivedState_status;
-uint64_t receivedState_timestamp;
+uint32_t receivedState_timestamp;
 float receivedState_x;
 float receivedState_v;
 float receivedState_a;
-uint8_t receivedState_light;
+uint32_t receivedState_light;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -74,8 +74,9 @@ void Error_Handler(void);
 void Simulator_start(float intervalsec);
 void Simulator_tick();
 void Simulator_dataReady();
-void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint64_t timestamp, float x, float v, float a, uint8_t light, uint32_t Timeout);
+void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint32_t timestamp, float x, float v, float a, uint32_t light, uint32_t Timeout);
 void Simulator_ReadFrom();
+uint32_t reverse_byte_order_32(uint32_t value);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -212,7 +213,7 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 void Simulator_start(float intervalsec)
-{   // Kukori, Kotkoda, tojásból lesz a csoda
+{   // Kukori, Kotkoda, tojï¿½sbï¿½l lesz a csoda
 	Simulator_dt = intervalsec;
 	RobotState_status = ROBOTSTATE_STATUS_DEFAULT;
 	RobotState_timestamp = 0;
@@ -222,8 +223,8 @@ void Simulator_start(float intervalsec)
 	RobotState_light = 0;
 }
 void Simulator_tick()
-{   // A szoftvertervezés az egy biztos pont. Biztos nem jó.
-	RobotState_timestamp = RobotState_timestamp + Simulator_dt;
+{   // A szoftvertervezï¿½s az egy biztos pont. Biztos nem jï¿½.
+	RobotState_timestamp = (uint32_t) RobotState_timestamp + Simulator_dt;
 	RobotState_x = RobotState_x + RobotState_v * Simulator_dt;
 	RobotState_v = RobotState_v + RobotState_a * Simulator_dt;
 	if(RobotState_v < -10.0)
@@ -280,7 +281,7 @@ void Simulator_tick()
 	Uart_sendstate(&huart2, RobotState_status, RobotState_timestamp, RobotState_x, RobotState_v, RobotState_a, RobotState_light, 100000);
 }
 void Simulator_dataReady()
-{   // Gyé éppen ír egy e-mailt az AUTókásoknak, mert õk kiszedték a gyári szervót a kocsiból
+{   // Gyï¿½ ï¿½ppen ï¿½r egy e-mailt az AUTï¿½kï¿½soknak, mert ï¿½k kiszedtï¿½k a gyï¿½ri szervï¿½t a kocsibï¿½l
 	Simulator_ReadFrom();
 
 	switch(receivedState_status)
@@ -303,12 +304,12 @@ void Simulator_dataReady()
 }
 void Simulator_ReadFrom()
 {
-	receivedState_status = *(&(inputStream[0]));
-	receivedState_timestamp = *(&(inputStream[4]));
-	receivedState_x = *(&(inputStream[12]));
-	receivedState_v = *(&(inputStream[16]));
-	receivedState_a = *(&(inputStream[20]));
-	receivedState_light = inputStream[24];
+	receivedState_status = inputStream[1];
+	receivedState_timestamp = inputStream[2];
+	receivedState_x = (float) inputStream[3];
+	receivedState_v = (float) inputStream[4];
+	receivedState_a = (float) inputStream[5];
+	receivedState_light = inputStream[6];
 }
 /*void szervoPszabalyozo(int16_t *vonalpozicio)
 {
@@ -332,22 +333,22 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if(huart->Instance == USART2)
 	{
-		HAL_UART_Receive_IT(huart, inputStream, sizeof(inputStream));
+		HAL_UART_Receive_IT(huart, (uint8_t *) inputStream, sizeof(inputStream));
 		dataReady = 1;
 	}
 }
-void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint64_t timestamp, float x, float v, float a, uint8_t light, uint32_t Timeout)
+void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint32_t timestamp, float x, float v, float a, uint32_t light, uint32_t Timeout)
 {
-	uint8_t i = 26;
-//	uint8_t state[26];
-//	state[0] = 26;
-	HAL_UART_Transmit(huart, &i, sizeof(i), Timeout);
+	//uint32_t i = 20;
+	uint32_t state[7];
+	state[0] = reverse_byte_order_32(sizeof(state));
+/*	HAL_UART_Transmit(huart, &i, sizeof(i), Timeout);
 	HAL_UART_Transmit(huart, (uint8_t *)&status, sizeof(status), Timeout);
-	HAL_UART_Transmit(huart, (uint8_t *)&timestamp, sizeof(timestamp), Timeout);
+	HAL_UART_Transmit(huart, (uint8_t *)timestamp, sizeof(uint16_t), Timeout);
 	HAL_UART_Transmit(huart, (uint8_t *)&x, sizeof(x), Timeout);
 	HAL_UART_Transmit(huart, (uint8_t *)&v, sizeof(v), Timeout);
 	HAL_UART_Transmit(huart, (uint8_t *)&a, sizeof(a), Timeout);
-	HAL_UART_Transmit(huart, &light, sizeof(light), Timeout);
+	HAL_UART_Transmit(huart, &light, sizeof(light), Timeout);*/
 /*	i = 1;
 	HAL_UART_Transmit(huart, &i, sizeof(i), Timeout);
 	HAL_UART_Transmit(huart, (uint8_t *)&status, sizeof(status), Timeout);
@@ -370,7 +371,7 @@ void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint64_t timesta
 	{
 		state[i+1] = *(((uint8_t *)&status)+3-i);
 	}
-	for(i = 0; i < 8; ++i)
+	for(i = 0; i < 4; ++i)
 	{
 		state[i+5] = *(((uint8_t *)&timestamp)+7-i);
 	}
@@ -386,8 +387,22 @@ void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint64_t timesta
 	{
 		state[i+21] = *(((uint8_t *)&a)+3-i);
 	}
-	state[25] = light;
-	HAL_UART_Transmit(huart, state, sizeof(state), Timeout);*/
+	state[25] = light;*/
+	state[1] = reverse_byte_order_32(status);
+	state[2] = reverse_byte_order_32(timestamp);
+	state[3] = reverse_byte_order_32((uint32_t *)&x);
+	state[4] = reverse_byte_order_32((uint32_t *)&v);
+	state[5] = reverse_byte_order_32((uint32_t *)&a);
+	state[6] = reverse_byte_order_32(light);
+	HAL_UART_Transmit(huart, (uint8_t*) state, sizeof(state), Timeout);
+}
+uint32_t reverse_byte_order_32(uint32_t value)
+{
+	uint8_t lolo = (value >> 0) & 0xFF;
+	uint8_t lohi = (value >> 8) & 0xFF;
+	uint8_t hilo = (value >> 16) & 0xFF;
+	uint8_t hihi = (value >> 24) & 0xFF;
+	return (hihi << 0) | (hilo << 8) | (lohi << 16) | (lolo << 24);
 }
 /* USER CODE END 4 */
 
