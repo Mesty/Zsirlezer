@@ -50,8 +50,8 @@
 #define MOTOR_3MPERS 7578 //Nem ennyi
 #define MOTOR_6MPERS 8224 //Nem biztos h ennyi
 
-#define SEB_LASSU 1100
-#define SEB_GYORS 3300
+#define SEB_LASSU_DEFAULT 700//1100
+#define SEB_GYORS_DEFAULT 1200//3300
 
 //Szurok
 #define FILTER_DEPTH 16
@@ -106,9 +106,13 @@
  volatile bool adcwaitdone=false;
  volatile bool dovelocitymeasurement=false;
  volatile uint32_t actualencoderval=0;
+ volatile bool endrxuart=false;
+ volatile uint32_t pData[2]={0,0};
  uint16_t adcmeasuredvalues[3];
  uint32_t WMAfilterarray[FILTER_DEPTH]; //vonalpoziciohoz
  //PD parameterei
+uint32_t SEB_LASSU=SEB_LASSU_DEFAULT;
+uint32_t SEB_GYORS=SEB_GYORS_DEFAULT;
  int32_t KD=-11;
  int32_t TD_COEFF=20;
  uint8_t velocity_state;
@@ -122,6 +126,7 @@
  uint32_t dir;
  int32_t velocity;
  int32_t filteredvelocity;
+ int32_t filteredvelocitydiff;
  int32_t velocityarray[VELOCITY_FILTER_DEPTH]={0,0,0,0}; //Kis csalas, akkor jo, ha VELOCITY_FILTER_DEPTH = 4
  uint32_t velocityabs;
 
@@ -149,13 +154,27 @@ void szervoPszabalyozo(int16_t vonalpozicio);
 void szervoPDszabalyozo(uint32_t vonalpozicio, int32_t sebesseg);
 void sebessegto(int32_t mmpersec);
 void setPD(uint32_t PD_type);
+uint32_t reverse_byte_order_32(uint32_t value);
+void dili_telemetria(UART_HandleTypeDef *huart, uint32_t linestatus, uint32_t velocitystatus, uint32_t position, uint32_t timestamp, int32_t x, int32_t v, int32_t a,  uint32_t Timeout);
+void handle_QT_command(uint32_t* pData);
+
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance == UART4)
+	{
+		//HAL_UART_Transmit(&huart4,pData, sizeof(char), 1000 ); teszthez kellett
+		endrxuart=true; //telemetria adatok fogadasahoz callback IT
+	}
+
+}
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
 	adcvalid = true;
 }
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
 	if (htim->Instance == TIM6)
@@ -170,7 +189,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 }
 
 /* USER CODE END 0 */
-
 
 int main(void)
 {
@@ -228,6 +246,7 @@ int main(void)
   uint32_t filteredposition=0;
   uint32_t prevfilteredposition=0;
   int32_t Pszabalyozopozicio=0;
+  uint32_t timestamp=0;
   uint8_t string[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   initWMAfilterarray();
   HAL_TIM_Base_Start_IT(&htim7);
@@ -235,7 +254,7 @@ int main(void)
   HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
   HAL_Delay(5000);
-  sebessegto(SEB_LASSU+600);
+  sebessegto((int32_t)(SEB_LASSU+600));
   velocity_state=SLOW;
   //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2 , SERVO_KOZEP);
   //HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
@@ -244,6 +263,8 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_UART_Receive_DMA(&huart4, (uint8_t*)pData, (2*sizeof(uint32_t)));	//Telemetria parancsok fogadása - konvencio: 2db uint32-t kapunk, elso: command ID, masodik: adat, ha van
+
   while (1)
   {
   /* USER CODE END WHILE */
@@ -322,12 +343,14 @@ int main(void)
 				  encoder1=actualencoderval;
 				  encoderdiff=encoder1-encoderprev;
 				  velocity=((encoderdiff*10000)/743); //v[mm/s]
+				  filteredvelocitydiff=-filteredvelocity;
 				  WMAfilter(&filteredvelocity, &velocity, velocityarray, VELOCITY_FILTER_DEPTH);
 				  if(filteredvelocity>=0)
 					  velocityabs = filteredvelocity;
 				  else
 					  velocityabs = -filteredvelocity;
 				  encoderprev=encoder1;
+				  filteredvelocitydiff+=filteredvelocity;
 				/*  for(int q=0; q<20; q++)
 					  string[q]=0;
 				  sprintf(string, "%"PRId32 "\t\n\r", filteredvelocity);
@@ -341,6 +364,17 @@ int main(void)
 				  //error handling...
 			  }
 			  dovelocitymeasurement=false;
+			  timestamp++;
+			  if((timestamp%100)==0)
+			  {
+				  //kesobb ha lesz ido atirni, hogy pointereket kapjon a fg(), hatha ugy gyorsabb, mert az uart sok idot elvesz
+				  dili_telemetria(&huart4, (uint32_t) linetype, (uint32_t) velocity_state, filteredposition, timestamp, (int32_t) actualencoderval, (int32_t) filteredvelocity, (int32_t) filteredvelocitydiff*100,  1000);
+			  }
+		  }
+		  if (endrxuart) 	//uart command lekezelese
+		  {
+			  handle_QT_command(pData);
+			  endrxuart=false;
 		  }
 		 /* sebessegto(1000);*///-------------------------------------------------------------
 
@@ -836,7 +870,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 	static uint8_t end_fast_counter=0;  //Figyeljuk hohy hany lassito szakasz van. ha 5, megallunk
 	uint8_t tab=9;
 
-	if (end_fast_counter==5)
+	if (end_fast_counter==2)
 		sebessegto(0);
 
 	for (int i=0; i<3; i++)
@@ -879,6 +913,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 
 
 
+
 	/*send8bitdecimal_to_uart(&huart4, linetype, 10000);
 	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 1000);*/
 	//Gyorsito, lassitoszakasz erzekeles
@@ -912,8 +947,8 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 			if(state==ONESTRIPE && encodervalue1-encodervalue0 > 200 && encodervalue1-encodervalue0 < 817) //Ha 1 kis stripeot lattunk, akkor gyanus hogy gyorsito, itt megnezzuk, hogy tenyleg az e (van e kb ugyanakkor kihagyas a kovi stripeig)
 			{
 				state=START_FAST;
-				sebessegto(SEB_GYORS);
-				//velocity_state=FAST;
+				sebessegto((int32_t) SEB_GYORS);
+				velocity_state=FAST;
 				setPD(PD_FAST);//gyors parameterek
 				encodervalue0=encodervalue1; //encodervalue0-ba kerül az aktualis pozicio, a kovetkezo stripe elejenel ezzel szamolunk
 
@@ -921,9 +956,9 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 			else if((state== UNKNOWN && encodervalue1-encodervalue0 > 1500))//Ha 800=? cm (2000=~27cm) -ota van 3 vonal -> lassito
 			{
 				state = END_FAST;
-				//end_fast_counter++;
-				sebessegto(SEB_LASSU-10000);
-				//velocity_state=SLOW;
+				end_fast_counter++;
+				sebessegto(((int32_t)SEB_LASSU)-10000);
+				velocity_state=SLOW;
 				//setPD(PD_SLOW); //lassu parameterek
 			}
 			else if(state==START_FAST)
@@ -933,7 +968,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 			}
 			else if(state==END_FAST && (filteredvelocity < SEB_LASSU-400))
 			{
-				sebessegto(SEB_LASSU);
+				sebessegto((int32_t)SEB_LASSU);
 			}
 		}
 
@@ -945,7 +980,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 				object_observe=false;
 				state = NORMAL;
 				setPD(PD_SLOW); //lassu parameterek
-				sebessegto(SEB_LASSU+450);
+				sebessegto((int32_t)SEB_LASSU+450);
 				//sebessegto(0);//mOOOOK
 			}
 		else if(state == UNKNOWN) //Ha megfigyeljuk, de semmit nem tudunk (eddig 3 vonal volt), most pedig egy vonal -> valszeg gyorsito
@@ -981,7 +1016,7 @@ uint8_t getlinetype(uint8_t* linetype, uint16_t* adcvals1, uint16_t* adcvals2, u
 	HAL_UART_Transmit(&huart4, &tab, sizeof(uint8_t), 10000);
 	send8bitdecimal_to_uart(&huart4, &state, 10000);*/
 
-	return 0;
+	return *linetype;
 }
 
 void szervoPszabalyozo(int16_t vonalpozicio)
@@ -1086,6 +1121,52 @@ void sebessegto(int32_t mmpersec)
 	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
 	//send32bitdecimal_to_uart(&huart4, &motorpulsePWM, 10000);
 	//send32bitdecimal_to_uart(&huart2, &motorpulsePWM, 10000);
+}
+void dili_telemetria(UART_HandleTypeDef *huart, uint32_t linestatus, uint32_t velocitystatus,uint32_t position, uint32_t timestamp, int32_t x, int32_t v, int32_t a,  uint32_t Timeout)
+{
+		uint32_t state[8];
+		state[0] = reverse_byte_order_32(sizeof(state));
+		state[1] = reverse_byte_order_32(linestatus);
+		state[2] = reverse_byte_order_32(velocitystatus);
+		state[3] = reverse_byte_order_32(position);
+		state[4] = reverse_byte_order_32(timestamp);
+		state[5] = reverse_byte_order_32(x);
+		state[6] = reverse_byte_order_32(v);
+		state[7] = reverse_byte_order_32(a);
+
+		HAL_UART_Transmit(huart, (uint8_t*) state, sizeof(state), Timeout);
+}
+
+uint32_t reverse_byte_order_32(uint32_t value)
+{
+	uint8_t lolo = (value >> 0) & 0xFF;
+	uint8_t lohi = (value >> 8) & 0xFF;
+	uint8_t hilo = (value >> 16) & 0xFF;
+	uint8_t hihi = (value >> 24) & 0xFF;
+	return (hihi << 0) | (hilo << 8) | (lohi << 16) | (lolo << 24);
+}
+void handle_QT_command(uint32_t* pData)
+{
+	switch (pData[0]){
+		case 1 :  	//STOP
+			sebessegto(0);
+			break;
+		case 2 :	//Gyorsitas
+			SEB_LASSU+=100;
+			SEB_GYORS+=100;
+			break;
+		case 3 : 	//Lassitas
+			SEB_LASSU-=100;
+			SEB_GYORS-=100;
+			break;
+		case 4 :	//Set Td
+			TD_COEFF=pData[1];
+			break;
+		case 5 :	//Set Kd
+			KD=pData[1];
+			break;
+		default :;
+	}
 }
 
 
