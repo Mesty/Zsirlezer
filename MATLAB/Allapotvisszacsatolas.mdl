@@ -7,11 +7,22 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.3"
+    ComputedModelVersion    "1.10"
     NumModelReferences	    0
     NumTestPointedSignals   0
     NumProvidedFunctions    0
     NumRequiredFunctions    0
+  }
+  slprops.hdlmdlprops {
+    $PropName		    "HDLParams"
+    $ObjectID		    1
+    Array {
+      Type		      "Cell"
+      Dimension		      2
+      Cell		      "HDLSubsystem"
+      Cell		      "Allapotvisszacsatolas"
+      PropName		      "mdlProps"
+    }
   }
   ScopeRefreshTime	  0.035000
   OverrideScopeRefreshTime on
@@ -25,17 +36,17 @@ Model {
   LastSavedArchitecture	  "win64"
   Object {
     $PropName		    "BdWindowsInfo"
-    $ObjectID		    1
+    $ObjectID		    2
     $ClassName		    "Simulink.BDWindowsInfo"
     Object {
       $PropName		      "WindowsInfo"
-      $ObjectID		      2
+      $ObjectID		      3
       $ClassName	      "Simulink.WindowInfo"
       IsActive		      [1]
       Location		      [100.0, 78.0, 800.0, 522.0]
       Object {
 	$PropName		"ModelBrowserInfo"
-	$ObjectID		3
+	$ObjectID		4
 	$ClassName		"Simulink.ModelBrowserInfo"
 	Visible			[0]
 	DockPosition		"Left"
@@ -45,20 +56,20 @@ Model {
       }
       Object {
 	$PropName		"ExplorerBarInfo"
-	$ObjectID		4
+	$ObjectID		5
 	$ClassName		"Simulink.ExplorerBarInfo"
 	Visible			[1]
       }
       Object {
 	$PropName		"EditorsInfo"
-	$ObjectID		5
+	$ObjectID		6
 	$ClassName		"Simulink.EditorInfo"
 	IsActive		[1]
 	ViewObjType		"SimulinkSubsys"
-	LoadSaveID		"9"
+	LoadSaveID		"17"
 	Extents			[750.0, 347.0]
-	ZoomFactor		[1.1739837398373985]
-	Offset			[493.07479224376732, 95.462603878116312]
+	ZoomFactor		[0.9647569734424587]
+	Offset			[-37.886426592797761, 13.661963296398909]
       }
     }
   }
@@ -68,9 +79,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "Mester Ádám"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Fri Jan 13 01:13:39 2017"
-  RTWModifiedTimeStamp	  406162174
-  ModelVersionFormat	  "1.%<AutoIncrement:3>"
+  LastModifiedDate	  "Fri Jan 13 18:44:31 2017"
+  RTWModifiedTimeStamp	  406233765
+  ModelVersionFormat	  "1.%<AutoIncrement:10>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -118,10 +129,10 @@ Model {
   TryForcingSFcnDF	  off
   Object {
     $PropName		    "DataLoggingOverride"
-    $ObjectID		    6
+    $ObjectID		    7
     $ClassName		    "Simulink.SimulationData.ModelLoggingInfo"
     model_		    "Allapotvisszacsatolas"
-    overrideMode_	    [0U]
+    overrideMode_	    [0.0]
     Array {
       Type		      "Cell"
       Dimension		      1
@@ -162,18 +173,18 @@ Model {
     Type		    "Handle"
     Dimension		    1
     Simulink.ConfigSet {
-      $ObjectID		      7
+      $ObjectID		      8
       Version		      "1.16.2"
       Array {
 	Type			"Handle"
 	Dimension		10
 	Simulink.SolverCC {
-	  $ObjectID		  8
+	  $ObjectID		  9
 	  Version		  "1.16.2"
 	  StartTime		  "0.0"
-	  StopTime		  "10.0"
+	  StopTime		  "0.2"
 	  AbsTol		  "auto"
-	  FixedStep		  "auto"
+	  FixedStep		  "0.01"
 	  InitialStep		  "auto"
 	  MaxNumMinSteps	  "-1"
 	  MaxOrder		  5
@@ -189,14 +200,14 @@ Model {
 	  SolverMode		  "Auto"
 	  EnableConcurrentExecution off
 	  ConcurrentTasks	  off
-	  Solver		  "VariableStepAuto"
-	  SolverName		  "VariableStepAuto"
+	  Solver		  "FixedStepAuto"
+	  SolverName		  "FixedStepAuto"
 	  SolverJacobianMethodControl "auto"
 	  ShapePreserveControl	  "DisableAll"
 	  ZeroCrossControl	  "UseLocalSettings"
 	  ZeroCrossAlgorithm	  "Nonadaptive"
 	  AlgebraicLoopSolver	  "TrustRegion"
-	  SolverInfoToggleStatus  off
+	  SolverInfoToggleStatus  on
 	  IsAutoAppliedInSIP	  off
 	  SolverResetMethod	  "Fast"
 	  PositivePriorityOrder	  off
@@ -205,7 +216,7 @@ Model {
 	  InsertRTBMode		  "Whenever possible"
 	}
 	Simulink.DataIOCC {
-	  $ObjectID		  9
+	  $ObjectID		  10
 	  Version		  "1.16.2"
 	  Decimation		  "1"
 	  ExternalInput		  "[t, u]"
@@ -243,7 +254,7 @@ Model {
 	  LoggingIntervals	  "[-inf, inf]"
 	}
 	Simulink.OptimizationCC {
-	  $ObjectID		  10
+	  $ObjectID		  11
 	  Version		  "1.16.2"
 	  Array {
 	    Type		    "Cell"
@@ -300,7 +311,7 @@ Model {
 	  AccelVerboseBuild	  off
 	}
 	Simulink.DebuggingCC {
-	  $ObjectID		  11
+	  $ObjectID		  12
 	  Version		  "1.16.2"
 	  RTPrefix		  "error"
 	  ConsistencyChecking	  "none"
@@ -395,7 +406,7 @@ Model {
 	  AllowAutomaticUnitConversions	on
 	}
 	Simulink.HardwareCC {
-	  $ObjectID		  12
+	  $ObjectID		  13
 	  Version		  "1.16.2"
 	  ProdBitPerChar	  8
 	  ProdBitPerShort	  16
@@ -437,7 +448,7 @@ Model {
 	  UseSimulinkCoderFeatures on
 	}
 	Simulink.ModelReferenceCC {
-	  $ObjectID		  13
+	  $ObjectID		  14
 	  Version		  "1.16.2"
 	  UpdateModelReferenceTargets "IfOutOfDateOrStructuralChange"
 	  EnableRefExpFcnMdlSchedulingChecks on
@@ -453,7 +464,7 @@ Model {
 	  SupportModelReferenceSimTargetCustomCode off
 	}
 	Simulink.SFSimCC {
-	  $ObjectID		  14
+	  $ObjectID		  15
 	  Version		  "1.16.2"
 	  SFSimEcho		  on
 	  SimCtrlC		  on
@@ -465,7 +476,7 @@ Model {
 	}
 	Simulink.RTWCC {
 	  $BackupClass		  "Simulink.RTWCC"
-	  $ObjectID		  15
+	  $ObjectID		  16
 	  Version		  "1.16.2"
 	  Array {
 	    Type		    "Cell"
@@ -537,7 +548,7 @@ Model {
 	    Type		    "Handle"
 	    Dimension		    2
 	    Simulink.CodeAppCC {
-	      $ObjectID		      16
+	      $ObjectID		      17
 	      Version		      "1.16.2"
 	      Array {
 		Type			"Cell"
@@ -608,7 +619,7 @@ Model {
 	    }
 	    Simulink.GRTTargetCC {
 	      $BackupClass	      "Simulink.TargetCC"
-	      $ObjectID		      17
+	      $ObjectID		      18
 	      Version		      "1.16.2"
 	      Array {
 		Type			"Cell"
@@ -693,7 +704,7 @@ Model {
 	  }
 	}
 	SlCovCC.ConfigComp {
-	  $ObjectID		  18
+	  $ObjectID		  19
 	  Version		  "1.16.2"
 	  Description		  "Simulink Coverage Configuration Component"
 	  Name			  "Simulink Coverage"
@@ -726,7 +737,7 @@ Model {
 	  CovStopTime		  0
 	}
 	hdlcoderui.hdlcc {
-	  $ObjectID		  19
+	  $ObjectID		  20
 	  Version		  "1.16.2"
 	  Description		  "HDL Coder custom configuration component"
 	  Name			  "HDL Coder"
@@ -742,17 +753,17 @@ Model {
       }
       Name		      "Configuration"
       CurrentDlgPage	      "Solver"
-      ConfigPrmDlgPosition     [ 65, 0, 1024, 768 ] 
+      ConfigPrmDlgPosition     [ 236, 77, 1131, 628 ] 
     }
     PropName		    "ConfigurationSets"
   }
   Simulink.ConfigSet {
     $PropName		    "ActiveConfigurationSet"
-    $ObjectID		    7
+    $ObjectID		    8
   }
   Object {
     $PropName		    "DataTransfer"
-    $ObjectID		    20
+    $ObjectID		    21
     $ClassName		    "Simulink.GlobalDataTransfer"
     DefaultTransitionBetweenSyncTasks "Ensure deterministic transfer (maximum delay)"
     DefaultTransitionBetweenAsyncTasks "Ensure data integrity only"
@@ -813,6 +824,15 @@ Model {
   }
   BlockParameterDefaults {
     Block {
+      BlockType		      FromWorkspace
+      VariableName	      "simulink_input"
+      OutDataTypeStr	      "Inherit: auto"
+      SampleTime	      "-1"
+      Interpolate	      on
+      ZeroCross		      off
+      OutputAfterFinalValue   "Extrapolation"
+    }
+    Block {
       BlockType		      Gain
       Gain		      "1"
       Multiplication	      "Element-wise(K.*u)"
@@ -847,6 +867,24 @@ Model {
       Interpolate	      on
     }
     Block {
+      BlockType		      Integrator
+      ExternalReset	      "none"
+      InitialConditionSource  "internal"
+      InitialCondition	      "0"
+      LimitOutput	      off
+      UpperSaturationLimit    "inf"
+      LowerSaturationLimit    "-inf"
+      WrapState		      off
+      WrappedStateUpperValue  "pi"
+      WrappedStateLowerValue  "-pi"
+      ShowSaturationPort      off
+      ShowStatePort	      off
+      AbsoluteTolerance	      "auto"
+      IgnoreLimit	      off
+      ZeroCross		      on
+      ContinuousStateAttributes	"''"
+    }
+    Block {
       BlockType		      Outport
       Port		      "1"
       OutMin		      "[]"
@@ -863,6 +901,21 @@ Model {
       SourceOfInitialOutputValue "Dialog"
       OutputWhenDisabled      "held"
       InitialOutput	      "[]"
+    }
+    Block {
+      BlockType		      Product
+      Inputs		      "2"
+      Multiplication	      "Element-wise(.*)"
+      CollapseMode	      "All dimensions"
+      CollapseDim	      "1"
+      InputSameDT	      on
+      OutMin		      "[]"
+      OutMax		      "[]"
+      OutDataTypeStr	      "Inherit: Same as first input"
+      LockScale		      off
+      RndMeth		      "Zero"
+      SaturateOnIntegerOverflow	on
+      SampleTime	      "-1"
     }
     Block {
       BlockType		      Saturate
@@ -944,6 +997,19 @@ Model {
       TransDelayFeedthrough   off
       PadeOrder		      "0"
     }
+    Block {
+      BlockType		      Trigonometry
+      Operator		      "sin"
+      ApproximationMethod     "None"
+      NumberOfIterations      "11"
+      OutputSignalType	      "auto"
+      SampleTime	      "-1"
+    }
+    Block {
+      BlockType		      UnaryMinus
+      SampleTime	      "-1"
+      SaturateOnIntegerOverflow	off
+    }
   }
   System {
     Name		    "Allapotvisszacsatolas"
@@ -961,20 +1027,20 @@ Model {
     ShowPageBoundaries	    off
     ZoomFactor		    "100"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    "11"
+    SIDHighWatermark	    "38"
     Block {
       BlockType		      SubSystem
       Name		      "Kormanyszervo"
       SID		      "9"
       Ports		      [1, 1]
-      Position		      [245, 49, 345, 91]
+      Position		      [125, 139, 225, 181]
       ZOrder		      9
       RequestExecContextInheritance off
       Variant		      off
       System {
 	Name			"Kormanyszervo"
 	Location		[100, 78, 900, 600]
-	Open			on
+	Open			off
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
 	ScreenColor		"white"
@@ -1000,18 +1066,18 @@ Model {
 	  SID			  "4"
 	  Position		  [680, 165, 725, 195]
 	  ZOrder		  12
-	  Gain			  "30"
+	  Gain			  "4*13/3"
 	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
 	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
 	  SaturateOnIntegerOverflow off
 	}
 	Block {
-	  BlockType		  TransferFcn
+	  BlockType		  Integrator
 	  Name			  "Integrator"
-	  SID			  "6"
-	  Position		  [945, 162, 1005, 198]
-	  ZOrder		  14
-	  Denominator		  "[1 0]"
+	  SID			  "14"
+	  Ports			  [1, 1]
+	  Position		  [945, 162, 1000, 198]
+	  ZOrder		  17
 	}
 	Block {
 	  BlockType		  Saturate
@@ -1021,6 +1087,8 @@ Model {
 	  Position		  [765, 165, 795, 195]
 	  ZOrder		  13
 	  InputPortMap		  "u0"
+	  UpperLimit		  "13"
+	  LowerLimit		  "-13"
 	}
 	Block {
 	  BlockType		  TransferFcn
@@ -1051,7 +1119,7 @@ Model {
 	  Ports			  [1, 1]
 	  Position		  [570, 165, 600, 195]
 	  ZOrder		  10
-	  DelayTime		  "0.05"
+	  DelayTime		  "0.03"
 	}
 	Block {
 	  BlockType		  Outport
@@ -1097,28 +1165,501 @@ Model {
 	  DstPort		  1
 	}
 	Line {
-	  ZOrder		  7
+	  ZOrder		  13
 	  SrcBlock		  "Motor"
 	  SrcPort		  1
 	  DstBlock		  "Integrator"
 	  DstPort		  1
 	}
 	Line {
-	  ZOrder		  10
+	  ZOrder		  15
 	  SrcBlock		  "Integrator"
 	  SrcPort		  1
-	  Points		  [38, 0]
+	  Points		  [43, 0]
 	  Branch {
-	    ZOrder		    9
+	    ZOrder		    17
 	    Points		    [0, 144; -408, 0]
 	    DstBlock		    "Sum"
 	    DstPort		    2
 	  }
 	  Branch {
-	    ZOrder		    8
+	    ZOrder		    16
 	    DstBlock		    "fi"
 	    DstPort		    1
 	  }
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Orientacios modell"
+      SID		      "17"
+      Ports		      [2, 2]
+      Position		      [530, 149, 630, 191]
+      ZOrder		      14
+      RequestExecContextInheritance off
+      Variant		      off
+      System {
+	Name			"Orientacios modell"
+	Location		[100, 78, 900, 600]
+	Open			on
+	ModelBrowserVisibility	off
+	ModelBrowserWidth	200
+	ScreenColor		"white"
+	PaperOrientation	"landscape"
+	PaperPositionMode	"auto"
+	PaperType		"A4"
+	PaperUnits		"centimeters"
+	TiledPaperMargins	[1.270000, 1.270000, 1.270000, 1.270000]
+	TiledPageScale		1
+	ShowPageBoundaries	off
+	ZoomFactor		"96"
+	Block {
+	  BlockType		  Inport
+	  Name			  "v"
+	  SID			  "18"
+	  Position		  [20, 68, 50, 82]
+	  ZOrder		  -1
+	  IconDisplay		  "Port number"
+	}
+	Block {
+	  BlockType		  Inport
+	  Name			  "fi"
+	  SID			  "20"
+	  Position		  [20, 273, 50, 287]
+	  ZOrder		  1
+	  Port			  "2"
+	  IconDisplay		  "Port number"
+	}
+	Block {
+	  BlockType		  UnaryMinus
+	  Name			  "-v"
+	  SID			  "36"
+	  Position		  [305, 250, 335, 280]
+	  ZOrder		  17
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum"
+	  SID			  "29"
+	  Ports			  [2, 1]
+	  Position		  [100, 130, 120, 150]
+	  ZOrder		  10
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|++"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum1"
+	  SID			  "31"
+	  Ports			  [2, 1]
+	  Position		  [475, 70, 495, 90]
+	  ZOrder		  12
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|+-"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum2"
+	  SID			  "32"
+	  Ports			  [2, 1]
+	  Position		  [425, 70, 445, 90]
+	  ZOrder		  13
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|-+"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Product
+	  Name			  "d(delta)/dt"
+	  SID			  "38"
+	  Ports			  [2, 1]
+	  Position		  [525, 262, 555, 293]
+	  ZOrder		  19
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  RndMeth		  "Floor"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Product
+	  Name			  "dp/dt"
+	  SID			  "26"
+	  Ports			  [2, 1]
+	  Position		  [525, 57, 555, 88]
+	  ZOrder		  7
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  RndMeth		  "Floor"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  FromWorkspace
+	  Name			  "elso szenzorsor\ntavolsaga az elso tengelytol"
+	  SID			  "28"
+	  Position		  [5, 203, 70, 227]
+	  ZOrder		  9
+	  VariableName		  "d"
+	  SampleTime		  "0"
+	  ZeroCross		  on
+	}
+	Block {
+	  BlockType		  Product
+	  Name			  "masodfoku\ntag"
+	  SID			  "34"
+	  Ports			  [2, 1]
+	  Position		  [467, 115, 498, 145]
+	  ZOrder		  15
+	  BlockRotation		  270
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  RndMeth		  "Floor"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Integrator
+	  Name			  "orientacio"
+	  SID			  "23"
+	  Ports			  [1, 1]
+	  Position		  [585, 265, 615, 295]
+	  ZOrder		  4
+	}
+	Block {
+	  BlockType		  Product
+	  Name			  "p/(L+d)"
+	  SID			  "33"
+	  Ports			  [2, 1]
+	  Position		  [472, 170, 503, 200]
+	  ZOrder		  14
+	  BlockRotation		  270
+	  Inputs		  "*/"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  RndMeth		  "Floor"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Integrator
+	  Name			  "pozicio"
+	  SID			  "22"
+	  Ports			  [1, 1]
+	  Position		  [585, 60, 615, 90]
+	  ZOrder		  3
+	}
+	Block {
+	  BlockType		  Trigonometry
+	  Name			  "tan(delta)"
+	  SID			  "24"
+	  Ports			  [1, 1]
+	  Position		  [640, 235, 670, 265]
+	  ZOrder		  5
+	  BlockRotation		  270
+	  Operator		  "tan"
+	}
+	Block {
+	  BlockType		  Product
+	  Name			  "tan(delta)*\n *tan(gamma)"
+	  SID			  "35"
+	  Ports			  [2, 1]
+	  Position		  [362, 170, 393, 200]
+	  ZOrder		  16
+	  BlockRotation		  270
+	  NamePlacement		  "alternate"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  RndMeth		  "Floor"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Trigonometry
+	  Name			  "tan(fi)"
+	  SID			  "25"
+	  Ports			  [1, 1]
+	  Position		  [95, 265, 125, 295]
+	  ZOrder		  6
+	  Operator		  "tan"
+	}
+	Block {
+	  BlockType		  Product
+	  Name			  "tan(gamma)"
+	  SID			  "30"
+	  Ports			  [2, 1]
+	  Position		  [200, 132, 230, 163]
+	  ZOrder		  11
+	  Inputs		  "*/"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  RndMeth		  "Floor"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Product
+	  Name			  "tan(gamma)/(L+d)"
+	  SID			  "37"
+	  Ports			  [2, 1]
+	  Position		  [470, 282, 500, 313]
+	  ZOrder		  18
+	  Inputs		  "*/"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  RndMeth		  "Floor"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  FromWorkspace
+	  Name			  "tengelytavolsag"
+	  SID			  "27"
+	  Position		  [5, 128, 70, 152]
+	  ZOrder		  8
+	  VariableName		  "L"
+	  SampleTime		  "0"
+	  ZeroCross		  on
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "p"
+	  SID			  "19"
+	  Position		  [695, 68, 725, 82]
+	  ZOrder		  -2
+	  IconDisplay		  "Port number"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "delta"
+	  SID			  "21"
+	  Position		  [695, 273, 725, 287]
+	  ZOrder		  2
+	  Port			  "2"
+	  IconDisplay		  "Port number"
+	}
+	Line {
+	  ZOrder		  2
+	  SrcBlock		  "pozicio"
+	  SrcPort		  1
+	  Points		  [37, 0]
+	  Branch {
+	    ZOrder		    20
+	    DstBlock		    "p"
+	    DstPort		    1
+	  }
+	  Branch {
+	    ZOrder		    19
+	    Points		    [0, 140]
+	    DstBlock		    "p/(L+d)"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  3
+	  SrcBlock		  "orientacio"
+	  SrcPort		  1
+	  Points		  [35, 0]
+	  Branch {
+	    ZOrder		    7
+	    DstBlock		    "tan(delta)"
+	    DstPort		    1
+	  }
+	  Branch {
+	    ZOrder		    6
+	    DstBlock		    "delta"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  4
+	  SrcBlock		  "dp/dt"
+	  SrcPort		  1
+	  DstBlock		  "pozicio"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  5
+	  SrcBlock		  "v"
+	  SrcPort		  1
+	  Points		  [233, 0]
+	  Branch {
+	    ZOrder		    45
+	    Points		    [0, -10]
+	    DstBlock		    "dp/dt"
+	    DstPort		    1
+	  }
+	  Branch {
+	    ZOrder		    39
+	    Points		    [0, 190]
+	    DstBlock		    "-v"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  8
+	  SrcBlock		  "fi"
+	  SrcPort		  1
+	  DstBlock		  "tan(fi)"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  9
+	  SrcBlock		  "tengelytavolsag"
+	  SrcPort		  1
+	  DstBlock		  "Sum"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  10
+	  SrcBlock		  "elso szenzorsor\ntavolsaga az elso tengelytol"
+	  SrcPort		  1
+	  Points		  [35, 0]
+	  DstBlock		  "Sum"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  11
+	  SrcBlock		  "Sum"
+	  SrcPort		  1
+	  Points		  [35, 0]
+	  Branch {
+	    ZOrder		    66
+	    DstBlock		    "tan(gamma)"
+	    DstPort		    1
+	  }
+	  Branch {
+	    ZOrder		    64
+	    Points		    [0, 104]
+	    Branch {
+	      ZOrder		      67
+	      Points		      [335, 0]
+	      DstBlock		      "p/(L+d)"
+	      DstPort		      2
+	    }
+	    Branch {
+	      ZOrder		      58
+	      Points		      [0, 61]
+	      DstBlock		      "tan(gamma)/(L+d)"
+	      DstPort		      2
+	    }
+	  }
+	}
+	Line {
+	  ZOrder		  12
+	  SrcBlock		  "tan(fi)"
+	  SrcPort		  1
+	  Points		  [2, 0; 0, -125]
+	  DstBlock		  "tan(gamma)"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  13
+	  SrcBlock		  "Sum1"
+	  SrcPort		  1
+	  DstBlock		  "dp/dt"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  14
+	  SrcBlock		  "Sum2"
+	  SrcPort		  1
+	  DstBlock		  "Sum1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  16
+	  SrcBlock		  "tan(delta)"
+	  SrcPort		  1
+	  Points		  [-220, 0]
+	  Branch {
+	    ZOrder		    30
+	    Points		    [-50, 0]
+	    DstBlock		    "tan(delta)*\n *tan(gamma)"
+	    DstPort		    2
+	  }
+	  Branch {
+	    ZOrder		    29
+	    DstBlock		    "Sum2"
+	    DstPort		    2
+	  }
+	}
+	Line {
+	  ZOrder		  24
+	  SrcBlock		  "masodfoku\ntag"
+	  SrcPort		  1
+	  DstBlock		  "Sum1"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  25
+	  SrcBlock		  "p/(L+d)"
+	  SrcPort		  1
+	  DstBlock		  "masodfoku\ntag"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  32
+	  SrcBlock		  "tan(delta)*\n *tan(gamma)"
+	  SrcPort		  1
+	  Points		  [0, -2; 95, 0]
+	  DstBlock		  "masodfoku\ntag"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  15
+	  SrcBlock		  "tan(gamma)"
+	  SrcPort		  1
+	  Points		  [61, 0]
+	  Branch {
+	    ZOrder		    68
+	    Points		    [34, 0; 0, -70]
+	    DstBlock		    "Sum2"
+	    DstPort		    1
+	  }
+	  Branch {
+	    ZOrder		    27
+	    Points		    [0, 87; 74, 0]
+	    Branch {
+	      ZOrder		      52
+	      DstBlock		      "tan(delta)*\n *tan(gamma)"
+	      DstPort		      1
+	    }
+	    Branch {
+	      ZOrder		      48
+	      Points		      [0, 53]
+	      DstBlock		      "tan(gamma)/(L+d)"
+	      DstPort		      1
+	    }
+	  }
+	}
+	Line {
+	  ZOrder		  54
+	  SrcBlock		  "d(delta)/dt"
+	  SrcPort		  1
+	  DstBlock		  "orientacio"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  55
+	  SrcBlock		  "tan(gamma)/(L+d)"
+	  SrcPort		  1
+	  Points		  [5, 0]
+	  DstBlock		  "d(delta)/dt"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  56
+	  SrcBlock		  "-v"
+	  SrcPort		  1
+	  Points		  [80, 0; 0, 5]
+	  DstBlock		  "d(delta)/dt"
+	  DstPort		  1
 	}
       }
     }
