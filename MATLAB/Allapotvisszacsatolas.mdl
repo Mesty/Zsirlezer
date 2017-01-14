@@ -7,7 +7,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.14"
+    ComputedModelVersion    "1.16"
     NumModelReferences	    0
     NumTestPointedSignals   0
     NumProvidedFunctions    0
@@ -43,7 +43,7 @@ Model {
       $ObjectID		      3
       $ClassName	      "Simulink.WindowInfo"
       IsActive		      [1]
-      Location		      [100.0, 78.0, 800.0, 522.0]
+      Location		      [-8.0, -8.0, 1936.0, 1056.0]
       Object {
 	$PropName		"ModelBrowserInfo"
 	$ObjectID		4
@@ -65,11 +65,11 @@ Model {
 	$ObjectID		6
 	$ClassName		"Simulink.EditorInfo"
 	IsActive		[1]
-	ViewObjType		"SimulinkSubsys"
-	LoadSaveID		"39"
-	Extents			[750.0, 347.0]
-	ZoomFactor		[1.0]
-	Offset			[5.9000000000000909, 19.599999999999994]
+	ViewObjType		"SimulinkTopLevel"
+	LoadSaveID		"0"
+	Extents			[1886.0, 881.0]
+	ZoomFactor		[1.0120904152794814]
+	Offset			[3.4172437673130389, -28.427371883656491]
       }
     }
   }
@@ -79,9 +79,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "Mester Ádám"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Sat Jan 14 14:56:13 2017"
-  RTWModifiedTimeStamp	  406306571
-  ModelVersionFormat	  "1.%<AutoIncrement:14>"
+  LastModifiedDate	  "Sat Jan 14 19:54:06 2017"
+  RTWModifiedTimeStamp	  406324436
+  ModelVersionFormat	  "1.%<AutoIncrement:16>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -200,8 +200,8 @@ Model {
 	  SolverMode		  "Auto"
 	  EnableConcurrentExecution off
 	  ConcurrentTasks	  off
-	  Solver		  "FixedStepAuto"
-	  SolverName		  "FixedStepAuto"
+	  Solver		  "VariableStepAuto"
+	  SolverName		  "VariableStepAuto"
 	  SolverJacobianMethodControl "auto"
 	  ShapePreserveControl	  "DisableAll"
 	  ZeroCrossControl	  "UseLocalSettings"
@@ -981,6 +981,17 @@ Model {
       SampleTime	      "-1"
     }
     Block {
+      BlockType		      ToWorkspace
+      VariableName	      "simulink_output"
+      MaxDataPoints	      "1000"
+      Decimation	      "1"
+      SaveFormat	      "Array"
+      Save2DSignal	      "Inherit from input (this choice will be removed - see release notes)"
+      FixptAsFi		      off
+      NumInputs		      "1"
+      SampleTime	      "0"
+    }
+    Block {
       BlockType		      TransferFcn
       Numerator		      "[1]"
       Denominator	      "[1 2 1]"
@@ -1017,8 +1028,8 @@ Model {
   }
   System {
     Name		    "Allapotvisszacsatolas"
-    Location		    [100, 78, 900, 600]
-    Open		    off
+    Location		    [-8, -8, 1928, 1048]
+    Open		    on
     ModelBrowserVisibility  off
     ModelBrowserWidth	    200
     ScreenColor		    "white"
@@ -1029,21 +1040,21 @@ Model {
     TiledPaperMargins	    [0.500000, 0.500000, 0.500000, 0.500000]
     TiledPageScale	    1
     ShowPageBoundaries	    off
-    ZoomFactor		    "100"
+    ZoomFactor		    "101"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    "57"
+    SIDHighWatermark	    "68"
     Block {
       BlockType		      SubSystem
       Name		      "Kormanyszervo"
       SID		      "9"
       Ports		      [1, 1]
-      Position		      [105, 74, 205, 116]
+      Position		      [210, 54, 310, 96]
       ZOrder		      9
       RequestExecContextInheritance off
       Variant		      off
       System {
 	Name			"Kormanyszervo"
-	Location		[100, 78, 900, 600]
+	Location		[-8, -8, 1928, 1048]
 	Open			off
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
@@ -1199,13 +1210,13 @@ Model {
       Name		      "Orientacios modell"
       SID		      "17"
       Ports		      [2, 2]
-      Position		      [410, 74, 510, 116]
+      Position		      [390, 0, 490, 100]
       ZOrder		      14
       RequestExecContextInheritance off
       Variant		      off
       System {
 	Name			"Orientacios modell"
-	Location		[100, 78, 900, 600]
+	Location		[-8, -8, 1928, 1048]
 	Open			off
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
@@ -1668,19 +1679,48 @@ Model {
       }
     }
     Block {
+      BlockType		      Sum
+      Name		      "Sum"
+      SID		      "62"
+      Ports		      [2, 1]
+      Position		      [145, 65, 165, 85]
+      ZOrder		      20
+      ShowName		      off
+      IconShape		      "round"
+      Inputs		      "|+-"
+      InputSameDT	      off
+      OutDataTypeStr	      "Inherit: Inherit via internal rule"
+      SaturateOnIntegerOverflow	off
+    }
+    Block {
+      BlockType		      Sum
+      Name		      "Sum1"
+      SID		      "63"
+      Ports		      [2, 1]
+      Position		      [310, 185, 330, 205]
+      ZOrder		      21
+      BlockMirror	      on
+      ShowName		      off
+      IconShape		      "round"
+      Inputs		      "|++"
+      InputSameDT	      off
+      OutDataTypeStr	      "Inherit: Inherit via internal rule"
+      SaturateOnIntegerOverflow	off
+    }
+    Block {
       BlockType		      SubSystem
-      Name		      "szenzor + feldolgozas"
+      Name		      "Szenzor + feldolgozas"
       SID		      "39"
       Ports		      [2, 2]
-      Position		      [465, 234, 565, 276]
+      Position		      [470, 171, 605, 269]
       ZOrder		      15
       BlockMirror	      on
       RequestExecContextInheritance off
       Variant		      off
       System {
-	Name			"szenzor + feldolgozas"
-	Location		[100, 78, 900, 600]
-	Open			on
+	Name			"Szenzor + feldolgozas"
+	Location		[-8, -8, 1928, 1048]
+	Open			off
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
 	ScreenColor		"white"
@@ -1910,7 +1950,6 @@ Model {
 	  ZOrder		  25
 	  SrcBlock		  "leptekezes\n(p)"
 	  SrcPort		  1
-	  Points		  [-10, 0]
 	  DstBlock		  "T_p"
 	  DstPort		  1
 	}
@@ -1945,6 +1984,211 @@ Model {
 	  DstBlock		  "leptekezes\n(p)"
 	  DstPort		  1
 	}
+      }
+    }
+    Block {
+      BlockType		      ToWorkspace
+      Name		      "To Workspace"
+      SID		      "66"
+      Ports		      [1]
+      Position		      [665, 10, 725, 40]
+      ZOrder		      24
+      VariableName	      "p"
+      MaxDataPoints	      "inf"
+      SaveFormat	      "Timeseries"
+      Save2DSignal	      "3-D array (concatenate along third dimension)"
+      FixptAsFi		      on
+      SampleTime	      "-1"
+    }
+    Block {
+      BlockType		      ToWorkspace
+      Name		      "To Workspace4"
+      SID		      "67"
+      Ports		      [1]
+      Position		      [665, 60, 725, 90]
+      ZOrder		      25
+      VariableName	      "delta"
+      MaxDataPoints	      "inf"
+      SaveFormat	      "Timeseries"
+      Save2DSignal	      "3-D array (concatenate along third dimension)"
+      FixptAsFi		      on
+      SampleTime	      "-1"
+    }
+    Block {
+      BlockType		      ZeroOrderHold
+      Name		      "Zero-Order\nHold"
+      SID		      "65"
+      Position		      [175, 180, 210, 210]
+      ZOrder		      23
+      BlockMirror	      on
+      SampleTime	      "0.006"
+    }
+    Block {
+      BlockType		      FromWorkspace
+      Name		      "alapjel"
+      SID		      "58"
+      Position		      [20, 63, 45, 87]
+      ZOrder		      16
+      VariableName	      "p_a"
+      SampleTime	      "0"
+      ZeroCross		      on
+    }
+    Block {
+      BlockType		      Gain
+      Name		      "k_delta"
+      SID		      "61"
+      Position		      [360, 180, 390, 210]
+      ZOrder		      19
+      BlockMirror	      on
+      Gain		      "k_delta"
+      ParamDataTypeStr	      "Inherit: Inherit via internal rule"
+      OutDataTypeStr	      "Inherit: Inherit via internal rule"
+      SaturateOnIntegerOverflow	off
+    }
+    Block {
+      BlockType		      Gain
+      Name		      "k_p"
+      SID		      "59"
+      Position		      [360, 230, 390, 260]
+      ZOrder		      17
+      BlockMirror	      on
+      Gain		      "k_p"
+      ParamDataTypeStr	      "Inherit: Inherit via internal rule"
+      OutDataTypeStr	      "Inherit: Inherit via internal rule"
+      SaturateOnIntegerOverflow	off
+    }
+    Block {
+      BlockType		      Gain
+      Name		      "k_p1"
+      SID		      "60"
+      Position		      [80, 60, 110, 90]
+      ZOrder		      18
+      Gain		      "k_p"
+      ParamDataTypeStr	      "Inherit: Inherit via internal rule"
+      OutDataTypeStr	      "Inherit: Inherit via internal rule"
+      SaturateOnIntegerOverflow	off
+    }
+    Block {
+      BlockType		      FromWorkspace
+      Name		      "v"
+      SID		      "64"
+      Position		      [330, 13, 355, 37]
+      ZOrder		      22
+      VariableName	      "v"
+      SampleTime	      "0"
+      ZeroCross		      on
+    }
+    Line {
+      ZOrder		      3
+      SrcBlock		      "alapjel"
+      SrcPort		      1
+      DstBlock		      "k_p1"
+      DstPort		      1
+    }
+    Line {
+      ZOrder		      4
+      SrcBlock		      "k_p1"
+      SrcPort		      1
+      DstBlock		      "Sum"
+      DstPort		      1
+    }
+    Line {
+      ZOrder		      5
+      SrcBlock		      "Sum"
+      SrcPort		      1
+      DstBlock		      "Kormanyszervo"
+      DstPort		      1
+    }
+    Line {
+      ZOrder		      6
+      SrcBlock		      "v"
+      SrcPort		      1
+      DstBlock		      "Orientacios modell"
+      DstPort		      1
+    }
+    Line {
+      ZOrder		      7
+      SrcBlock		      "Kormanyszervo"
+      SrcPort		      1
+      DstBlock		      "Orientacios modell"
+      DstPort		      2
+    }
+    Line {
+      ZOrder		      8
+      SrcBlock		      "k_delta"
+      SrcPort		      1
+      DstBlock		      "Sum1"
+      DstPort		      1
+    }
+    Line {
+      ZOrder		      9
+      SrcBlock		      "k_p"
+      SrcPort		      1
+      Points		      [-35, 0]
+      DstBlock		      "Sum1"
+      DstPort		      2
+    }
+    Line {
+      ZOrder		      10
+      SrcBlock		      "Szenzor + feldolgozas"
+      SrcPort		      2
+      DstBlock		      "k_p"
+      DstPort		      1
+    }
+    Line {
+      ZOrder		      11
+      SrcBlock		      "Szenzor + feldolgozas"
+      SrcPort		      1
+      DstBlock		      "k_delta"
+      DstPort		      1
+    }
+    Line {
+      ZOrder		      12
+      SrcBlock		      "Sum1"
+      SrcPort		      1
+      DstBlock		      "Zero-Order\nHold"
+      DstPort		      1
+    }
+    Line {
+      ZOrder		      13
+      SrcBlock		      "Zero-Order\nHold"
+      SrcPort		      1
+      Points		      [-15, 0]
+      DstBlock		      "Sum"
+      DstPort		      2
+    }
+    Line {
+      ZOrder		      14
+      SrcBlock		      "Orientacios modell"
+      SrcPort		      2
+      Points		      [129, 0]
+      Branch {
+	ZOrder			31
+	DstBlock		"To Workspace4"
+	DstPort			1
+      }
+      Branch {
+	ZOrder			17
+	Points			[0, 120]
+	DstBlock		"Szenzor + feldolgozas"
+	DstPort			1
+      }
+    }
+    Line {
+      ZOrder		      15
+      SrcBlock		      "Orientacios modell"
+      SrcPort		      1
+      Points		      [145, 0]
+      Branch {
+	ZOrder			35
+	DstBlock		"To Workspace"
+	DstPort			1
+      }
+      Branch {
+	ZOrder			19
+	Points			[0, 220]
+	DstBlock		"Szenzor + feldolgozas"
+	DstPort			2
       }
     }
   }
