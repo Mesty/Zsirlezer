@@ -7,7 +7,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.16"
+    ComputedModelVersion    "1.17"
     NumModelReferences	    0
     NumTestPointedSignals   0
     NumProvidedFunctions    0
@@ -68,8 +68,8 @@ Model {
 	ViewObjType		"SimulinkTopLevel"
 	LoadSaveID		"0"
 	Extents			[1886.0, 881.0]
-	ZoomFactor		[1.0120904152794814]
-	Offset			[3.4172437673130389, -28.427371883656491]
+	ZoomFactor		[2.6045207639740671]
+	Offset			[11.874730893433821, -26.129002960172215]
       }
     }
   }
@@ -79,9 +79,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "Mester Ádám"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Sat Jan 14 19:54:06 2017"
-  RTWModifiedTimeStamp	  406324436
-  ModelVersionFormat	  "1.%<AutoIncrement:16>"
+  LastModifiedDate	  "Sat Jan 14 21:04:36 2017"
+  RTWModifiedTimeStamp	  406328305
+  ModelVersionFormat	  "1.%<AutoIncrement:17>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -182,9 +182,9 @@ Model {
 	  $ObjectID		  9
 	  Version		  "1.16.2"
 	  StartTime		  "0.0"
-	  StopTime		  "0.2"
+	  StopTime		  "3"
 	  AbsTol		  "auto"
-	  FixedStep		  "0.01"
+	  FixedStep		  "0.001"
 	  InitialStep		  "auto"
 	  MaxNumMinSteps	  "-1"
 	  MaxOrder		  5
@@ -200,8 +200,8 @@ Model {
 	  SolverMode		  "Auto"
 	  EnableConcurrentExecution off
 	  ConcurrentTasks	  off
-	  Solver		  "VariableStepAuto"
-	  SolverName		  "VariableStepAuto"
+	  Solver		  "FixedStepAuto"
+	  SolverName		  "FixedStepAuto"
 	  SolverJacobianMethodControl "auto"
 	  ShapePreserveControl	  "DisableAll"
 	  ZeroCrossControl	  "UseLocalSettings"
@@ -1040,9 +1040,9 @@ Model {
     TiledPaperMargins	    [0.500000, 0.500000, 0.500000, 0.500000]
     TiledPageScale	    1
     ShowPageBoundaries	    off
-    ZoomFactor		    "101"
+    ZoomFactor		    "260"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    "68"
+    SIDHighWatermark	    "70"
     Block {
       BlockType		      SubSystem
       Name		      "Kormanyszervo"
@@ -1066,7 +1066,7 @@ Model {
 	TiledPaperMargins	[1.270000, 1.270000, 1.270000, 1.270000]
 	TiledPageScale		1
 	ShowPageBoundaries	off
-	ZoomFactor		"117"
+	ZoomFactor		"302"
 	Block {
 	  BlockType		  Inport
 	  Name			  "fi_a"
@@ -1228,7 +1228,7 @@ Model {
 	TiledPaperMargins	[1.270000, 1.270000, 1.270000, 1.270000]
 	TiledPageScale		1
 	ShowPageBoundaries	off
-	ZoomFactor		"96"
+	ZoomFactor		"248"
 	Block {
 	  BlockType		  Inport
 	  Name			  "v"
@@ -1330,6 +1330,17 @@ Model {
 	  ZeroCross		  on
 	}
 	Block {
+	  BlockType		  Gain
+	  Name			  "leptekezes\nfeloldasa"
+	  SID			  "70"
+	  Position		  [80, 265, 110, 295]
+	  ZOrder		  21
+	  Gain			  "p_1s"
+	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
 	  BlockType		  Product
 	  Name			  "masodfoku\ntag"
 	  SID			  "34"
@@ -1371,6 +1382,7 @@ Model {
 	  Ports			  [1, 1]
 	  Position		  [585, 60, 615, 90]
 	  ZOrder		  3
+	  InitialCondition	  "-0.1"
 	}
 	Block {
 	  BlockType		  Trigonometry
@@ -1401,8 +1413,9 @@ Model {
 	  Name			  "tan(fi)"
 	  SID			  "25"
 	  Ports			  [1, 1]
-	  Position		  [95, 265, 125, 295]
+	  Position		  [120, 200, 150, 230]
 	  ZOrder		  6
+	  BlockRotation		  270
 	  Operator		  "tan"
 	}
 	Block {
@@ -1517,13 +1530,6 @@ Model {
 	  }
 	}
 	Line {
-	  ZOrder		  8
-	  SrcBlock		  "fi"
-	  SrcPort		  1
-	  DstBlock		  "tan(fi)"
-	  DstPort		  1
-	}
-	Line {
 	  ZOrder		  9
 	  SrcBlock		  "tengelytavolsag"
 	  SrcPort		  1
@@ -1542,7 +1548,7 @@ Model {
 	  ZOrder		  11
 	  SrcBlock		  "Sum"
 	  SrcPort		  1
-	  Points		  [35, 0]
+	  Points		  [58, 0]
 	  Branch {
 	    ZOrder		    66
 	    DstBlock		    "tan(gamma)"
@@ -1552,15 +1558,15 @@ Model {
 	    ZOrder		    64
 	    Points		    [0, 104]
 	    Branch {
-	      ZOrder		      67
-	      Points		      [335, 0]
-	      DstBlock		      "p/(L+d)"
+	      ZOrder		      91
+	      Points		      [0, 61]
+	      DstBlock		      "tan(gamma)/(L+d)"
 	      DstPort		      2
 	    }
 	    Branch {
-	      ZOrder		      58
-	      Points		      [0, 61]
-	      DstBlock		      "tan(gamma)/(L+d)"
+	      ZOrder		      67
+	      Points		      [312, 0]
+	      DstBlock		      "p/(L+d)"
 	      DstPort		      2
 	    }
 	  }
@@ -1569,7 +1575,7 @@ Model {
 	  ZOrder		  12
 	  SrcBlock		  "tan(fi)"
 	  SrcPort		  1
-	  Points		  [2, 0; 0, -125]
+	  Points		  [0, -40]
 	  DstBlock		  "tan(gamma)"
 	  DstPort		  2
 	}
@@ -1676,6 +1682,21 @@ Model {
 	  DstBlock		  "d(delta)/dt"
 	  DstPort		  1
 	}
+	Line {
+	  ZOrder		  93
+	  SrcBlock		  "fi"
+	  SrcPort		  1
+	  DstBlock		  "leptekezes\nfeloldasa"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  94
+	  SrcBlock		  "leptekezes\nfeloldasa"
+	  SrcPort		  1
+	  Points		  [20, 0]
+	  DstBlock		  "tan(fi)"
+	  DstPort		  1
+	}
       }
     }
     Block {
@@ -1731,7 +1752,7 @@ Model {
 	TiledPaperMargins	[1.270000, 1.270000, 1.270000, 1.270000]
 	TiledPageScale		1
 	ShowPageBoundaries	off
-	ZoomFactor		"100"
+	ZoomFactor		"248"
 	Block {
 	  BlockType		  Inport
 	  Name			  "delta"
