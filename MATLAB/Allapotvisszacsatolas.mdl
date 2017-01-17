@@ -7,7 +7,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.45"
+    ComputedModelVersion    "1.82"
     NumModelReferences	    0
     NumTestPointedSignals   0
     NumProvidedFunctions    0
@@ -43,7 +43,7 @@ Model {
       $ObjectID		      3
       $ClassName	      "Simulink.WindowInfo"
       IsActive		      [1]
-      Location		      [-8.0, -8.0, 1936.0, 1056.0]
+      Location		      [-8.0, -8.0, 1382.0, 744.0]
       Object {
 	$PropName		"ModelBrowserInfo"
 	$ObjectID		4
@@ -65,11 +65,11 @@ Model {
 	$ObjectID		6
 	$ClassName		"Simulink.EditorInfo"
 	IsActive		[1]
-	ViewObjType		"SimulinkSubsys"
-	LoadSaveID		"39"
-	Extents			[1886.0, 881.0]
-	ZoomFactor		[2.4736228989848561]
-	Offset			[2.8402852529602, 12.171118137782571]
+	ViewObjType		"SimulinkTopLevel"
+	LoadSaveID		"0"
+	Extents			[1332.0, 569.0]
+	ZoomFactor		[1.8205933682373472]
+	Offset			[6.6851993865030295, -13.267733895705533]
       }
     }
   }
@@ -79,9 +79,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "Mester Ádám"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Sun Jan 15 18:18:14 2017"
-  RTWModifiedTimeStamp	  406402492
-  ModelVersionFormat	  "1.%<AutoIncrement:45>"
+  LastModifiedDate	  "Tue Jan 17 16:49:49 2017"
+  RTWModifiedTimeStamp	  406572585
+  ModelVersionFormat	  "1.%<AutoIncrement:82>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -898,6 +898,222 @@ Model {
       ContinuousStateAttributes	"''"
     }
     Block {
+      BlockType		      Lookup_n-D
+      NumberOfTableDimensions "2"
+      BreakpointsSpecification "Explicit values"
+      BreakpointsForDimension1 "[10,22,31]"
+      BreakpointsForDimension2 "[10,22,31]"
+      BreakpointsForDimension3 "[1:3]"
+      BreakpointsForDimension4 "[1:3]"
+      BreakpointsForDimension5 "[1:3]"
+      BreakpointsForDimension6 "[1:3]"
+      BreakpointsForDimension7 "[1:3]"
+      BreakpointsForDimension8 "[1:3]"
+      BreakpointsForDimension9 "[1:3]"
+      BreakpointsForDimension10	"[1:3]"
+      BreakpointsForDimension11	"[1:3]"
+      BreakpointsForDimension12	"[1:3]"
+      BreakpointsForDimension13	"[1:3]"
+      BreakpointsForDimension14	"[1:3]"
+      BreakpointsForDimension15	"[1:3]"
+      BreakpointsForDimension16	"[1:3]"
+      BreakpointsForDimension17	"[1:3]"
+      BreakpointsForDimension18	"[1:3]"
+      BreakpointsForDimension19	"[1:3]"
+      BreakpointsForDimension20	"[1:3]"
+      BreakpointsForDimension21	"[1:3]"
+      BreakpointsForDimension22	"[1:3]"
+      BreakpointsForDimension23	"[1:3]"
+      BreakpointsForDimension24	"[1:3]"
+      BreakpointsForDimension25	"[1:3]"
+      BreakpointsForDimension26	"[1:3]"
+      BreakpointsForDimension27	"[1:3]"
+      BreakpointsForDimension28	"[1:3]"
+      BreakpointsForDimension29	"[1:3]"
+      BreakpointsForDimension30	"[1:3]"
+      BreakpointsForDimension1FirstPoint "1"
+      BreakpointsForDimension2FirstPoint "1"
+      BreakpointsForDimension3FirstPoint "1"
+      BreakpointsForDimension4FirstPoint "1"
+      BreakpointsForDimension5FirstPoint "1"
+      BreakpointsForDimension6FirstPoint "1"
+      BreakpointsForDimension7FirstPoint "1"
+      BreakpointsForDimension8FirstPoint "1"
+      BreakpointsForDimension9FirstPoint "1"
+      BreakpointsForDimension10FirstPoint "1"
+      BreakpointsForDimension11FirstPoint "1"
+      BreakpointsForDimension12FirstPoint "1"
+      BreakpointsForDimension13FirstPoint "1"
+      BreakpointsForDimension14FirstPoint "1"
+      BreakpointsForDimension15FirstPoint "1"
+      BreakpointsForDimension16FirstPoint "1"
+      BreakpointsForDimension17FirstPoint "1"
+      BreakpointsForDimension18FirstPoint "1"
+      BreakpointsForDimension19FirstPoint "1"
+      BreakpointsForDimension20FirstPoint "1"
+      BreakpointsForDimension21FirstPoint "1"
+      BreakpointsForDimension22FirstPoint "1"
+      BreakpointsForDimension23FirstPoint "1"
+      BreakpointsForDimension24FirstPoint "1"
+      BreakpointsForDimension25FirstPoint "1"
+      BreakpointsForDimension26FirstPoint "1"
+      BreakpointsForDimension27FirstPoint "1"
+      BreakpointsForDimension28FirstPoint "1"
+      BreakpointsForDimension29FirstPoint "1"
+      BreakpointsForDimension30FirstPoint "1"
+      BreakpointsForDimension1Spacing "1"
+      BreakpointsForDimension2Spacing "1"
+      BreakpointsForDimension3Spacing "1"
+      BreakpointsForDimension4Spacing "1"
+      BreakpointsForDimension5Spacing "1"
+      BreakpointsForDimension6Spacing "1"
+      BreakpointsForDimension7Spacing "1"
+      BreakpointsForDimension8Spacing "1"
+      BreakpointsForDimension9Spacing "1"
+      BreakpointsForDimension10Spacing "1"
+      BreakpointsForDimension11Spacing "1"
+      BreakpointsForDimension12Spacing "1"
+      BreakpointsForDimension13Spacing "1"
+      BreakpointsForDimension14Spacing "1"
+      BreakpointsForDimension15Spacing "1"
+      BreakpointsForDimension16Spacing "1"
+      BreakpointsForDimension17Spacing "1"
+      BreakpointsForDimension18Spacing "1"
+      BreakpointsForDimension19Spacing "1"
+      BreakpointsForDimension20Spacing "1"
+      BreakpointsForDimension21Spacing "1"
+      BreakpointsForDimension22Spacing "1"
+      BreakpointsForDimension23Spacing "1"
+      BreakpointsForDimension24Spacing "1"
+      BreakpointsForDimension25Spacing "1"
+      BreakpointsForDimension26Spacing "1"
+      BreakpointsForDimension27Spacing "1"
+      BreakpointsForDimension28Spacing "1"
+      BreakpointsForDimension29Spacing "1"
+      BreakpointsForDimension30Spacing "1"
+      BreakpointsForDimension1Min "[]"
+      BreakpointsForDimension2Min "[]"
+      BreakpointsForDimension3Min "[]"
+      BreakpointsForDimension4Min "[]"
+      BreakpointsForDimension5Min "[]"
+      BreakpointsForDimension6Min "[]"
+      BreakpointsForDimension7Min "[]"
+      BreakpointsForDimension8Min "[]"
+      BreakpointsForDimension9Min "[]"
+      BreakpointsForDimension10Min "[]"
+      BreakpointsForDimension11Min "[]"
+      BreakpointsForDimension12Min "[]"
+      BreakpointsForDimension13Min "[]"
+      BreakpointsForDimension14Min "[]"
+      BreakpointsForDimension15Min "[]"
+      BreakpointsForDimension16Min "[]"
+      BreakpointsForDimension17Min "[]"
+      BreakpointsForDimension18Min "[]"
+      BreakpointsForDimension19Min "[]"
+      BreakpointsForDimension20Min "[]"
+      BreakpointsForDimension21Min "[]"
+      BreakpointsForDimension22Min "[]"
+      BreakpointsForDimension23Min "[]"
+      BreakpointsForDimension24Min "[]"
+      BreakpointsForDimension25Min "[]"
+      BreakpointsForDimension26Min "[]"
+      BreakpointsForDimension27Min "[]"
+      BreakpointsForDimension28Min "[]"
+      BreakpointsForDimension29Min "[]"
+      BreakpointsForDimension30Min "[]"
+      BreakpointsForDimension1Max "[]"
+      BreakpointsForDimension2Max "[]"
+      BreakpointsForDimension3Max "[]"
+      BreakpointsForDimension4Max "[]"
+      BreakpointsForDimension5Max "[]"
+      BreakpointsForDimension6Max "[]"
+      BreakpointsForDimension7Max "[]"
+      BreakpointsForDimension8Max "[]"
+      BreakpointsForDimension9Max "[]"
+      BreakpointsForDimension10Max "[]"
+      BreakpointsForDimension11Max "[]"
+      BreakpointsForDimension12Max "[]"
+      BreakpointsForDimension13Max "[]"
+      BreakpointsForDimension14Max "[]"
+      BreakpointsForDimension15Max "[]"
+      BreakpointsForDimension16Max "[]"
+      BreakpointsForDimension17Max "[]"
+      BreakpointsForDimension18Max "[]"
+      BreakpointsForDimension19Max "[]"
+      BreakpointsForDimension20Max "[]"
+      BreakpointsForDimension21Max "[]"
+      BreakpointsForDimension22Max "[]"
+      BreakpointsForDimension23Max "[]"
+      BreakpointsForDimension24Max "[]"
+      BreakpointsForDimension25Max "[]"
+      BreakpointsForDimension26Max "[]"
+      BreakpointsForDimension27Max "[]"
+      BreakpointsForDimension28Max "[]"
+      BreakpointsForDimension29Max "[]"
+      BreakpointsForDimension30Max "[]"
+      BreakpointsForDimension1DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension2DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension3DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension4DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension5DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension6DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension7DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension8DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension9DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension10DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension11DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension12DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension13DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension14DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension15DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension16DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension17DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension18DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension19DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension20DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension21DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension22DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension23DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension24DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension25DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension26DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension27DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension28DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension29DataTypeStr "Inherit: Same as corresponding input"
+      BreakpointsForDimension30DataTypeStr "Inherit: Same as corresponding input"
+      IndexSearchMethod	      "Binary search"
+      BeginIndexSearchUsingPreviousIndexResult off
+      UseOneInputPortForAllInputData off
+      Table		      "[4 5 6;16 19 20;10 18 23]"
+      TableMin		      "[]"
+      TableMax		      "[]"
+      TableDataTypeStr	      "Inherit: Same as output"
+      IntermediateResultsDataTypeStr "Inherit: Same as output"
+      InterpMethod	      "Linear"
+      ExtrapMethod	      "Linear"
+      DiagnosticForOutOfRangeInput "None"
+      RemoveProtectionInput   off
+      UseLastTableValue	      off
+      SampleTime	      "-1"
+      InternalRulePriority    "Precision"
+      InputSameDT	      on
+      OutMin		      "[]"
+      OutMax		      "[]"
+      OutDataTypeStr	      "Inherit: Same as first input"
+      LockScale		      off
+      RndMeth		      "Floor"
+      SaturateOnIntegerOverflow	off
+      FractionDataTypeStr     "Inherit: Inherit via internal rule"
+      SupportTunableTableSize off
+      MaximumIndicesForEachDimension "[]"
+      LUTDesignTableMode      "Redesign Table"
+      LUTDesignDataSource     "Block Dialog"
+      LUTDesignFunctionName   "sqrt(x)"
+      LUTDesignUseExistingBP  on
+      LUTDesignRelError	      "0.01"
+      LUTDesignAbsError	      "1e-6"
+    }
+    Block {
       BlockType		      Outport
       Port		      "1"
       OutMin		      "[]"
@@ -928,6 +1144,12 @@ Model {
       LockScale		      off
       RndMeth		      "Zero"
       SaturateOnIntegerOverflow	on
+      SampleTime	      "-1"
+    }
+    Block {
+      BlockType		      Quantizer
+      QuantizationInterval    "0.5"
+      LinearizeAsGain	      on
       SampleTime	      "-1"
     }
     Block {
@@ -1041,8 +1263,8 @@ Model {
   }
   System {
     Name		    "Allapotvisszacsatolas"
-    Location		    [-8, -8, 1928, 1048]
-    Open		    off
+    Location		    [-8, -8, 1374, 736]
+    Open		    on
     ModelBrowserVisibility  off
     ModelBrowserWidth	    200
     ScreenColor		    "white"
@@ -1053,17 +1275,9 @@ Model {
     TiledPaperMargins	    [0.500000, 0.500000, 0.500000, 0.500000]
     TiledPageScale	    1
     ShowPageBoundaries	    off
-    ZoomFactor		    "259"
+    ZoomFactor		    "182"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    "96"
-    Block {
-      BlockType		      Constant
-      Name		      "Constant"
-      SID		      "89"
-      Position		      [20, 110, 50, 140]
-      ZOrder		      32
-      Value		      "0"
-    }
+    SIDHighWatermark	    "120"
     Block {
       BlockType		      SubSystem
       Name		      "Kormanyszervo"
@@ -1075,7 +1289,7 @@ Model {
       Variant		      off
       System {
 	Name			"Kormanyszervo"
-	Location		[-8, -8, 1928, 1048]
+	Location		[-8, -8, 1374, 736]
 	Open			off
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
@@ -1087,7 +1301,7 @@ Model {
 	TiledPaperMargins	[1.270000, 1.270000, 1.270000, 1.270000]
 	TiledPageScale		1
 	ShowPageBoundaries	off
-	ZoomFactor		"302"
+	ZoomFactor		"212"
 	Block {
 	  BlockType		  Inport
 	  Name			  "fi_a"
@@ -1102,7 +1316,7 @@ Model {
 	  SID			  "4"
 	  Position		  [680, 165, 725, 195]
 	  ZOrder		  12
-	  Gain			  "4*13/3"
+	  Gain			  "30"
 	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
 	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
 	  SaturateOnIntegerOverflow off
@@ -1114,7 +1328,7 @@ Model {
 	  Ports			  [1, 1]
 	  Position		  [945, 162, 1000, 198]
 	  ZOrder		  17
-	  InitialCondition	  "-0.1"
+	  InitialCondition	  "fi_init"
 	}
 	Block {
 	  BlockType		  Saturate
@@ -1124,8 +1338,8 @@ Model {
 	  Position		  [765, 165, 795, 195]
 	  ZOrder		  13
 	  InputPortMap		  "u0"
-	  UpperLimit		  "13"
-	  LowerLimit		  "-13"
+	  UpperLimit		  "(fi_PWMb-fi_PWMa)*13*pi/(2*fi_m*9)"
+	  LowerLimit		  "-(fi_PWMb-fi_PWMa)*13*pi/(2*fi_m*9)"
 	}
 	Block {
 	  BlockType		  TransferFcn
@@ -1238,7 +1452,7 @@ Model {
       Variant		      off
       System {
 	Name			"Orientacios modell"
-	Location		[-8, -8, 1928, 1048]
+	Location		[-8, -8, 1374, 736]
 	Open			off
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
@@ -1250,12 +1464,12 @@ Model {
 	TiledPaperMargins	[1.270000, 1.270000, 1.270000, 1.270000]
 	TiledPageScale		1
 	ShowPageBoundaries	off
-	ZoomFactor		"247"
+	ZoomFactor		"174"
 	Block {
 	  BlockType		  Inport
 	  Name			  "v"
 	  SID			  "18"
-	  Position		  [20, 68, 50, 82]
+	  Position		  [20, 58, 50, 72]
 	  ZOrder		  -1
 	  IconDisplay		  "Port number"
 	}
@@ -1382,7 +1596,7 @@ Model {
 	  SID			  "70"
 	  Position		  [120, 265, 150, 295]
 	  ZOrder		  21
-	  Gain			  "pi/9"
+	  Gain			  "2*fi_m/(fi_PWMb-fi_PWMa)"
 	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
 	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
 	  SaturateOnIntegerOverflow off
@@ -1408,8 +1622,8 @@ Model {
 	  Position		  [70, 265, 100, 295]
 	  ZOrder		  27
 	  InputPortMap		  "u0"
-	  UpperLimit		  "1"
-	  LowerLimit		  "-1"
+	  UpperLimit		  "2000"
+	  LowerLimit		  "-2000"
 	}
 	Block {
 	  BlockType		  Integrator
@@ -1418,6 +1632,7 @@ Model {
 	  Ports			  [1, 1]
 	  Position		  [575, 265, 605, 295]
 	  ZOrder		  4
+	  InitialCondition	  "delta_init"
 	}
 	Block {
 	  BlockType		  Product
@@ -1440,7 +1655,7 @@ Model {
 	  Ports			  [1, 1]
 	  Position		  [585, 60, 615, 90]
 	  ZOrder		  3
-	  InitialCondition	  "-0.1"
+	  InitialCondition	  "p_init"
 	}
 	Block {
 	  BlockType		  Gain
@@ -1594,15 +1809,14 @@ Model {
 	  SrcPort		  1
 	  Points		  [267, 0]
 	  Branch {
-	    ZOrder		    45
-	    Points		    [0, -10]
-	    DstBlock		    "dp/dt"
+	    ZOrder		    195
+	    Points		    [0, 200]
+	    DstBlock		    "-v"
 	    DstPort		    1
 	  }
 	  Branch {
-	    ZOrder		    39
-	    Points		    [0, 190]
-	    DstBlock		    "-v"
+	    ZOrder		    45
+	    DstBlock		    "dp/dt"
 	    DstPort		    1
 	  }
 	}
@@ -1613,18 +1827,9 @@ Model {
 	  Points		  [17, 0]
 	  Branch {
 	    ZOrder		    110
-	    Points		    [0, 15; 17, 0]
-	    Branch {
-	      ZOrder		      151
-	      Points		      [0, 69; 406, 0]
-	      DstBlock		      "p/(L+d)"
-	      DstPort		      2
-	    }
-	    Branch {
-	      ZOrder		      150
-	      DstBlock		      "(L+d)/L"
-	      DstPort		      2
-	    }
+	    Points		    [0, 15]
+	    DstBlock		    "(L+d)/L"
+	    DstPort		    2
 	  }
 	  Branch {
 	    ZOrder		    109
@@ -1652,9 +1857,19 @@ Model {
 	  }
 	  Branch {
 	    ZOrder		    64
-	    Points		    [0, 104; 133, 0; 0, 61]
-	    DstBlock		    "tan(gamma)/(L+d)"
-	    DstPort		    2
+	    Points		    [0, 104; 133, 0]
+	    Branch {
+	      ZOrder		      192
+	      Points		      [179, 0]
+	      DstBlock		      "p/(L+d)"
+	      DstPort		      2
+	    }
+	    Branch {
+	      ZOrder		      191
+	      Points		      [0, 61]
+	      DstBlock		      "tan(gamma)/(L+d)"
+	      DstPort		      2
+	    }
 	  }
 	}
 	Line {
@@ -1734,22 +1949,6 @@ Model {
 	  DstPort		  1
 	}
 	Line {
-	  ZOrder		  94
-	  SrcBlock		  "leptekezes\nfeloldasa"
-	  SrcPort		  1
-	  Points		  [5, 0]
-	  Branch {
-	    ZOrder		    98
-	    DstBlock		    "rad2deg\n(fi)"
-	    DstPort		    1
-	  }
-	  Branch {
-	    ZOrder		    97
-	    DstBlock		    "tan(fi)"
-	    DstPort		    1
-	  }
-	}
-	Line {
 	  ZOrder		  100
 	  SrcBlock		  "rad2deg\n(fi)"
 	  SrcPort		  1
@@ -1767,56 +1966,72 @@ Model {
 	  ZOrder		  113
 	  SrcBlock		  "tan(fi)"
 	  SrcPort		  1
-	  Points		  [0, -40; 83, 0]
-	  Branch {
-	    ZOrder		    154
-	    Points		    [0, -25]
-	    Branch {
-	      ZOrder		      153
-	      Points		      [0, -85]
-	      DstBlock		      "Sum2"
-	      DstPort		      1
-	    }
-	    Branch {
-	      ZOrder		      148
-	      DstBlock		      "tan(gamma)"
-	      DstPort		      2
-	    }
-	  }
-	  Branch {
-	    ZOrder		    149
-	    Points		    [0, 41; 157, 0]
-	    DstBlock		    "tan(delta)*\n *tan(gamma)"
-	    DstPort		    1
-	  }
-	}
-	Line {
-	  ZOrder		  114
-	  SrcBlock		  "tan(gamma)"
-	  SrcPort		  1
-	  Points		  [28, 0; 0, 58; 66, 0; 0, 72]
-	  DstBlock		  "tan(gamma)/(L+d)"
-	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  142
-	  SrcBlock		  "fi"
-	  SrcPort		  1
-	  DstBlock		  "mechanikai\nkorlat"
-	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  143
-	  SrcBlock		  "mechanikai\nkorlat"
-	  SrcPort		  1
-	  DstBlock		  "leptekezes\nfeloldasa"
-	  DstPort		  1
+	  Points		  [0, -40; 83, 0; 0, -25]
+	  DstBlock		  "tan(gamma)"
+	  DstPort		  2
 	}
 	Line {
 	  ZOrder		  145
 	  SrcBlock		  "rad2deg\n(delta)"
 	  SrcPort		  1
 	  DstBlock		  "delta"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  114
+	  SrcBlock		  "tan(gamma)"
+	  SrcPort		  1
+	  Points		  [28, 0]
+	  Branch {
+	    ZOrder		    198
+	    Points		    [0, 58; 72, 0]
+	    Branch {
+	      ZOrder		      189
+	      DstBlock		      "tan(delta)*\n *tan(gamma)"
+	      DstPort		      1
+	    }
+	    Branch {
+	      ZOrder		      188
+	      Points		      [0, 72]
+	      DstBlock		      "tan(gamma)/(L+d)"
+	      DstPort		      1
+	    }
+	  }
+	  Branch {
+	    ZOrder		    197
+	    Points		    [0, -80]
+	    DstBlock		    "Sum2"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  213
+	  SrcBlock		  "leptekezes\nfeloldasa"
+	  SrcPort		  1
+	  Points		  [5, 0]
+	  Branch {
+	    ZOrder		    215
+	    DstBlock		    "tan(fi)"
+	    DstPort		    1
+	  }
+	  Branch {
+	    ZOrder		    214
+	    DstBlock		    "rad2deg\n(fi)"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  217
+	  SrcBlock		  "fi"
+	  SrcPort		  1
+	  DstBlock		  "mechanikai\nkorlat"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  219
+	  SrcBlock		  "mechanikai\nkorlat"
+	  SrcPort		  1
+	  DstBlock		  "leptekezes\nfeloldasa"
 	  DstPort		  1
 	}
       }
@@ -1862,8 +2077,8 @@ Model {
       Variant		      off
       System {
 	Name			"Szenzor + feldolgozas"
-	Location		[-8, -8, 1928, 1048]
-	Open			on
+	Location		[-8, -8, 1374, 736]
+	Open			off
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
 	ScreenColor		"white"
@@ -1874,12 +2089,12 @@ Model {
 	TiledPaperMargins	[1.270000, 1.270000, 1.270000, 1.270000]
 	TiledPageScale		1
 	ShowPageBoundaries	off
-	ZoomFactor		"247"
+	ZoomFactor		"167"
 	Block {
 	  BlockType		  Inport
 	  Name			  "delta"
 	  SID			  "40"
-	  Position		  [605, 43, 635, 57]
+	  Position		  [715, 68, 745, 82]
 	  ZOrder		  -1
 	  BlockMirror		  on
 	  IconDisplay		  "Port number"
@@ -1888,72 +2103,53 @@ Model {
 	  BlockType		  Inport
 	  Name			  "p"
 	  SID			  "43"
-	  Position		  [615, 258, 645, 272]
+	  Position		  [715, 283, 745, 297]
 	  ZOrder		  2
 	  BlockMirror		  on
 	  Port			  "2"
 	  IconDisplay		  "Port number"
 	}
 	Block {
-	  BlockType		  Product
-	  Name			  "(p_1s+p_2s)/\n/L_sensor"
-	  SID			  "54"
-	  Ports			  [2, 1]
-	  Position		  [505, 112, 535, 143]
-	  ZOrder		  13
-	  BlockMirror		  on
-	  Inputs		  "*/"
-	  InputSameDT		  off
-	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
-	  RndMeth		  "Floor"
-	  SaturateOnIntegerOverflow off
-	}
-	Block {
-	  BlockType		  UnaryMinus
-	  Name			  "-delta(delta_s)"
-	  SID			  "87"
-	  Position		  [635, 65, 665, 95]
-	  ZOrder		  23
-	  BlockMirror		  on
-	}
-	Block {
-	  BlockType		  UnaryMinus
-	  Name			  "-delta(p_s)"
-	  SID			  "88"
-	  Position		  [635, 280, 665, 310]
-	  ZOrder		  24
-	  BlockMirror		  on
-	}
-	Block {
-	  BlockType		  Constant
-	  Name			  "Constant"
-	  SID			  "90"
-	  Position		  [445, 180, 475, 210]
-	  ZOrder		  25
-	  BlockMirror		  on
-	  Value			  "pi/4"
-	  VectorParams1D	  off
-	}
-	Block {
-	  BlockType		  Constant
-	  Name			  "Constant1"
-	  SID			  "91"
-	  Position		  [445, 305, 475, 335]
-	  ZOrder		  26
-	  BlockMirror		  on
-	  Value			  "1.5"
-	}
-	Block {
 	  BlockType		  Sum
-	  Name			  "Sum"
-	  SID			  "53"
+	  Name			  "Sum1"
+	  SID			  "115"
 	  Ports			  [2, 1]
-	  Position		  [595, 110, 615, 130]
-	  ZOrder		  12
+	  Position		  [485, 65, 505, 85]
+	  ZOrder		  46
 	  BlockMirror		  on
 	  ShowName		  off
 	  IconShape		  "round"
-	  Inputs		  "|++"
+	  Inputs		  "|-+"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum2"
+	  SID			  "116"
+	  Ports			  [2, 1]
+	  Position		  [435, 65, 455, 85]
+	  ZOrder		  47
+	  BlockMirror		  on
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|+-"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum3"
+	  SID			  "119"
+	  Ports			  [2, 1]
+	  Position		  [325, 65, 345, 85]
+	  ZOrder		  50
+	  BlockMirror		  on
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|-+"
 	  InputSameDT		  off
 	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
 	  SaturateOnIntegerOverflow off
@@ -1962,44 +2158,26 @@ Model {
 	  BlockType		  ZeroOrderHold
 	  Name			  "T_delta"
 	  SID			  "46"
-	  Position		  [250, 60, 285, 90]
+	  Position		  [85, 60, 120, 90]
 	  ZOrder		  5
 	  BlockMirror		  on
-	  SampleTime		  "0.5"
+	  SampleTime		  "T_delta"
 	}
 	Block {
 	  BlockType		  ZeroOrderHold
 	  Name			  "T_p"
 	  SID			  "47"
-	  Position		  [250, 275, 285, 305]
+	  Position		  [85, 275, 120, 305]
 	  ZOrder		  6
 	  BlockMirror		  on
-	  SampleTime		  "0.5"
-	}
-	Block {
-	  BlockType		  Constant
-	  Name			  "abs(max_pozicio)\nelso szenzorsor"
-	  SID			  "76"
-	  Position		  [700, 165, 730, 195]
-	  ZOrder		  18
-	  BlockMirror		  on
-	  Value			  "p_1s"
-	}
-	Block {
-	  BlockType		  Constant
-	  Name			  "abs(max_pozicio)\nmasodik szenzorsor"
-	  SID			  "75"
-	  Position		  [700, 105, 730, 135]
-	  ZOrder		  17
-	  BlockMirror		  on
-	  Value			  "p_2s"
+	  SampleTime		  "T_p"
 	}
 	Block {
 	  BlockType		  Gain
 	  Name			  "deg2rad"
-	  SID			  "96"
-	  Position		  [555, 35, 585, 65]
-	  ZOrder		  29
+	  SID			  "111"
+	  Position		  [655, 60, 685, 90]
+	  ZOrder		  42
 	  BlockMirror		  on
 	  Gain			  "pi/180"
 	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
@@ -2007,119 +2185,103 @@ Model {
 	  SaturateOnIntegerOverflow off
 	}
 	Block {
-	  BlockType		  Trigonometry
-	  Name			  "delta(delta_s)"
-	  SID			  "55"
+	  BlockType		  Lookup_n-D
+	  Name			  "leptekezes\n(delta)"
+	  SID			  "106"
 	  Ports			  [1, 1]
-	  Position		  [445, 115, 475, 145]
-	  ZOrder		  14
+	  Position		  [155, 43, 220, 107]
+	  ZOrder		  37
 	  BlockMirror		  on
-	  Operator		  "atan"
+	  NumberOfTableDimensions "1"
+	  BreakpointsForDimension1 "[100-2400:3200-100]"
+	  Table			  "L*(fi_PWMb-fi_PWMa)*atan((2*p_1s*[100-2400:3200-100]/(p_1TCRTb-p_1TCRTa)-p_1s+p_2s)/L_sensor)/(2*fi_m*(L"
+	  "+d))"
+	  InterpMethod		  "Nearest"
+	  InternalRulePriority	  "Speed"
+	  RndMeth		  "Simplest"
 	}
 	Block {
-	  BlockType		  Saturate
-	  Name			  "delta_meas_sat"
-	  SID			  "93"
+	  BlockType		  Lookup_n-D
+	  Name			  "leptekezes\n(p)"
+	  SID			  "107"
 	  Ports			  [1, 1]
-	  Position		  [320, 60, 350, 90]
-	  ZOrder		  27
+	  Position		  [155, 258, 220, 322]
+	  ZOrder		  38
 	  BlockMirror		  on
-	  InputPortMap		  "u0"
-	  UpperLimit		  "1"
-	  LowerLimit		  "-1"
+	  NumberOfTableDimensions "1"
+	  BreakpointsForDimension1 "[100:3200]"
+	  Table			  "L*(fi_PWMb-fi_PWMa)*p_1s*(2*[100:3200]-p_1TCRTb-p_1TCRTa)/(2*fi_m*(L+d)*(p_1TCRTb-p_1TCRTa))"
+	  InterpMethod		  "Nearest"
+	  InternalRulePriority	  "Speed"
+	  RndMeth		  "Simplest"
+	}
+	Block {
+	  BlockType		  Lookup_n-D
+	  Name			  "meres\n(p_1)"
+	  SID			  "109"
+	  Ports			  [1, 1]
+	  Position		  [575, 258, 640, 322]
+	  ZOrder		  40
+	  BlockMirror		  on
+	  NumberOfTableDimensions "1"
+	  BreakpointsForDimension1 "[-p_1s:2*p_1s/(p_1TCRTb-p_1TCRTa):p_1s]"
+	  Table			  "round([-p_1s:2*p_1s/(p_1TCRTb-p_1TCRTa):p_1s]*(p_1TCRTb-p_1TCRTa)/(2*p_1s)+(p_1TCRTb+p_1TCRTa)/2)"
+	  InterpMethod		  "Nearest"
+	  InternalRulePriority	  "Speed"
+	  RndMeth		  "Simplest"
+	}
+	Block {
+	  BlockType		  Quantizer
+	  Name			  "meres\n(p_2)"
+	  SID			  "120"
+	  Position		  [375, 60, 405, 90]
+	  ZOrder		  51
+	  BlockMirror		  on
+	  QuantizationInterval	  "1"
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "p_2TCRT\n(delta)"
+	  SID			  "114"
+	  Position		  [535, 60, 565, 90]
+	  ZOrder		  45
+	  BlockMirror		  on
+	  Gain			  "L_sensor*(p_2TCRTb-p_2TCRTa)/(2*p_2s)"
+	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
 	}
 	Block {
 	  BlockType		  Constant
-	  Name			  "ket szenzorsor\nkozotti tavolsag"
-	  SID			  "77"
-	  Position		  [700, 225, 730, 255]
-	  ZOrder		  19
-	  BlockMirror		  on
-	  Value			  "L_sensor"
+	  Name			  "p_2TCRT\n(konstans)"
+	  SID			  "118"
+	  Position		  [430, 165, 460, 195]
+	  ZOrder		  49
+	  BlockRotation		  270
+	  NamePlacement		  "alternate"
+	  Value			  "(p_1s-p_2s)*(p_2TCRTb-p_2TCRTa)/(2*p_2s)"
 	}
 	Block {
-	  BlockType		  Product
-	  Name			  "leptekezes\n(delta)"
-	  SID			  "56"
-	  Ports			  [2, 1]
-	  Position		  [385, 57, 415, 88]
-	  ZOrder		  15
-	  BlockMirror		  on
-	  Inputs		  "*/"
-	  InputSameDT		  off
+	  BlockType		  Gain
+	  Name			  "p_2TCRT\n(p_1TCRT)"
+	  SID			  "96"
+	  Position		  [480, 165, 510, 195]
+	  ZOrder		  29
+	  BlockRotation		  270
+	  Gain			  "p_1s*(p_2TCRTb-p_2TCRTa)/(p_2s*(p_1TCRTb-p_1TCRTa))"
+	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
 	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
-	  RndMeth		  "Floor"
 	  SaturateOnIntegerOverflow off
 	}
 	Block {
-	  BlockType		  Product
-	  Name			  "leptekezes\n(p)"
-	  SID			  "57"
-	  Ports			  [2, 1]
-	  Position		  [385, 272, 415, 303]
-	  ZOrder		  16
-	  BlockMirror		  on
-	  Inputs		  "*/"
-	  InputSameDT		  off
-	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
-	  RndMeth		  "Floor"
-	  SaturateOnIntegerOverflow off
-	}
-	Block {
-	  BlockType		  Reference
-	  Name			  "merheto\norientaciok"
-	  SID			  "85"
-	  Ports			  [3, 1]
-	  Position		  [445, 45, 525, 85]
-	  ZOrder		  21
-	  BlockMirror		  on
-	  LibraryVersion	  "1.386"
-	  SourceBlock		  "simulink/Discontinuities/Saturation\nDynamic"
-	  SourceType		  "Saturation Dynamic"
-	  ContentPreviewEnabled	  off
-	  OutMin		  "[]"
-	  OutMax		  "[]"
-	  OutDataTypeStr	  "Inherit: Same as second input"
-	  OutputDataTypeScalingMode "Same as second input"
-	  OutDataType		  "fixdt(1, 16)"
-	  OutScaling		  "2^-10"
-	  LockScale		  off
-	  RndMeth		  "Floor"
-	  DoSatur		  off
-	}
-	Block {
-	  BlockType		  Reference
-	  Name			  "merheto\npoziciok"
-	  SID			  "86"
-	  Ports			  [3, 1]
-	  Position		  [505, 260, 585, 300]
-	  ZOrder		  22
-	  BlockMirror		  on
-	  LibraryVersion	  "1.386"
-	  SourceBlock		  "simulink/Discontinuities/Saturation\nDynamic"
-	  SourceType		  "Saturation Dynamic"
-	  ContentPreviewEnabled	  off
-	  OutMin		  "[]"
-	  OutMax		  "[]"
-	  OutDataTypeStr	  "Inherit: Same as second input"
-	  OutputDataTypeScalingMode "Same as second input"
-	  OutDataType		  "fixdt(1, 16)"
-	  OutScaling		  "2^-10"
-	  LockScale		  off
-	  RndMeth		  "Floor"
-	  DoSatur		  off
-	}
-	Block {
-	  BlockType		  Saturate
-	  Name			  "p_meas_sat"
-	  SID			  "94"
+	  BlockType		  Trigonometry
+	  Name			  "tan(delta)"
+	  SID			  "113"
 	  Ports			  [1, 1]
-	  Position		  [320, 275, 350, 305]
-	  ZOrder		  28
+	  Position		  [595, 60, 625, 90]
+	  ZOrder		  44
 	  BlockMirror		  on
-	  InputPortMap		  "u0"
-	  UpperLimit		  "1"
-	  LowerLimit		  "-1"
+	  Operator		  "tan"
 	}
 	Block {
 	  BlockType		  Outport
@@ -2141,160 +2303,133 @@ Model {
 	  IconDisplay		  "Port number"
 	}
 	Line {
-	  ZOrder		  14
-	  SrcBlock		  "Sum"
-	  SrcPort		  1
-	  DstBlock		  "(p_1s+p_2s)/\n/L_sensor"
-	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  42
-	  SrcBlock		  "ket szenzorsor\nkozotti tavolsag"
-	  SrcPort		  1
-	  Points		  [-145, 0]
-	  DstBlock		  "(p_1s+p_2s)/\n/L_sensor"
-	  DstPort		  2
-	}
-	Line {
-	  ZOrder		  19
-	  SrcBlock		  "(p_1s+p_2s)/\n/L_sensor"
-	  SrcPort		  1
-	  DstBlock		  "delta(delta_s)"
-	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  22
-	  SrcBlock		  "delta(delta_s)"
-	  SrcPort		  1
-	  Points		  [-5, 0; 0, -99; 109, 0]
-	  Branch {
-	    ZOrder		    56
-	    Points		    [136, 0]
-	    DstBlock		    "-delta(delta_s)"
-	    DstPort		    1
-	  }
-	  Branch {
-	    ZOrder		    52
-	    Points		    [0, 19]
-	    DstBlock		    "merheto\norientaciok"
-	    DstPort		    1
-	  }
-	}
-	Line {
-	  ZOrder		  37
-	  SrcBlock		  "abs(max_pozicio)\nmasodik szenzorsor"
-	  SrcPort		  1
-	  DstBlock		  "Sum"
-	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  54
-	  SrcBlock		  "-delta(delta_s)"
-	  SrcPort		  1
-	  DstBlock		  "merheto\norientaciok"
-	  DstPort		  3
-	}
-	Line {
-	  ZOrder		  73
-	  SrcBlock		  "-delta(p_s)"
-	  SrcPort		  1
-	  DstBlock		  "merheto\npoziciok"
-	  DstPort		  3
-	}
-	Line {
-	  ZOrder		  41
-	  SrcBlock		  "abs(max_pozicio)\nelso szenzorsor"
-	  SrcPort		  1
-	  Points		  [-90, 0]
-	  Branch {
-	    ZOrder		    77
-	    DstBlock		    "Sum"
-	    DstPort		    2
-	  }
-	  Branch {
-	    ZOrder		    30
-	    Points		    [0, 66]
-	    Branch {
-	      ZOrder		      76
-	      Points		      [0, 19]
-	      DstBlock		      "merheto\npoziciok"
-	      DstPort		      1
-	    }
-	    Branch {
-	      ZOrder		      75
-	      Points		      [74, 0; 0, 49]
-	      DstBlock		      "-delta(p_s)"
-	      DstPort		      1
-	    }
-	  }
-	}
-	Line {
-	  ZOrder		  86
-	  SrcBlock		  "p"
-	  SrcPort		  1
-	  Points		  [0, -10; -172, 0; 0, 25]
-	  DstBlock		  "leptekezes\n(p)"
-	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  87
-	  SrcBlock		  "Constant1"
-	  SrcPort		  1
-	  Points		  [0, -25]
-	  DstBlock		  "leptekezes\n(p)"
-	  DstPort		  2
-	}
-	Line {
-	  ZOrder		  88
-	  SrcBlock		  "Constant"
-	  SrcPort		  1
-	  Points		  [-13, 0; 0, -115]
-	  DstBlock		  "leptekezes\n(delta)"
-	  DstPort		  2
-	}
-	Line {
-	  ZOrder		  90
-	  SrcBlock		  "leptekezes\n(delta)"
-	  SrcPort		  1
-	  DstBlock		  "delta_meas_sat"
-	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  92
+	  ZOrder		  173
 	  SrcBlock		  "leptekezes\n(p)"
 	  SrcPort		  1
-	  DstBlock		  "p_meas_sat"
+	  DstBlock		  "T_p"
 	  DstPort		  1
 	}
 	Line {
-	  ZOrder		  95
+	  ZOrder		  166
+	  SrcBlock		  "T_p"
+	  SrcPort		  1
+	  DstBlock		  "p_meas"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  194
+	  SrcBlock		  "leptekezes\n(delta)"
+	  SrcPort		  1
+	  DstBlock		  "T_delta"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  168
+	  SrcBlock		  "T_delta"
+	  SrcPort		  1
+	  DstBlock		  "delta_meas"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  176
+	  SrcBlock		  "p"
+	  SrcPort		  1
+	  DstBlock		  "meres\n(p_1)"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  177
+	  SrcBlock		  "meres\n(p_1)"
+	  SrcPort		  1
+	  Points		  [-75, 0]
+	  Branch {
+	    ZOrder		    199
+	    Points		    [-160, 0]
+	    Branch {
+	      ZOrder		      203
+	      DstBlock		      "leptekezes\n(p)"
+	      DstPort		      1
+	    }
+	    Branch {
+	      ZOrder		      193
+	      DstBlock		      "Sum3"
+	      DstPort		      2
+	    }
+	  }
+	  Branch {
+	    ZOrder		    183
+	    DstBlock		    "p_2TCRT\n(p_1TCRT)"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  178
 	  SrcBlock		  "delta"
 	  SrcPort		  1
 	  DstBlock		  "deg2rad"
 	  DstPort		  1
 	}
 	Line {
-	  ZOrder		  98
+	  ZOrder		  180
 	  SrcBlock		  "deg2rad"
 	  SrcPort		  1
-	  Points		  [0, -12; -110, 0; 0, 27]
+	  DstBlock		  "tan(delta)"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  181
+	  SrcBlock		  "tan(delta)"
+	  SrcPort		  1
+	  DstBlock		  "p_2TCRT\n(delta)"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  186
+	  SrcBlock		  "Sum1"
+	  SrcPort		  1
+	  DstBlock		  "Sum2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  187
+	  SrcBlock		  "p_2TCRT\n(konstans)"
+	  SrcPort		  1
+	  DstBlock		  "Sum2"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  188
+	  SrcBlock		  "p_2TCRT\n(delta)"
+	  SrcPort		  1
+	  DstBlock		  "Sum1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  189
+	  SrcBlock		  "p_2TCRT\n(p_1TCRT)"
+	  SrcPort		  1
+	  DstBlock		  "Sum1"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  190
+	  SrcBlock		  "Sum3"
+	  SrcPort		  1
 	  DstBlock		  "leptekezes\n(delta)"
 	  DstPort		  1
 	}
 	Line {
-	  ZOrder		  104
-	  SrcBlock		  "delta_meas_sat"
+	  ZOrder		  195
+	  SrcBlock		  "meres\n(p_2)"
 	  SrcPort		  1
-	  Points		  [-12, 0; 0, -20; -153, 0; 0, 20]
-	  DstBlock		  "delta_meas"
+	  DstBlock		  "Sum3"
 	  DstPort		  1
 	}
 	Line {
-	  ZOrder		  105
-	  SrcBlock		  "p_meas_sat"
+	  ZOrder		  196
+	  SrcBlock		  "Sum2"
 	  SrcPort		  1
-	  Points		  [-12, 0; 0, -20; -153, 0; 0, 20]
-	  DstBlock		  "p_meas"
+	  DstBlock		  "meres\n(p_2)"
 	  DstPort		  1
 	}
       }
@@ -2334,7 +2469,7 @@ Model {
       Position		      [180, 180, 215, 210]
       ZOrder		      31
       BlockMirror	      on
-      SampleTime	      "0.1"
+      SampleTime	      "T_PWM"
     }
     Block {
       BlockType		      FromWorkspace
@@ -2343,8 +2478,10 @@ Model {
       Position		      [20, 63, 45, 87]
       ZOrder		      16
       VariableName	      "p_a"
-      SampleTime	      "0.0001"
+      SampleTime	      "T_p_a"
+      Interpolate	      off
       ZeroCross		      on
+      OutputAfterFinalValue   "Holding final value"
     }
     Block {
       BlockType		      Gain
@@ -2382,12 +2519,16 @@ Model {
       SaturateOnIntegerOverflow	off
     }
     Block {
-      BlockType		      Constant
+      BlockType		      FromWorkspace
       Name		      "v"
-      SID		      "78"
-      Position		      [320, 10, 350, 40]
-      ZOrder		      27
-      Value		      "v"
+      SID		      "102"
+      Position		      [320, 13, 345, 37]
+      ZOrder		      34
+      VariableName	      "v"
+      SampleTime	      "T_v"
+      Interpolate	      off
+      ZeroCross		      on
+      OutputAfterFinalValue   "Holding final value"
     }
     Line {
       ZOrder		      5
@@ -2397,18 +2538,11 @@ Model {
       DstPort		      1
     }
     Line {
-      ZOrder		      36
+      ZOrder		      63
       SrcBlock		      "v"
       SrcPort		      1
       DstBlock		      "Orientacios modell"
       DstPort		      1
-    }
-    Line {
-      ZOrder		      7
-      SrcBlock		      "Kormanyszervo"
-      SrcPort		      1
-      DstBlock		      "Orientacios modell"
-      DstPort		      2
     }
     Line {
       ZOrder		      8
@@ -2481,14 +2615,6 @@ Model {
       DstPort		      1
     }
     Line {
-      ZOrder		      50
-      SrcBlock		      "Constant"
-      SrcPort		      1
-      Points		      [9, 0; 0, -50]
-      DstBlock		      "k_p1"
-      DstPort		      1
-    }
-    Line {
       ZOrder		      51
       SrcBlock		      "Sum1"
       SrcPort		      1
@@ -2502,6 +2628,20 @@ Model {
       Points		      [-20, 0]
       DstBlock		      "Sum"
       DstPort		      2
+    }
+    Line {
+      ZOrder		      62
+      SrcBlock		      "Kormanyszervo"
+      SrcPort		      1
+      DstBlock		      "Orientacios modell"
+      DstPort		      2
+    }
+    Line {
+      ZOrder		      64
+      SrcBlock		      "alapjel"
+      SrcPort		      1
+      DstBlock		      "k_p1"
+      DstPort		      1
     }
   }
 }
