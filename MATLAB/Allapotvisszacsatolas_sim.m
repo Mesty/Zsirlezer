@@ -3,6 +3,15 @@
 
 % A valtozoneveket atirni nem szabad, a Simulink modell ezeket hasznalja
 
+%% Workspace kiuritese
+clear T_H T_M fi_m m s_s
+clear L D p_1s p_2s L_sensor
+clear kszi a b
+clear T_p_a T_v T_delta T_p T_PWM p_1TCRTa p_1TCRTb p_2TCRTa p_2TCRTb fi_PWMa fi_PWMb
+clear p_init delta_init fi_init
+clear T_sim p_a v
+clear tout dout p delta fi
+
 %% Parameterek (valtozoneveket atirni nem szabad, csak az ertekeket)
 
 % Kormanyszervo parameterezese (jelenleg tanszeki modell alapjan)
@@ -23,7 +32,7 @@ L_sensor = 0.13; % Ket szenzorsor tavolsaga egymastol [m]
 kszi = 0.9; % Csillapitasi tenyezo
 % d_5s 5%-os beallasi ut
 % d_5s = a*v+b, ahol v sebesseg, a[s] meredekseg, b[m] konstans
-a = 0.9; % d_5s meredeksege [s]
+a = 0.5; % d_5s meredeksege [s]
 b = 0.5; % d_5s 0 sebesseghez tartozo erteke [m]
 
 % Szoftver (kvantalas) parameterei
@@ -36,18 +45,18 @@ p_1TCRTa = 100; % Elso szenzorsor minimalis erteke
 p_1TCRTb = 3200; % Elso szenzorsor maximalis erteke
 p_2TCRTa = 100; % Hatso szenzorsor minimalis erteke
 p_2TCRTb = 2400; % Hatso szenzorsor maximalis erteke
-fi_PWMa = 5000; % Legkisebb szoghoz tartozo PWM pulse
-fi_PWMb = 9000; % Legnagyobb szoghoz tartozo PWM pulse
+fi_PWMa = 7800; % Legkisebb szoghoz tartozo PWM pulse
+fi_PWMb = 5800; % Legnagyobb szoghoz tartozo PWM pulse
 
 % Kezdeti feltetelek
 p_init = -0.1; % Kezdeti vonalpozicio [m]
-d_init = 0; % Kezdeti vonalorientacio [fok]
+delta_init = 0; % Kezdeti vonalorientacio [fok]
 fi_init = 0; % Kezdeti kormanyszog [fok]
 
 % Szimulacio parameterei
 T_sim = 3; % Szimulacios ido [s]
-p_a = timeseries(zeros(1,T_sim/T_p_a)); % Pozicio alapjel-ido fuggveny
-v = timeseries(5*ones(1,T_sim/T_v)); % Sebesseg-ido fuggveny
+p_a = 0; % Pozicio alapjel [m]
+v = 5; % Sebesseg [m/s]
 
 %% Innentol a programkodot modositani nem szabad
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -57,9 +66,14 @@ v = timeseries(5*ones(1,T_sim/T_v)); % Sebesseg-ido fuggveny
 fi_m = deg2rad(fi_m);
 m = deg2rad(m);
 s_s = deg2rad(s_s);
-d_init = deg2rad(d_init);
+delta_init = deg2rad(delta_init);
 % Mertekegysegek konvertalasa (fok -> PWM leptek)
 fi_init = pi*fi_init*(fi_PWMb-fi_PWMa)/(360*fi_m);
+% Beallasi uthossz szamitasa
+d_5s = a*v+b;
+% Szabalyozo parameterek szamitasa
+k_p = -9*(L+d)/(kszi^2*d_5s^2);
+k_delta = (L+d)/(kszi^2*d_5s^2)*(9*(L+d)-6*kszi^2*d_5s);
 
 sim('Allapotvisszacsatolas');
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
