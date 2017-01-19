@@ -7,7 +7,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.87"
+    ComputedModelVersion    "1.95"
     NumModelReferences	    0
     NumTestPointedSignals   0
     NumProvidedFunctions    0
@@ -68,8 +68,8 @@ Model {
 	ViewObjType		"SimulinkSubsys"
 	LoadSaveID		"39"
 	Extents			[1332.0, 569.0]
-	ZoomFactor		[1.6723338485316845]
-	Offset			[-17.234288354898297, 29.348428835489813]
+	ZoomFactor		[1.7488683989941325]
+	Offset			[-8.6301763803680842, 34.82337998466258]
       }
     }
   }
@@ -79,9 +79,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "Mester Ádám"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Wed Jan 18 17:26:40 2017"
-  RTWModifiedTimeStamp	  406661184
-  ModelVersionFormat	  "1.%<AutoIncrement:87>"
+  LastModifiedDate	  "Thu Jan 19 16:42:07 2017"
+  RTWModifiedTimeStamp	  406744923
+  ModelVersionFormat	  "1.%<AutoIncrement:95>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -753,7 +753,7 @@ Model {
       }
       Name		      "Configuration"
       CurrentDlgPage	      "Solver"
-      ConfigPrmDlgPosition     [ 236, 77, 1131, 628 ] 
+      ConfigPrmDlgPosition     [ -8, -8, 1374, 736 ] 
     }
     PropName		    "ConfigurationSets"
   }
@@ -1268,7 +1268,7 @@ Model {
     ShowPageBoundaries	    off
     ZoomFactor		    "181"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    "126"
+    SIDHighWatermark	    "130"
     Block {
       BlockType		      SubSystem
       Name		      "Kormanyszervo"
@@ -1319,7 +1319,7 @@ Model {
 	  Ports			  [1, 1]
 	  Position		  [945, 162, 1000, 198]
 	  ZOrder		  17
-	  InitialCondition	  "fi_init"
+	  InitialCondition	  "fi_0"
 	}
 	Block {
 	  BlockType		  Saturate
@@ -1329,8 +1329,8 @@ Model {
 	  Position		  [765, 165, 795, 195]
 	  ZOrder		  13
 	  InputPortMap		  "u0"
-	  UpperLimit		  "abs(fi_PWMb-fi_PWMa)*m/(2*fi_m)"
-	  LowerLimit		  "-abs(fi_PWMb-fi_PWMa)*m/(2*fi_m)"
+	  UpperLimit		  "abs(SERVO_BAL-SERVO_JOBB)*m/(2*fi_m)"
+	  LowerLimit		  "-abs(SERVO_BAL-SERVO_JOBB)*m/(2*fi_m)"
 	}
 	Block {
 	  BlockType		  TransferFcn
@@ -1502,7 +1502,7 @@ Model {
 	  ZOrder		  23
 	  VariableName		  "fi"
 	  MaxDataPoints		  "inf"
-	  SaveFormat		  "Timeseries"
+	  SaveFormat		  "Structure With Time"
 	  Save2DSignal		  "3-D array (concatenate along third dimension)"
 	  FixptAsFi		  on
 	  SampleTime		  "-1"
@@ -1587,7 +1587,7 @@ Model {
 	  SID			  "70"
 	  Position		  [120, 265, 150, 295]
 	  ZOrder		  21
-	  Gain			  "2*fi_m/(fi_PWMb-fi_PWMa)"
+	  Gain			  "2*fi_m/(SERVO_BAL-SERVO_JOBB)"
 	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
 	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
 	  SaturateOnIntegerOverflow off
@@ -1613,8 +1613,8 @@ Model {
 	  Position		  [70, 265, 100, 295]
 	  ZOrder		  27
 	  InputPortMap		  "u0"
-	  UpperLimit		  "max(fi_PWMa,fi_PWMb)-(fi_PWMa+fi_PWMb)/2"
-	  LowerLimit		  "min(fi_PWMa,fi_PWMb)-(fi_PWMa+fi_PWMb)/2"
+	  UpperLimit		  "max(SERVO_JOBB,SERVO_BAL)-(SERVO_JOBB+SERVO_BAL)/2"
+	  LowerLimit		  "min(SERVO_JOBB,SERVO_BAL)-(SERVO_JOBB+SERVO_BAL)/2"
 	}
 	Block {
 	  BlockType		  Integrator
@@ -1623,7 +1623,7 @@ Model {
 	  Ports			  [1, 1]
 	  Position		  [575, 265, 605, 295]
 	  ZOrder		  4
-	  InitialCondition	  "delta_init"
+	  InitialCondition	  "delta_0"
 	}
 	Block {
 	  BlockType		  Product
@@ -1646,7 +1646,7 @@ Model {
 	  Ports			  [1, 1]
 	  Position		  [585, 60, 615, 90]
 	  ZOrder		  3
-	  InitialCondition	  "p_init"
+	  InitialCondition	  "p_0"
 	}
 	Block {
 	  BlockType		  Gain
@@ -2080,7 +2080,7 @@ Model {
 	TiledPaperMargins	[1.270000, 1.270000, 1.270000, 1.270000]
 	TiledPageScale		1
 	ShowPageBoundaries	off
-	ZoomFactor		"167"
+	ZoomFactor		"175"
 	Block {
 	  BlockType		  Inport
 	  Name			  "delta"
@@ -2105,7 +2105,7 @@ Model {
 	  Name			  "Sum1"
 	  SID			  "115"
 	  Ports			  [2, 1]
-	  Position		  [485, 65, 505, 85]
+	  Position		  [520, 65, 540, 85]
 	  ZOrder		  46
 	  BlockMirror		  on
 	  ShowName		  off
@@ -2120,7 +2120,7 @@ Model {
 	  Name			  "Sum2"
 	  SID			  "116"
 	  Ports			  [2, 1]
-	  Position		  [435, 65, 455, 85]
+	  Position		  [480, 65, 500, 85]
 	  ZOrder		  47
 	  BlockMirror		  on
 	  ShowName		  off
@@ -2135,7 +2135,7 @@ Model {
 	  Name			  "Sum3"
 	  SID			  "119"
 	  Ports			  [2, 1]
-	  Position		  [325, 65, 345, 85]
+	  Position		  [340, 65, 360, 85]
 	  ZOrder		  50
 	  BlockMirror		  on
 	  ShowName		  off
@@ -2148,18 +2148,18 @@ Model {
 	Block {
 	  BlockType		  ZeroOrderHold
 	  Name			  "T_delta"
-	  SID			  "46"
-	  Position		  [85, 60, 120, 90]
-	  ZOrder		  5
+	  SID			  "129"
+	  Position		  [285, 60, 320, 90]
+	  ZOrder		  58
 	  BlockMirror		  on
 	  SampleTime		  "T_delta"
 	}
 	Block {
 	  BlockType		  ZeroOrderHold
 	  Name			  "T_p"
-	  SID			  "47"
-	  Position		  [85, 275, 120, 305]
-	  ZOrder		  6
+	  SID			  "128"
+	  Position		  [285, 275, 320, 305]
+	  ZOrder		  57
 	  BlockMirror		  on
 	  SampleTime		  "T_p"
 	}
@@ -2173,7 +2173,7 @@ Model {
 	  BlockMirror		  on
 	  VariableName		  "p_meas"
 	  MaxDataPoints		  "inf"
-	  SaveFormat		  "Timeseries"
+	  SaveFormat		  "Structure With Time"
 	  Save2DSignal		  "3-D array (concatenate along third dimension)"
 	  FixptAsFi		  on
 	  SampleTime		  "-1"
@@ -2188,7 +2188,7 @@ Model {
 	  BlockMirror		  on
 	  VariableName		  "delta_meas"
 	  MaxDataPoints		  "inf"
-	  SaveFormat		  "Timeseries"
+	  SaveFormat		  "Structure With Time"
 	  Save2DSignal		  "3-D array (concatenate along third dimension)"
 	  FixptAsFi		  on
 	  SampleTime		  "-1"
@@ -2197,7 +2197,7 @@ Model {
 	  BlockType		  Gain
 	  Name			  "deg2rad"
 	  SID			  "111"
-	  Position		  [655, 60, 685, 90]
+	  Position		  [665, 60, 695, 90]
 	  ZOrder		  42
 	  BlockMirror		  on
 	  Gain			  "pi/180"
@@ -2206,17 +2206,26 @@ Model {
 	  SaturateOnIntegerOverflow off
 	}
 	Block {
+	  BlockType		  Quantizer
+	  Name			  "kvantalas\n(p_2)"
+	  SID			  "120"
+	  Position		  [430, 60, 460, 90]
+	  ZOrder		  51
+	  BlockMirror		  on
+	  QuantizationInterval	  "1"
+	}
+	Block {
 	  BlockType		  Lookup_n-D
 	  Name			  "leptekezes\n(delta)"
 	  SID			  "106"
 	  Ports			  [1, 1]
-	  Position		  [155, 43, 220, 107]
+	  Position		  [120, 43, 185, 107]
 	  ZOrder		  37
 	  BlockMirror		  on
 	  NumberOfTableDimensions "1"
-	  BreakpointsForDimension1 "[100-2400:3200-100]"
-	  Table			  "L*(fi_PWMb-fi_PWMa)*atan((2*p_1s*[100-2400:3200-100]/(p_1TCRTb-p_1TCRTa)-p_1s+p_2s)/L_sensor)/(2*fi_m*(L"
-	  "+d))"
+	  BreakpointsForDimension1 "[p_1TCRTa-p_2TCRTb:p_1TCRTb-p_2TCRTa]"
+	  Table			  "L*(SERVO_BAL-SERVO_JOBB)*atan((2*p_1s*[p_1TCRTa-p_2TCRTb:p_1TCRTb-p_2TCRTa]/(p_1TCRTb-p_1TCRTa)-p_1s+p_2"
+	  "s)/L_sensor)/(2*fi_m*(L+d))"
 	  InterpMethod		  "Nearest"
 	  InternalRulePriority	  "Speed"
 	  RndMeth		  "Simplest"
@@ -2226,12 +2235,13 @@ Model {
 	  Name			  "leptekezes\n(p)"
 	  SID			  "107"
 	  Ports			  [1, 1]
-	  Position		  [155, 258, 220, 322]
+	  Position		  [120, 258, 185, 322]
 	  ZOrder		  38
 	  BlockMirror		  on
 	  NumberOfTableDimensions "1"
-	  BreakpointsForDimension1 "[100:3200]"
-	  Table			  "L*(fi_PWMb-fi_PWMa)*p_1s*(2*[100:3200]-p_1TCRTb-p_1TCRTa)/(2*fi_m*(L+d)*(p_1TCRTb-p_1TCRTa))"
+	  BreakpointsForDimension1 "[p_1TCRTa:p_1TCRTb]"
+	  Table			  "L*(SERVO_BAL-SERVO_JOBB)*p_1s*(2*[p_1TCRTa:p_1TCRTb]-p_1TCRTb-p_1TCRTa)/(2*fi_m*(L+d)*(p_1TCRTb-p_1TCRTa"
+	  "))"
 	  InterpMethod		  "Nearest"
 	  InternalRulePriority	  "Speed"
 	  RndMeth		  "Simplest"
@@ -2241,12 +2251,12 @@ Model {
 	  Name			  "meres\n(delta)"
 	  SID			  "123"
 	  Ports			  [1, 1]
-	  Position		  [240, 108, 305, 172]
+	  Position		  [190, 108, 255, 172]
 	  ZOrder		  52
 	  BlockMirror		  on
 	  NumberOfTableDimensions "1"
-	  BreakpointsForDimension1 "[100-2400:3200-100]"
-	  Table			  "atan((2*p_1s*[100-2400:3200-100]/(p_1TCRTb-p_1TCRTa)-p_1s+p_2s)/L_sensor)"
+	  BreakpointsForDimension1 "[p_1TCRTa-p_2TCRTb:p_1TCRTb-p_2TCRTa]"
+	  Table			  "atan((2*p_1s*[p_1TCRTa-p_2TCRTb:p_1TCRTb-p_2TCRTa]/(p_1TCRTb-p_1TCRTa)-p_1s+p_2s)/L_sensor)"
 	  InterpMethod		  "Nearest"
 	  InternalRulePriority	  "Speed"
 	  RndMeth		  "Simplest"
@@ -2256,12 +2266,12 @@ Model {
 	  Name			  "meres\n(p)"
 	  SID			  "124"
 	  Ports			  [1, 1]
-	  Position		  [155, 163, 220, 227]
+	  Position		  [120, 163, 185, 227]
 	  ZOrder		  53
 	  BlockMirror		  on
 	  NumberOfTableDimensions "1"
-	  BreakpointsForDimension1 "[100:3200]"
-	  Table			  "p_1s*(2*[100:3200]-p_1TCRTb-p_1TCRTa)/(p_1TCRTb-p_1TCRTa)"
+	  BreakpointsForDimension1 "[p_1TCRTa:p_1TCRTb]"
+	  Table			  "p_1s*(2*[p_1TCRTa:p_1TCRTb]-p_1TCRTb-p_1TCRTa)/(p_1TCRTb-p_1TCRTa)"
 	  InterpMethod		  "Nearest"
 	  InternalRulePriority	  "Speed"
 	  RndMeth		  "Simplest"
@@ -2271,7 +2281,7 @@ Model {
 	  Name			  "meres\n(p_1)"
 	  SID			  "109"
 	  Ports			  [1, 1]
-	  Position		  [575, 258, 640, 322]
+	  Position		  [595, 258, 660, 322]
 	  ZOrder		  40
 	  BlockMirror		  on
 	  NumberOfTableDimensions "1"
@@ -2282,19 +2292,22 @@ Model {
 	  RndMeth		  "Simplest"
 	}
 	Block {
-	  BlockType		  Quantizer
+	  BlockType		  Saturate
 	  Name			  "meres\n(p_2)"
-	  SID			  "120"
-	  Position		  [375, 60, 405, 90]
-	  ZOrder		  51
+	  SID			  "130"
+	  Ports			  [1, 1]
+	  Position		  [380, 60, 410, 90]
+	  ZOrder		  59
 	  BlockMirror		  on
-	  QuantizationInterval	  "1"
+	  InputPortMap		  "u0"
+	  UpperLimit		  "max(p_2TCRTa,p_2TCRTb)"
+	  LowerLimit		  "min(p_2TCRTa,p_2TCRTb)"
 	}
 	Block {
 	  BlockType		  Gain
 	  Name			  "p_2TCRT\n(delta)"
 	  SID			  "114"
-	  Position		  [535, 60, 565, 90]
+	  Position		  [560, 60, 590, 90]
 	  ZOrder		  45
 	  BlockMirror		  on
 	  Gain			  "L_sensor*(p_2TCRTb-p_2TCRTa)/(2*p_2s)"
@@ -2306,7 +2319,7 @@ Model {
 	  BlockType		  Constant
 	  Name			  "p_2TCRT\n(konstans)"
 	  SID			  "118"
-	  Position		  [430, 165, 460, 195]
+	  Position		  [475, 165, 505, 195]
 	  ZOrder		  49
 	  BlockRotation		  270
 	  NamePlacement		  "alternate"
@@ -2316,10 +2329,22 @@ Model {
 	  BlockType		  Gain
 	  Name			  "p_2TCRT\n(p_1TCRT)"
 	  SID			  "96"
-	  Position		  [480, 165, 510, 195]
+	  Position		  [515, 165, 545, 195]
 	  ZOrder		  29
 	  BlockRotation		  270
 	  Gain			  "p_1s*(p_2TCRTb-p_2TCRTa)/(p_2s*(p_1TCRTb-p_1TCRTa))"
+	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "rad2deg"
+	  SID			  "127"
+	  Position		  [85, 125, 115, 155]
+	  ZOrder		  56
+	  BlockMirror		  on
+	  Gain			  "180/pi"
 	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
 	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
 	  SaturateOnIntegerOverflow off
@@ -2329,7 +2354,7 @@ Model {
 	  Name			  "tan(delta)"
 	  SID			  "113"
 	  Ports			  [1, 1]
-	  Position		  [595, 60, 625, 90]
+	  Position		  [615, 60, 645, 90]
 	  ZOrder		  44
 	  BlockMirror		  on
 	  Operator		  "tan"
@@ -2354,29 +2379,15 @@ Model {
 	  IconDisplay		  "Port number"
 	}
 	Line {
-	  ZOrder		  173
+	  ZOrder		  222
 	  SrcBlock		  "leptekezes\n(p)"
-	  SrcPort		  1
-	  DstBlock		  "T_p"
-	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  166
-	  SrcBlock		  "T_p"
 	  SrcPort		  1
 	  DstBlock		  "p_meas"
 	  DstPort		  1
 	}
 	Line {
-	  ZOrder		  194
+	  ZOrder		  223
 	  SrcBlock		  "leptekezes\n(delta)"
-	  SrcPort		  1
-	  DstBlock		  "T_delta"
-	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  168
-	  SrcBlock		  "T_delta"
 	  SrcPort		  1
 	  DstBlock		  "delta_meas"
 	  DstPort		  1
@@ -2392,32 +2403,23 @@ Model {
 	  ZOrder		  177
 	  SrcBlock		  "meres\n(p_1)"
 	  SrcPort		  1
-	  Points		  [-75, 0]
+	  Points		  [-60, 0]
 	  Branch {
-	    ZOrder		    199
-	    Points		    [-160, 0]
+	    ZOrder		    248
+	    Points		    [-180, 0]
 	    Branch {
-	      ZOrder		      193
-	      Points		      [-100, 0]
-	      Branch {
-		ZOrder			203
-		DstBlock		"leptekezes\n(p)"
-		DstPort			1
-	      }
-	      Branch {
-		ZOrder			209
-		DstBlock		"meres\n(p)"
-		DstPort			1
-	      }
+	      ZOrder		      241
+	      DstBlock		      "T_p"
+	      DstPort		      1
 	    }
 	    Branch {
-	      ZOrder		      210
+	      ZOrder		      227
 	      DstBlock		      "Sum3"
 	      DstPort		      2
 	    }
 	  }
 	  Branch {
-	    ZOrder		    183
+	    ZOrder		    239
 	    DstBlock		    "p_2TCRT\n(p_1TCRT)"
 	    DstPort		    1
 	  }
@@ -2472,41 +2474,10 @@ Model {
 	  DstPort		  2
 	}
 	Line {
-	  ZOrder		  190
-	  SrcBlock		  "Sum3"
-	  SrcPort		  1
-	  Points		  [-5, 0]
-	  Branch {
-	    ZOrder		    212
-	    DstBlock		    "leptekezes\n(delta)"
-	    DstPort		    1
-	  }
-	  Branch {
-	    ZOrder		    205
-	    Points		    [0, 65]
-	    DstBlock		    "meres\n(delta)"
-	    DstPort		    1
-	  }
-	}
-	Line {
-	  ZOrder		  195
-	  SrcBlock		  "meres\n(p_2)"
-	  SrcPort		  1
-	  DstBlock		  "Sum3"
-	  DstPort		  1
-	}
-	Line {
 	  ZOrder		  196
 	  SrcBlock		  "Sum2"
 	  SrcPort		  1
-	  DstBlock		  "meres\n(p_2)"
-	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  219
-	  SrcBlock		  "meres\n(delta)"
-	  SrcPort		  1
-	  DstBlock		  "To Workspace2"
+	  DstBlock		  "kvantalas\n(p_2)"
 	  DstPort		  1
 	}
 	Line {
@@ -2514,6 +2485,75 @@ Model {
 	  SrcBlock		  "meres\n(p)"
 	  SrcPort		  1
 	  DstBlock		  "To Workspace1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  220
+	  SrcBlock		  "rad2deg"
+	  SrcPort		  1
+	  DstBlock		  "To Workspace2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  221
+	  SrcBlock		  "meres\n(delta)"
+	  SrcPort		  1
+	  DstBlock		  "rad2deg"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  226
+	  SrcBlock		  "T_p"
+	  SrcPort		  1
+	  Points		  [-77, 0]
+	  Branch {
+	    ZOrder		    246
+	    DstBlock		    "leptekezes\n(p)"
+	    DstPort		    1
+	  }
+	  Branch {
+	    ZOrder		    231
+	    Points		    [0, -95]
+	    DstBlock		    "meres\n(p)"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  232
+	  SrcBlock		  "Sum3"
+	  SrcPort		  1
+	  DstBlock		  "T_delta"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  233
+	  SrcBlock		  "T_delta"
+	  SrcPort		  1
+	  Points		  [-8, 0]
+	  Branch {
+	    ZOrder		    245
+	    DstBlock		    "leptekezes\n(delta)"
+	    DstPort		    1
+	  }
+	  Branch {
+	    ZOrder		    234
+	    Points		    [0, 65]
+	    DstBlock		    "meres\n(delta)"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  249
+	  SrcBlock		  "meres\n(p_2)"
+	  SrcPort		  1
+	  DstBlock		  "Sum3"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  250
+	  SrcBlock		  "kvantalas\n(p_2)"
+	  SrcPort		  1
+	  DstBlock		  "meres\n(p_2)"
 	  DstPort		  1
 	}
       }
@@ -2527,7 +2567,7 @@ Model {
       ZOrder		      24
       VariableName	      "p"
       MaxDataPoints	      "inf"
-      SaveFormat	      "Timeseries"
+      SaveFormat	      "Structure With Time"
       Save2DSignal	      "3-D array (concatenate along third dimension)"
       FixptAsFi		      on
       SampleTime	      "-1"
@@ -2541,7 +2581,7 @@ Model {
       ZOrder		      25
       VariableName	      "delta"
       MaxDataPoints	      "inf"
-      SaveFormat	      "Timeseries"
+      SaveFormat	      "Structure With Time"
       Save2DSignal	      "3-D array (concatenate along third dimension)"
       FixptAsFi		      on
       SampleTime	      "-1"
