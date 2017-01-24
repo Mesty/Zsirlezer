@@ -4,6 +4,7 @@
 % A valtozoneveket atirni nem szabad, a Simulink modell ezeket hasznalja
 
 %% Workspace kiuritese
+
 clear T_H T_M fi_m m s_s
 clear L D p_1s p_2s L_sensor
 clear kszi a b
