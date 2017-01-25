@@ -7,7 +7,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.13"
+    ComputedModelVersion    "1.17"
     NumModelReferences	    0
     NumTestPointedSignals   0
     NumProvidedFunctions    0
@@ -32,7 +32,7 @@ Model {
       $ObjectID		      2
       $ClassName	      "Simulink.WindowInfo"
       IsActive		      [1]
-      Location		      [-8.0, -8.0, 1382.0, 744.0]
+      Location		      [-8.0, 0.0, 1382.0, 744.0]
       Object {
 	$PropName		"ModelBrowserInfo"
 	$ObjectID		3
@@ -68,9 +68,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "Mester Ádám"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Tue Jan 24 23:02:42 2017"
-  RTWModifiedTimeStamp	  407199185
-  ModelVersionFormat	  "1.%<AutoIncrement:13>"
+  LastModifiedDate	  "Wed Jan 25 12:08:27 2017"
+  RTWModifiedTimeStamp	  407246905
+  ModelVersionFormat	  "1.%<AutoIncrement:17>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -171,7 +171,7 @@ Model {
 	  $ObjectID		  8
 	  Version		  "1.16.2"
 	  StartTime		  "0.0"
-	  StopTime		  "179.9"
+	  StopTime		  "179.99"
 	  AbsTol		  "auto"
 	  FixedStep		  "auto"
 	  InitialStep		  "auto"
@@ -1107,7 +1107,7 @@ Model {
   }
   System {
     Name		    "untitled"
-    Location		    [-8, -8, 1374, 736]
+    Location		    [-8, 0, 1374, 744]
     Open		    on
     ModelBrowserVisibility  off
     ModelBrowserWidth	    200
@@ -1147,7 +1147,7 @@ Model {
       Position		      [555, 153, 620, 177]
       ZOrder		      4
       VariableName	      "u"
-      SampleTime	      "0.1"
+      SampleTime	      "0.01"
       ZeroCross		      on
     }
     Block {
@@ -1157,7 +1157,7 @@ Model {
       Position		      [685, 215, 715, 245]
       ZOrder		      2
       Variance		      "20"
-      SampleTime	      "0.1"
+      SampleTime	      "0.01"
     }
     Block {
       BlockType		      Lookup_n-D
@@ -1220,7 +1220,7 @@ Model {
       SaveFormat	      "Structure"
       Save2DSignal	      "3-D array (concatenate along third dimension)"
       FixptAsFi		      on
-      SampleTime	      "0.1"
+      SampleTime	      "0.01"
     }
     Line {
       ZOrder		      1
@@ -1268,7 +1268,7 @@ Model {
       DstPort		      1
     }
     Line {
-      ZOrder		      23
+      ZOrder		      29
       SrcBlock		      "Telítés1"
       SrcPort		      1
       DstBlock		      "To Workspace"

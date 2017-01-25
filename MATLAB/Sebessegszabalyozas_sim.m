@@ -25,7 +25,7 @@ clear siminput T_sim
 
 %% Parameterek (valtozoneveket atirni nem szabad, csak az ertekeket)
 
-Ts = 0.1; % Mintavetelezesi ido [s]
+Ts = 0.01; % Mintavetelezesi ido [s]
 T_cl = 0.5; % Zart kor eloirt idoallandoja [s]
 
 %% Egyeb parameterek
@@ -166,10 +166,47 @@ sim('beavatkozo_szerv_telites_kezelese');
 open_system('beavatkozo_szerv_telites_kezelese/Scope3')
 open_system('beavatkozo_szerv_telites_kezelese/Scope')
 
-%Mintaveteles FOXBORO PI szabalyozo
+% Mintaveteles FOXBORO PI szabalyozo
 sim('mintaveteles_FOXBORO_PI_szabalyozo')
 open_system('mintaveteles_FOXBORO_PI_szabalyozo/Scope3')
 open_system('mintaveteles_FOXBORO_PI_szabalyozo/Scope')
+
+% Parameterek kiirasa a Workspace-re
+disp(' ');
+disp(['z_d=',num2str(z_d)]);
+disp(['K_C=',num2str(K_C)]);
+disp(' ');
+
+% C kod generalas
+disp('A szabalyozast megvalosito C kod:');
+disp(' ');
+disp('// Inverz statikus nemlinearitas LUT letrehozasa');
+disp(['static float inv_stat_nonlinearity[',num2str(size(inv_y_stat,1)),'] = {']);
+for i = 1:size(inv_y_stat,1)
+    disp([char(9),num2str(inv_y_stat(i)),',']);
+end
+disp('};');
+disp(' ');
+disp('// Szabalyozas');
+disp(['u_2 = ',num2str(z_d),'*u_2+',num2str(1-z_d),'*u;']);
+disp(['f = ',num2str(K_C),'*(mmpersec-velocity);+u_2;']);
+disp(['if(f < ',num2str(u_sat),')']);
+disp([sprintf('\t'),'u = f;']);
+disp('else');
+disp([sprintf('\t'),'u = ',num2str(u_sat),';']);
+disp(['if(f > ',num2str(-u_sat),')']);
+disp([sprintf('\t'),'u = f;']);
+disp('else');
+disp([sprintf('\t'),'u = ',num2str(-u_sat),';']);
+disp('if(u > 0)');
+disp('{');
+for i = 1:size(inv_u_stat,1)-1
+    disp([char(9),'if((',num2str(inv_u_stat(i)),' < u) && (u <= ',num2str(inv_u_stat(i+1)),'))']);
+    disp([char(9),char(9),'u = ',num2str(inv_y_stat(i)),'+',num2str((inv_y_stat(i+1)-inv_y_stat(i))/(inv_u_stat(i+1)-inv_u_stat(i))),'*(u-',num2str(inv_u_stat(i)),');']);
+end
+disp('}');
+disp('sebessegto(u);');
+disp(' ');
 
 y_stat = y_stat*K;
 %%
