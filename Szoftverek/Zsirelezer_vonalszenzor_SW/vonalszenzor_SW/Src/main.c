@@ -41,12 +41,19 @@
 
 /* USER CODE BEGIN Includes */
 
+#include "stdbool.h"
+
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+
+/* Global Variable definition */
+//ADC
+volatile bool adckesz = false;
+uint32_t adceredmeny[7] = {0,0,0,0,0,0,0};
 
 /* USER CODE END PV */
 
@@ -61,12 +68,22 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN 0 */
 
+/*Periferiak kezelofuggvenyei (weak callback-ek) */
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+	  adckesz=true;
+}
+
 /* USER CODE END 0 */
 
 int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+  /* Local Variable definition */
+	//SPI
+	uint8_t infraLEDminta=0b00000001;
+	uint8_t visszajelzoLEDminta[4] = {0,0,0,0};
 
   /* USER CODE END 1 */
 
@@ -88,27 +105,51 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
 
-  uint8_t spidata=0b00000001;
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  for(int q=0; q<8; q++)
+	  //A TCRT-k infraLED-mintajanak kikuldese SPI-on (7 ugyanolyan byte mivel 7x8 TCRT van)
+	  for(int q=0; q<7; q++)
 	  {
-		  HAL_SPI_Transmit(&hspi1,&spidata,1,100000);
+		  HAL_SPI_Transmit(&hspi1,&infraLEDminta,1,1000);
 	  }
+	  //A visszajelzo LED-ekhez 4 byte kikuldese SPI-on
+	  //HAL_SPI_Transmit(&hspi1, visszajelzoLEDminta, 4, 1000);
 
+	  //Latch enable impulzus kiadása
 	  HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_SET);
-	  HAL_Delay(500);
+	  HAL_Delay(100); //
 	  HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_RESET);
 
-	  if (spidata==0b10000000)
-		  spidata=0b00000001;
+	  //Vilagito TCRT LED-ek leptetese (minden 8-ik vilagit)
+	  if (infraLEDminta==0b10000000)
+		  infraLEDminta=0b00000001;
 	  else
-		  spidata=spidata*2;
+		  infraLEDminta=infraLEDminta*2;
+
+	  //Timer inditas, hogy a TCRT-k baziskapacitasa biztos feltoltodjon  - 280us
+	  //MUX kezeles kell
+
+/*
+	  //ADC inditasa
+	  adckesz=false;
+	  HAL_ADC_Start_DMA(&hadc1,adceredmeny,7);
+
+	  //ADC konverzio vegere valo varakozas
+	  while (!adckesz);
+
+	  //Gyors kijelzes thresholddal
+	  for (int q=0; q<4; q++)
+	  {
+		  if (adceredmeny[q]>1000)
+			  visszajelzoLEDminta[q] = visszajelzoLEDminta[q] | infraLEDminta;
+		  else
+			  visszajelzoLEDminta[q] = visszajelzoLEDminta[q] & ~infraLEDminta;
+	  }
+*/
 
   /* USER CODE END WHILE */
 

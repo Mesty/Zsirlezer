@@ -50,6 +50,7 @@ DMA_HandleTypeDef hdma_adc2;
 /* ADC1 init function */
 void MX_ADC1_Init(void)
 {
+  ADC_MultiModeTypeDef multimode;
   ADC_ChannelConfTypeDef sConfig;
 
     /**Common config 
@@ -63,11 +64,21 @@ void MX_ADC1_Init(void)
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.NbrOfConversion = 4;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
   hadc1.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+    /**Configure the ADC multi-mode 
+    */
+  multimode.Mode = ADC_DUALMODE_REGSIMULT;
+  multimode.DMAAccessMode = ADC_DMAACCESSMODE_12_10_BITS;
+  multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_1CYCLE;
+  if (HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode) != HAL_OK)
   {
     Error_Handler();
   }
@@ -129,7 +140,7 @@ void MX_ADC2_Init(void)
   hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc2.Init.NbrOfConversion = 3;
-  hadc2.Init.DMAContinuousRequests = DISABLE;
+  hadc2.Init.DMAContinuousRequests = ENABLE;
   hadc2.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hadc2.Init.LowPowerAutoWait = DISABLE;
   hadc2.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
