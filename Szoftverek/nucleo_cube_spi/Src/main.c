@@ -106,6 +106,7 @@
  volatile bool adcwaitdone=false;
  volatile bool dovelocitymeasurement=false;
  volatile uint32_t actualencoderval=0;
+ volatile uint32_t actualmotorinput=0;
  volatile bool endrxuart=false;
  volatile uint32_t pData[2]={0,0};
  uint16_t adcmeasuredvalues[3];
@@ -116,6 +117,11 @@ uint32_t SEB_GYORS=SEB_GYORS_DEFAULT;
  int32_t KD=-11;
  int32_t TD_COEFF=20;
  uint8_t velocity_state;
+ uint8_t space=32;
+ uint8_t endline=10;
+ uint8_t tab = 9;
+ uint8_t CR = 13;
+ uint32_t timestamp=0;
 
 
  /*Encoder vars*/
@@ -177,15 +183,21 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
-	if (htim->Instance == TIM6)
+	/*if (htim->Instance == TIM6)
 	{
 		adcwaitdone = true;
-	}
+	}*/
 	if(htim->Instance == TIM7)
 	{
+		timestamp++;
 		actualencoderval=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
 		dovelocitymeasurement=true;
 	}
+}
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef* htim)
+{
+	if (htim->Instance == TIM3)
+		actualmotorinput = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_2);
 }
 
 /* USER CODE END 0 */
@@ -208,12 +220,13 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_ADC1_Init();
+  //MX_ADC1_Init();
   MX_USART2_UART_Init();
-  MX_SPI3_Init();
+  //MX_SPI3_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
-  MX_TIM6_Init();
+  MX_TIM3_Init();
+  //MX_TIM6_Init();
   MX_TIM7_Init();
   MX_UART4_Init();
   MX_TIM8_Init();
@@ -246,16 +259,18 @@ int main(void)
   uint32_t filteredposition=0;
   uint32_t prevfilteredposition=0;
   int32_t Pszabalyozopozicio=0;
-  uint32_t timestamp=0;
+  //uint32_t timestamp=0;
   uint8_t string[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  int32_t motorpulsePWM;
   initWMAfilterarray();
   HAL_TIM_Base_Start_IT(&htim7);
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
+  HAL_TIM_IC_Start_IT(&htim3,TIM_CHANNEL_2);
   HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
   HAL_Delay(5000);
-  sebessegto((int32_t)(SEB_LASSU+600));
-  velocity_state=SLOW;
+  //sebessegto((int32_t)(SEB_LASSU+600));
+  //velocity_state=SLOW;
   //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2 , SERVO_KOZEP);
   //HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
 
@@ -263,13 +278,20 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_UART_Receive_DMA(&huart4, (uint8_t*)pData, (2*sizeof(uint32_t)));	//Telemetria parancsok fogadása - konvencio: 2db uint32-t kapunk, elso: command ID, masodik: adat, ha van
+  //HAL_UART_Receive_DMA(&huart4, (uint8_t*)pData, (2*sizeof(uint32_t)));	//Telemetria parancsok fogadása - konvencio: 2db uint32-t kapunk, elso: command ID, masodik: adat, ha van
 
   while (1)
   {
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
+	  /*Deadman emergency brake*/
+	  /*if(actualmotorinput < 8000)
+	  {
+		__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (3692)); //
+		while(encoderdiff > 10);
+		__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (6932)); //
+	  }*/
 	  /*Encoder test*/
 
 	  /*HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
@@ -294,32 +316,32 @@ int main(void)
 	  /*If only 3 sequence is sent, then something is wrong with the bits (not the good bits are received by the LED drivers.
 	   Dont know, whats the problem.*/
 
-	  for(int q=0; q<3; q++)
+	  /*for(int q=0; q<3; q++)
 	  {
 		  HAL_SPI_Transmit(&hspi3,&spidata,1,100);
-	  }
+	  }*/
 
 	  /*Valami nem oke a LE outputtal. Ha kiveszem az utolso 2 hal-delay(1)-et, akkor nem vilagit az uccso(elso) TCRT. Ha az egyik bent van a kodban, akkor hol vilaghit, hol nem. Ha mindketto akkor ok.*/
 	  /*Elobbi megoldottnak tunik*/
 	  /*LE signal output*/
-	  HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_SET);
-	  HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_RESET);
+	  //HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_SET);
+	  //HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_RESET);
 
-	  adcwaitdone=false;
+	  /*adcwaitdone=false;
 	  __HAL_TIM_SET_COUNTER(&htim6, 0);
-	  HAL_TIM_Base_Start_IT(&htim6);
+	  HAL_TIM_Base_Start_IT(&htim6);*/
 	  /*TCRT:280usec varakozas kezdete---------------------------------------------------------------------*/
 
-	  if(spidata==0b00000001)
-	  {
+	  //if(spidata==0b00000001)
+	  //{
 		  // medianfilterW3(adcvalregister1, adcvalregister2, adcvalregister3); //kicsit thresholdal jo lehet
-		  getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);//-----------------------------------
+		  //getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);//-----------------------------------
 
 		  //sendlineregisters_to_uart(&huart2, &line_register1, &line_register2, &line_register3, 1000);
 		  //sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
 
 		  // medianfilterW3(adcfilterregister1, adcfilterregister2, adcfilterregister3); //Medianhoz kisebb threshold
-		  getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
+		  //getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
 		 /* HAL_UART_Transmit(&huart4,&endline, sizeof(uint8_t), 100000);
 		  HAL_UART_Transmit(&huart4,&CR, sizeof(uint8_t), 100000);*/
 		  //send8bitdecimal_to_uart(&huart2, &linetype, 1000);
@@ -327,12 +349,12 @@ int main(void)
 		//	  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
 		 // sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
 
-		  if(!position) //Szaturacional==vonalelhagyasnal uccso erteket jegyezze meg.
-			  position=prevfilteredposition;
-		  else
-			  prevfilteredposition=position;
+		  //if(!position) //Szaturacional==vonalelhagyasnal uccso erteket jegyezze meg.
+			  //position=prevfilteredposition;
+		  //else
+			  //prevfilteredposition=position;
 
-		  handleWMAfilter(&filteredposition, &position);				//pozicio idobeli szurese
+		  //handleWMAfilter(&filteredposition, &position);				//pozicio idobeli szurese
 
 		  if(dovelocitymeasurement) //v=[mm/s], delta t = 10ms
 		  {//valami szamitas hibas, wma filter furi.
@@ -342,15 +364,15 @@ int main(void)
 				  //dir = __HAL_TIM_DIRECTION_STATUS(&htim2);
 				  encoder1=actualencoderval;
 				  encoderdiff=encoder1-encoderprev;
-				  velocity=((encoderdiff*10000)/743); //v[mm/s]
-				  filteredvelocitydiff=-filteredvelocity;
-				  WMAfilter(&filteredvelocity, &velocity, velocityarray, VELOCITY_FILTER_DEPTH);
-				  if(filteredvelocity>=0)
+				  //velocity=((encoderdiff*10000)/743); //v[mm/s]
+				  //filteredvelocitydiff=-filteredvelocity;
+				  //WMAfilter(&filteredvelocity, &velocity, velocityarray, VELOCITY_FILTER_DEPTH);
+				  /*if(filteredvelocity>=0)
 					  velocityabs = filteredvelocity;
 				  else
-					  velocityabs = -filteredvelocity;
+					  velocityabs = -filteredvelocity;*/
 				  encoderprev=encoder1;
-				  filteredvelocitydiff+=filteredvelocity;
+				  //filteredvelocitydiff+=filteredvelocity;
 				/*  for(int q=0; q<20; q++)
 					  string[q]=0;
 				  sprintf(string, "%"PRId32 "\t\n\r", filteredvelocity);
@@ -364,26 +386,44 @@ int main(void)
 				  //error handling...
 			  }
 			  dovelocitymeasurement=false;
-			  timestamp++;
-			  if((timestamp%100)==0)
+			  //timestamp++;
+			  if(timestamp == 1000)
+			  {
+				motorpulsePWM = 6932;
+				__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
+			  }
+			  if(timestamp == 2000)
+			  {
+				motorpulsePWM = 7932;
+				__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
+			  }
+			  if(timestamp == 3000)
+			  {
+				motorpulsePWM = 6932;
+				__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
+			  }
+			  sprintf(string,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
+			  sprintf(string,"%d %d %d %d\n\r",timestamp,actualmotorinput,motorpulsePWM,encoderdiff);
+			  HAL_UART_Transmit(&huart2, &string, sizeof(string)*sizeof(uint8_t), 10000);
+			  /*if((timestamp%100)==0)
 			  {
 				  //kesobb ha lesz ido atirni, hogy pointereket kapjon a fg(), hatha ugy gyorsabb, mert az uart sok idot elvesz
 				  dili_telemetria(&huart4, (uint32_t) linetype, (uint32_t) velocity_state, filteredposition, timestamp, (int32_t) actualencoderval, (int32_t) filteredvelocity, (int32_t) filteredvelocitydiff*100,  1000);
-			  }
+			  }*/
 		  }
-		  if (endrxuart) 	//uart command lekezelese
+		  /*if (endrxuart) 	//uart command lekezelese
 		  {
 			  handle_QT_command(pData);
 			  endrxuart=false;
-		  }
+		  }*/
 		 /* sebessegto(1000);*///-------------------------------------------------------------
 
 		//  Pszabalyozopozicio=(((filteredposition-100)*140)/2300)-70;	//2400 100 tartomany (filteredposition ertektartomanya) illesztese a -70 70 tartomanyhoz (Pszab bemeneti ertektartomany)
 		//  szervoPszabalyozo((int16_t)Pszabalyozopozicio);				//szabalyozo PWM kezelojenek meghivasa
 		 // szervoPszabalyozo((int16_t)filteredposition);				//szabalyozo PWM kezelojenek meghivasa
 
-		  if(filteredvelocity!=0)
-			  szervoPDszabalyozo(filteredposition, filteredvelocity);
+		  /*if(filteredvelocity!=0)
+			  szervoPDszabalyozo(filteredposition, filteredvelocity);*/
 		  //szervoPDszabalyozo(filteredposition, 1000);
 
 		 /*send32bitdecimal_to_uart(&huart2,&filteredposition,10000);
@@ -395,34 +435,34 @@ int main(void)
 
 
 
-		  line_register1=0;
+		  /*line_register1=0;
 		  line_register2=0;
 		  line_register3=0;
 		  line_count=0;
-		  i=0;
-	  }
+		  i=0;*/
+	  //}
 
 
-	  while(!adcwaitdone);
+	  //while(!adcwaitdone);
 	  /*TCRT:280usec varakozas vege---------------------------------------------------------------------*/
-	  HAL_TIM_Base_Stop_IT(&htim6);
+	  //HAL_TIM_Base_Stop_IT(&htim6);
 
 	  //ADC inditasa, majd varakozas a konverzio vegere
-	  adcvalid=false;
+	  /*adcvalid=false;
 	  HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adcmeasuredvalues, 3);
-	  while (!adcvalid);
+	  while (!adcvalid);*/
 
 	  //mert ADC ertekek eltarolasa
-	  adcvalregister1[i]=adcmeasuredvalues[0];
+	  /*adcvalregister1[i]=adcmeasuredvalues[0];
 	  adcvalregister2[i]=adcmeasuredvalues[1];
 	  adcvalregister3[i]=adcmeasuredvalues[2];
 	  if(i==4)
 		  adcvalregister3[4]=adcvalregister3[4]-300; //20. TCRT kicsit erosebb, a zajt jobban athozza----------------------
-
+*/
 
 	  //Az ADC ertekek thresholdozasa: a minimalis szint alatti ertekeket nem vesszuk figyelembe i 0tol 7ig fut
 	  //line register: 3 sima 8 bites tarolo, melyben taroljuk, hogy hol latunk vonalat.
-	  if (adcvalregister1[i]>threshold)
+/*	  if (adcvalregister1[i]>threshold)
 	  {
 		  line_register1+=spidata;
 		  line_count++;
@@ -453,9 +493,9 @@ int main(void)
 		  adcfilterregister3[i]=0;
 	  }
 	  i++;
-
+*/
 	  /*State machine (8 state) for SPI data (LED drivers output) and MUX signals (MUX for analog input)*/
-	  if (spidata==0b10000000)
+/*	  if (spidata==0b10000000)
 	  {
 		  spidata=0b00000001;
 		  HAL_GPIO_WritePin(MUX1_GPIO_Port,MUX1_Pin,GPIO_PIN_SET);
@@ -520,7 +560,7 @@ int main(void)
 
 	  }
 
-	 // HAL_Delay(10);
+	 // HAL_Delay(10);*/
   }
   /* USER CODE END 3 */
 
