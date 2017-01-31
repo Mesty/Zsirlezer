@@ -240,6 +240,7 @@ int main(void)
 
 
   /*Initialize variables for main()*/
+  uint8_t stop = 0;
   uint8_t spidata = 0b00000010;
   uint8_t endline=10;
   uint8_t CR=13;
@@ -291,11 +292,13 @@ int main(void)
 
   /* USER CODE BEGIN 3 */
 	  /*Deadman emergency brake*/
-	  if(((actualmotorinput < previousmotorinput) ? actualmotorinput : previousmotorinput) < 8000)
+	  if(((actualmotorinput < previousmotorinput) ? actualmotorinput : previousmotorinput) < 4000)
 	  {
-		__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (3692)); //
-		while(encoderdiff > 10);
-		__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (6932)); //
+		  stop = 1;
+	  }
+	  else
+	  {
+		  stop = 0;
 	  }
 	  /*Encoder test*/
 
@@ -395,17 +398,14 @@ int main(void)
 			  if(timestamp == 1000)
 			  {
 				motorpulsePWM = 6932;
-				__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
 			  }
 			  if(timestamp == 2000)
 			  {
-				motorpulsePWM = 7032;
-				__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
+				motorpulsePWM = 7232;
 			  }
 			  if(timestamp == 3000)
 			  {
 				//motorpulsePWM = 6932;
-				__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
 			  }
 			  sprintf(string,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
 			  sprintf(string,"%d %d %d %d\n\r",timestamp,((actualmotorinput < previousmotorinput) ? actualmotorinput : previousmotorinput),motorpulsePWM,encoderdiff);
@@ -416,6 +416,13 @@ int main(void)
 				  dili_telemetria(&huart4, (uint32_t) linetype, (uint32_t) velocity_state, filteredposition, timestamp, (int32_t) actualencoderval, (int32_t) filteredvelocity, (int32_t) filteredvelocitydiff*100,  1000);
 			  }*/
 		  }
+		  if (!stop)
+			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+		  else if (encoderdiff > 10)
+			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (4000));
+		  else
+			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (6932));
+
 		  /*if (endrxuart) 	//uart command lekezelese
 		  {
 			  handle_QT_command(pData);

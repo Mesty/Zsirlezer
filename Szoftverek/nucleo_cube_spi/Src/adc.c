@@ -33,10 +33,11 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "adc.h"
 
 #include "gpio.h"
 #include "dma.h"
+#include "adc.h"
+
 
 /* USER CODE BEGIN 0 */
 #include "stdbool.h"
