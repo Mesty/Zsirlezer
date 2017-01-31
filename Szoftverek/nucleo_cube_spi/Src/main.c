@@ -4,7 +4,7 @@
   * Description        : Main program body
   ******************************************************************************
   *
-  * COPYRIGHT(c) 2016 STMicroelectronics
+  * COPYRIGHT(c) 2017 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -107,6 +107,7 @@
  volatile bool dovelocitymeasurement=false;
  volatile uint32_t actualencoderval=0;
  volatile uint32_t actualmotorinput=0;
+ volatile uint32_t previousmotorinput=0;
  volatile bool endrxuart=false;
  volatile uint32_t pData[2]={0,0};
  uint16_t adcmeasuredvalues[3];
@@ -196,8 +197,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 }
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef* htim)
 {
-	if (htim->Instance == TIM3)
-		actualmotorinput = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_2);
+	if (htim->Instance == TIM4)
+	{
+		previousmotorinput = actualmotorinput;
+		actualmotorinput = HAL_TIM_ReadCapturedValue(&htim4,TIM_CHANNEL_1);
+		__HAL_TIM_SET_COUNTER(&htim4,0);
+	}
 }
 
 /* USER CODE END 0 */
@@ -220,16 +225,16 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  //MX_ADC1_Init();
+  MX_ADC1_Init();
   MX_USART2_UART_Init();
-  //MX_SPI3_Init();
+  MX_SPI3_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
-  MX_TIM3_Init();
-  //MX_TIM6_Init();
+  MX_TIM6_Init();
   MX_TIM7_Init();
   MX_UART4_Init();
   MX_TIM8_Init();
+  MX_TIM4_Init();
 
   /* USER CODE BEGIN 2 */
 
@@ -265,7 +270,7 @@ int main(void)
   initWMAfilterarray();
   HAL_TIM_Base_Start_IT(&htim7);
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
-  HAL_TIM_IC_Start_IT(&htim3,TIM_CHANNEL_2);
+  HAL_TIM_IC_Start_IT(&htim4,TIM_CHANNEL_1);
   HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
   HAL_Delay(5000);
@@ -286,12 +291,12 @@ int main(void)
 
   /* USER CODE BEGIN 3 */
 	  /*Deadman emergency brake*/
-	  /*if(actualmotorinput < 8000)
+	  if(((actualmotorinput < previousmotorinput) ? actualmotorinput : previousmotorinput) < 8000)
 	  {
 		__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (3692)); //
 		while(encoderdiff > 10);
 		__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (6932)); //
-	  }*/
+	  }
 	  /*Encoder test*/
 
 	  /*HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
@@ -394,16 +399,16 @@ int main(void)
 			  }
 			  if(timestamp == 2000)
 			  {
-				motorpulsePWM = 7932;
+				motorpulsePWM = 7032;
 				__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
 			  }
 			  if(timestamp == 3000)
 			  {
-				motorpulsePWM = 6932;
+				//motorpulsePWM = 6932;
 				__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM)); //
 			  }
 			  sprintf(string,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
-			  sprintf(string,"%d %d %d %d\n\r",timestamp,actualmotorinput,motorpulsePWM,encoderdiff);
+			  sprintf(string,"%d %d %d %d\n\r",timestamp,((actualmotorinput < previousmotorinput) ? actualmotorinput : previousmotorinput),motorpulsePWM,encoderdiff);
 			  HAL_UART_Transmit(&huart2, &string, sizeof(string)*sizeof(uint8_t), 10000);
 			  /*if((timestamp%100)==0)
 			  {
