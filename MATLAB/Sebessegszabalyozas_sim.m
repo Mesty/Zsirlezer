@@ -189,7 +189,7 @@ disp('};');
 disp(' ');
 disp('// Szabalyozas');
 disp(['u_2 = ',num2str(z_d),'*u_2+',num2str(1-z_d),'*u;']);
-disp(['f = ',num2str(K_C),'*(mmpersec-velocity);+u_2;']);
+disp(['f = ',num2str(K_C),'*(mmpersec-velocity)+u_2;']);
 disp(['if(f < ',num2str(u_sat),')']);
 disp([sprintf('\t'),'u = f;']);
 disp('else');
@@ -200,8 +200,10 @@ disp('else');
 disp([sprintf('\t'),'u = ',num2str(-u_sat),';']);
 disp('if(u > 0)');
 disp('{');
-for i = 1:size(inv_u_stat,1)-1
-    disp([char(9),'if((',num2str(inv_u_stat(i)),' < u) && (u <= ',num2str(inv_u_stat(i+1)),'))']);
+disp([char(9),'if((',num2str(inv_u_stat(1)),' < u) && (u <= ',num2str(inv_u_stat(2)),'))']);
+disp([char(9),char(9),'u = ',num2str(inv_y_stat(1)),'+',num2str((inv_y_stat(2)-inv_y_stat(1))/(inv_u_stat(2)-inv_u_stat(1))),'*u;']);
+for i = 2:size(inv_u_stat,1)-1
+    disp([char(9),'else if((',num2str(inv_u_stat(i)),' < u) && (u <= ',num2str(inv_u_stat(i+1)),'))']);
     disp([char(9),char(9),'u = ',num2str(inv_y_stat(i)),'+',num2str((inv_y_stat(i+1)-inv_y_stat(i))/(inv_u_stat(i+1)-inv_u_stat(i))),'*(u-',num2str(inv_u_stat(i)),');']);
 end
 disp('}');
