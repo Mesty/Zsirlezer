@@ -120,7 +120,7 @@ int main(void)
 	//SPI
 	uint8_t infraLEDminta=0b00000001;
 	uint8_t visszajelzoLEDminta[4] = {0,0,0,0};
-	uint8_t SPIIteracio=1;
+	uint8_t SPIIteracio=8;
 
 	//ADC
 	uint16_t szenzorertekek_elso[4][8];
@@ -186,20 +186,19 @@ int main(void)
 	  HAL_SPI_Transmit(&hspi1, visszajelzoLEDminta, 4, 1000);
 
 	  //Latch enable impulzus kiadása
-	  HAL_Delay(1); //
-
 	  HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_SET);
-	  HAL_Delay(1); //
 	  HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_RESET);
 
-	  //Timer inditas, hogy a TCRT-k baziskapacitasa biztos feltoltodjon  - 280us
+	  //Timer inditas, hogy a TCRT-k baziskapacitasa biztos feltoltodjon  - 280us -------------------------------------------------------------------------------------------
 	  varakozas280usec=false;
 	  __HAL_TIM_SET_COUNTER(&htim7, 0);
 	  HAL_TIM_Base_Start_IT(&htim7);
 
-	  //szenzorertekek feldolgozasa
+	  //MUX kezeles
+	  MUXselectkuldes(&infraLEDminta);
 
-	  if(SPIIteracio==1)
+	  //szenzorertekek teljes feldolgozasa a 8. iteracioban + UART kuldes
+	  if(infraLEDminta==0b00000010)
 	  {
 
 		  //ELSO szenzorsor -----------
@@ -242,8 +241,8 @@ int main(void)
 
 		  WMAfilterkezeles(wmafilterarray_elso, &pozicioWMA_elso, &pozicio_elso);
 
-		 /* send16bitdecimal_to_uart(&huart1, (uint16_t*) &pozicioWMA_elso, 1000);
-		  HAL_UART_Transmit(&huart1,&tab, sizeof(uint8_t), 100000);*/
+		  send16bitdecimal_to_uart(&huart1, (uint16_t*) &pozicioWMA_elso, 1000);
+		  HAL_UART_Transmit(&huart1,&tab, sizeof(uint8_t), 100000);
 
 		  //MASODIK szenzorsor ---------------------
 
@@ -283,17 +282,89 @@ int main(void)
 
 		  WMAfilterkezeles(wmafilterarray_masodik, &pozicioWMA_masodik, &pozicio_masodik);
 
-		  /*send16bitdecimal_to_uart(&huart1, (uint16_t*) &pozicioWMA_masodik, 1000);
+		  send16bitdecimal_to_uart(&huart1, (uint16_t*) &pozicioWMA_masodik, 1000);
 		  HAL_UART_Transmit(&huart1,&endline, sizeof(uint8_t), 100000);
-		  HAL_UART_Transmit(&huart1,&CR, sizeof(uint8_t), 100000);*/
-
+		  HAL_UART_Transmit(&huart1,&CR, sizeof(uint8_t), 100000);
 
 		  //ADC adatok elkuldese ----------------------
 		  sendadcvals_to_uart(&huart1, szenzorertekek_elso[0], szenzorertekek_elso[1], szenzorertekek_elso[2], szenzorertekek_elso[3], 1000);
 
+		  //NUCLEONAK UART-on pozicio es vonalszam elkuldese
+
 	  }
 
-	  //Timer vege
+	  //ADC adatok mentese, feldolgozasa
+	  //HATSO
+	  //ADC adatok mentese
+	  {
+	  for (int q=0; q<3; q++)
+		szenzorertekek_masodik[q][SPIIteracio-1]=adceredmenymasodik[q];
+	  }
+	  //Thresholdozas
+	  for (int q=0; q<3; q++)
+	  {
+		  if (adceredmenymasodik[q] > threshold)
+		  {
+			  szenzorertekek_thresholddal_masodik[q][SPIIteracio-1] = adceredmenymasodik[q];
+		  }
+		  else
+		  {
+			  szenzorertekek_thresholddal_masodik[q][SPIIteracio-1] = 0;
+		  }
+	  }
+
+	  //ELSO
+	  //Gyors kijelzes threshold alapjan
+	  for (int q=0; q<4; q++)
+	  {
+		  if (adceredmenyelso[q] > threshold)
+		  {
+			  visszajelzoLEDminta[3-q] = visszajelzoLEDminta[3-q] | 1 << SPIIteracio-1; //infraLEDminta;
+		  }
+		  else
+		  {
+			  visszajelzoLEDminta[3-q] = visszajelzoLEDminta[3-q] & ~(1 << SPIIteracio-1); //~infraLEDminta;
+		  }
+	  }
+	  //ADC adatok mentese
+	  for (int q=0; q<4; q++)
+	  {
+		szenzorertekek_elso[q][SPIIteracio-1]=adceredmenyelso[q];
+	  }
+	  //Thresholdozas
+	  for (int q=0; q<4; q++)
+	  {
+		  if (adceredmenyelso[q] > threshold)
+		  {
+			  szenzorertekek_thresholddal_elso[q][SPIIteracio-1] = adceredmenyelso[q];
+		  }
+		  else
+		  {
+			  szenzorertekek_thresholddal_elso[q][SPIIteracio-1] = 0;
+		  }
+	  }
+
+
+	  //Vilagito TCRT LED-ek leptetese (minden 8-ik vilagit)
+	  if (infraLEDminta==0b10000000)
+	  {
+		  infraLEDminta=0b00000001;
+		  SPIIteracio=8;
+	  }
+	  else if (infraLEDminta==0b00000001)
+	  {
+		  infraLEDminta=0b00000010;
+		  SPIIteracio=1;
+	  }
+	  else
+	  {
+		  infraLEDminta=infraLEDminta*2;
+		  SPIIteracio+=1;
+	  }
+
+
+
+	  //280us timer vege ----------------------------------------------------------------------------------------------------------------------------------------
 	  while(!varakozas280usec);
 	  HAL_TIM_Base_Stop_IT(&htim7);
 
@@ -305,78 +376,11 @@ int main(void)
 	  adckeszelso=false;
 	  HAL_ADC_Start_DMA(&hadc1,(uint32_t *)adceredmenyelso,4);
 
-
-	  //HATSO--------------
 	  //Hatso szenzorsor ADC konverzio vegere varakozas
 	  while (!adckeszmasodik);
 
-	  //ADC adatok mentese
-	  for (int q=0; q<3; q++)
-	  {
-		szenzorertekek_masodik[q][SPIIteracio-1]=adceredmenymasodik[q];
-	  }
-	  //Thresholdozas EZT LEHET EGY EGYEL KESOBBI ITERACIO 280USECES RESZEBEN
-	  for (int q=0; q<4; q++)
-	  {
-		  if (adceredmenymasodik[q] > threshold)
-		  {
-		  	  szenzorertekek_thresholddal_masodik[q][SPIIteracio-1] = adceredmenymasodik[q];
-		  }
-		  else
-		  {
-			  szenzorertekek_thresholddal_masodik[q][SPIIteracio-1] = 0;
-		  }
-	  }
-
-	  //ELSO-------------------
-	  //ADC konverzio vegere valo varakozas
+	  //Elso szenzorsor ADC konverzio vegere valo varakozas
 	  while (!adckeszelso);
-
-	  //Gyors kijelzes threshold alapjan
-	  for (int q=0; q<4; q++)
-	  {
-		  if (adceredmenyelso[q] > threshold)
-		  {
-			  visszajelzoLEDminta[3-q] = visszajelzoLEDminta[3-q] | infraLEDminta;
-		  }
-		  else
-		  {
-			  visszajelzoLEDminta[3-q] = visszajelzoLEDminta[3-q] & ~infraLEDminta;
-		  }
-	  }
-	  //ADC adatok mentese
-	  for (int q=0; q<4; q++)
-	  {
-		szenzorertekek_elso[q][SPIIteracio-1]=adceredmenyelso[q];
-	  }
-	  //Thresholdozas EZT LEHET EGY EGYEL KESOBBI ITERACIO 280USECES RESZEBEN
-	  for (int q=0; q<4; q++)
-	  {
-		  if (adceredmenyelso[q] > threshold)
-		  {
-		  	  szenzorertekek_thresholddal_elso[q][SPIIteracio-1] = adceredmenyelso[q];
-		  }
-		  else
-		  {
-			  szenzorertekek_thresholddal_elso[q][SPIIteracio-1] = 0;
-		  }
-	  }
-
-
-	  //MUX kezeles EZT IS LEHETNE AZ ADC ELOTTI 280USECES RESZBEN
-	  MUXselectkuldes(&infraLEDminta);
-
-	  //Vilagito TCRT LED-ek leptetese (minden 8-ik vilagit)
-	  if (infraLEDminta==0b10000000)
-	  {
-		  infraLEDminta=0b00000001;
-		  SPIIteracio=1;
-	  }
-	  else
-	  {
-		  infraLEDminta=infraLEDminta*2;
-		  SPIIteracio+=1;
-	  }
 
 
 
@@ -450,57 +454,57 @@ void SystemClock_Config(void)
 void MUXselectkuldes(uint8_t* infraLEDminta)
 {
 	//Allapotgep: infra LED minta alapjan a megfelelo TCRT fototranzisztorok kivalasztasa a MUX-okkal
-	//A jelenlegi infra LED minta alapjan a KOVETKEZO MUX select jelek kikuldese
-	  if (*infraLEDminta==0b10000000)
+	//A jelenlegi infra LED minta alapjan a JELENLEGI MUX select jelek kikuldese
+	  if (*infraLEDminta==0b00000001)
 	  {
 		  HAL_GPIO_WritePin(MUX_SEL_0_GPIO_Port,MUX_SEL_0_Pin,GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(MUX_SEL_1_GPIO_Port,MUX_SEL_1_Pin,GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(MUX_SEL_2_GPIO_Port,MUX_SEL_2_Pin,GPIO_PIN_SET);
-
-	  }
-	  else if (*infraLEDminta==0b00000001)
-	  {
-		  HAL_GPIO_WritePin(MUX_SEL_0_GPIO_Port,MUX_SEL_0_Pin,GPIO_PIN_RESET);
 		  HAL_GPIO_WritePin(MUX_SEL_1_GPIO_Port,MUX_SEL_1_Pin,GPIO_PIN_SET);
 		  HAL_GPIO_WritePin(MUX_SEL_2_GPIO_Port,MUX_SEL_2_Pin,GPIO_PIN_SET);
 
 	  }
 	  else if (*infraLEDminta==0b00000010)
 	  {
-		  HAL_GPIO_WritePin(MUX_SEL_0_GPIO_Port,MUX_SEL_0_Pin,GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(MUX_SEL_1_GPIO_Port,MUX_SEL_1_Pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUX_SEL_0_GPIO_Port,MUX_SEL_0_Pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUX_SEL_1_GPIO_Port,MUX_SEL_1_Pin,GPIO_PIN_SET);
 		  HAL_GPIO_WritePin(MUX_SEL_2_GPIO_Port,MUX_SEL_2_Pin,GPIO_PIN_SET);
 
 	  }
 	  else if (*infraLEDminta==0b00000100)
 	  {
-		  HAL_GPIO_WritePin(MUX_SEL_0_GPIO_Port,MUX_SEL_0_Pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUX_SEL_0_GPIO_Port,MUX_SEL_0_Pin,GPIO_PIN_SET);
 		  HAL_GPIO_WritePin(MUX_SEL_1_GPIO_Port,MUX_SEL_1_Pin,GPIO_PIN_RESET);
 		  HAL_GPIO_WritePin(MUX_SEL_2_GPIO_Port,MUX_SEL_2_Pin,GPIO_PIN_SET);
 
 	  }
 	  else if (*infraLEDminta==0b00001000)
 	  {
-		  HAL_GPIO_WritePin(MUX_SEL_0_GPIO_Port,MUX_SEL_0_Pin,GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(MUX_SEL_1_GPIO_Port,MUX_SEL_1_Pin,GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(MUX_SEL_2_GPIO_Port,MUX_SEL_2_Pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUX_SEL_0_GPIO_Port,MUX_SEL_0_Pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUX_SEL_1_GPIO_Port,MUX_SEL_1_Pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUX_SEL_2_GPIO_Port,MUX_SEL_2_Pin,GPIO_PIN_SET);
 
 	  }
 	  else if (*infraLEDminta==0b00010000)
 	  {
-		  HAL_GPIO_WritePin(MUX_SEL_0_GPIO_Port,MUX_SEL_0_Pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUX_SEL_0_GPIO_Port,MUX_SEL_0_Pin,GPIO_PIN_SET);
 		  HAL_GPIO_WritePin(MUX_SEL_1_GPIO_Port,MUX_SEL_1_Pin,GPIO_PIN_SET);
 		  HAL_GPIO_WritePin(MUX_SEL_2_GPIO_Port,MUX_SEL_2_Pin,GPIO_PIN_RESET);
 
 	  }
 	  else if (*infraLEDminta==0b00100000)
 	  {
+		  HAL_GPIO_WritePin(MUX_SEL_0_GPIO_Port,MUX_SEL_0_Pin,GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(MUX_SEL_1_GPIO_Port,MUX_SEL_1_Pin,GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(MUX_SEL_2_GPIO_Port,MUX_SEL_2_Pin,GPIO_PIN_RESET);
+
+	  }
+	  else if (*infraLEDminta==0b01000000)
+	  {
 		  HAL_GPIO_WritePin(MUX_SEL_0_GPIO_Port,MUX_SEL_0_Pin,GPIO_PIN_SET);
 		  HAL_GPIO_WritePin(MUX_SEL_1_GPIO_Port,MUX_SEL_1_Pin,GPIO_PIN_RESET);
 		  HAL_GPIO_WritePin(MUX_SEL_2_GPIO_Port,MUX_SEL_2_Pin,GPIO_PIN_RESET);
 
 	  }
-	  else if (*infraLEDminta==0b01000000)
+	  else if (*infraLEDminta==0b10000000)
 	  {
 		  HAL_GPIO_WritePin(MUX_SEL_0_GPIO_Port,MUX_SEL_0_Pin,GPIO_PIN_RESET);
 		  HAL_GPIO_WritePin(MUX_SEL_1_GPIO_Port,MUX_SEL_1_Pin,GPIO_PIN_RESET);
