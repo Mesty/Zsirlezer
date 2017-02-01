@@ -16,8 +16,8 @@ clear scrsz defaultFigurePosition vonalorientacio str
 
 %% Gyakran valtoztatott parameterek (valtozoneveket atirni nem szabad)
 
-p_0 = 0; % Kezdeti vonalpozicio [m]
-delta_0 = 20; % Kezdeti vonalorientacio [fok]
+p_0 = 0.09; % Kezdeti vonalpozicio [m]
+delta_0 = 0; % Kezdeti vonalorientacio [fok]
 v = 5; % Sebesseg [m/s]
 % d_5s 5%-os beallasi ut
 % d_5s = a*v+b, ahol v sebesseg, a[s] meredekseg, b[m] konstans

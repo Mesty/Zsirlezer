@@ -4,7 +4,7 @@
   * Description        : Main program body
   ******************************************************************************
   *
-  * COPYRIGHT(c) 2016 STMicroelectronics
+  * COPYRIGHT(c) 2017 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -106,6 +106,8 @@
  volatile bool adcwaitdone=false;
  volatile bool dovelocitymeasurement=false;
  volatile uint32_t actualencoderval=0;
+ volatile uint32_t actualmotorinput=0;
+ volatile uint32_t previousmotorinput=0;
  volatile bool endrxuart=false;
  volatile uint32_t pData[2]={0,0};
  uint16_t adcmeasuredvalues[3];
@@ -116,6 +118,11 @@ uint32_t SEB_GYORS=SEB_GYORS_DEFAULT;
  int32_t KD=-11;
  int32_t TD_COEFF=20;
  uint8_t velocity_state;
+ uint8_t space=32;
+ uint8_t endline=10;
+ uint8_t tab = 9;
+ uint8_t CR = 13;
+ uint32_t timestamp=0;
 
 
  /*Encoder vars*/
@@ -177,14 +184,24 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
-	if (htim->Instance == TIM6)
+	/*if (htim->Instance == TIM6)
 	{
 		adcwaitdone = true;
-	}
+	}*/
 	if(htim->Instance == TIM7)
 	{
+		timestamp++;
 		actualencoderval=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
 		dovelocitymeasurement=true;
+	}
+}
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef* htim)
+{
+	if (htim->Instance == TIM4)
+	{
+		previousmotorinput = actualmotorinput;
+		actualmotorinput = HAL_TIM_ReadCapturedValue(&htim4,TIM_CHANNEL_1);
+		__HAL_TIM_SET_COUNTER(&htim4,0);
 	}
 }
 
@@ -217,11 +234,14 @@ int main(void)
   MX_TIM7_Init();
   MX_UART4_Init();
   MX_TIM8_Init();
+  MX_TIM4_Init();
 
   /* USER CODE BEGIN 2 */
 
 
   /*Initialize variables for main()*/
+  uint8_t stop = 0;
+  uint8_t stopm1 = 0;
   uint8_t spidata = 0b00000010;
   uint8_t endline=10;
   uint8_t CR=13;
@@ -246,16 +266,18 @@ int main(void)
   uint32_t filteredposition=0;
   uint32_t prevfilteredposition=0;
   int32_t Pszabalyozopozicio=0;
-  uint32_t timestamp=0;
+  //uint32_t timestamp=0;
   uint8_t string[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  int32_t motorpulsePWM;
   initWMAfilterarray();
   HAL_TIM_Base_Start_IT(&htim7);
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
+  HAL_TIM_IC_Start_IT(&htim4,TIM_CHANNEL_1);
   HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
   HAL_Delay(5000);
-  sebessegto((int32_t)(SEB_LASSU+600));
-  velocity_state=SLOW;
+  //sebessegto((int32_t)(SEB_LASSU+600));
+  //velocity_state=SLOW;
   //__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2 , SERVO_KOZEP);
   //HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
 
@@ -263,13 +285,22 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_UART_Receive_DMA(&huart4, (uint8_t*)pData, (2*sizeof(uint32_t)));	//Telemetria parancsok fogadása - konvencio: 2db uint32-t kapunk, elso: command ID, masodik: adat, ha van
+  //HAL_UART_Receive_DMA(&huart4, (uint8_t*)pData, (2*sizeof(uint32_t)));	//Telemetria parancsok fogadása - konvencio: 2db uint32-t kapunk, elso: command ID, masodik: adat, ha van
 
   while (1)
   {
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
+	  /*Deadman emergency brake*/
+	  if(((actualmotorinput < previousmotorinput) ? actualmotorinput : previousmotorinput) < 4000)
+	  {
+		  stop = 1;
+	  }
+	  else
+	  {
+		  stop = 0;
+	  }
 	  /*Encoder test*/
 
 	  /*HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
@@ -294,32 +325,32 @@ int main(void)
 	  /*If only 3 sequence is sent, then something is wrong with the bits (not the good bits are received by the LED drivers.
 	   Dont know, whats the problem.*/
 
-	  for(int q=0; q<3; q++)
+	  /*for(int q=0; q<3; q++)
 	  {
 		  HAL_SPI_Transmit(&hspi3,&spidata,1,100);
-	  }
+	  }*/
 
 	  /*Valami nem oke a LE outputtal. Ha kiveszem az utolso 2 hal-delay(1)-et, akkor nem vilagit az uccso(elso) TCRT. Ha az egyik bent van a kodban, akkor hol vilaghit, hol nem. Ha mindketto akkor ok.*/
 	  /*Elobbi megoldottnak tunik*/
 	  /*LE signal output*/
-	  HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_SET);
-	  HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_RESET);
+	  //HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_SET);
+	  //HAL_GPIO_WritePin(LE_GPIO_Port,LE_Pin,GPIO_PIN_RESET);
 
-	  adcwaitdone=false;
+	  /*adcwaitdone=false;
 	  __HAL_TIM_SET_COUNTER(&htim6, 0);
-	  HAL_TIM_Base_Start_IT(&htim6);
+	  HAL_TIM_Base_Start_IT(&htim6);*/
 	  /*TCRT:280usec varakozas kezdete---------------------------------------------------------------------*/
 
-	  if(spidata==0b00000001)
-	  {
+	  //if(spidata==0b00000001)
+	  //{
 		  // medianfilterW3(adcvalregister1, adcvalregister2, adcvalregister3); //kicsit thresholdal jo lehet
-		  getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);//-----------------------------------
+		  //getlinetype(&linetype, adcvalregister1, adcvalregister2, adcvalregister3, &thresholdforlinetype);//-----------------------------------
 
 		  //sendlineregisters_to_uart(&huart2, &line_register1, &line_register2, &line_register3, 1000);
 		  //sendadcvals_to_uart(&huart2, adcvalregister1, adcvalregister2, adcvalregister3, 1000);
 
 		  // medianfilterW3(adcfilterregister1, adcfilterregister2, adcfilterregister3); //Medianhoz kisebb threshold
-		  getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
+		  //getposition(&position, adcfilterregister1, adcfilterregister2, adcfilterregister3);
 		 /* HAL_UART_Transmit(&huart4,&endline, sizeof(uint8_t), 100000);
 		  HAL_UART_Transmit(&huart4,&CR, sizeof(uint8_t), 100000);*/
 		  //send8bitdecimal_to_uart(&huart2, &linetype, 1000);
@@ -327,12 +358,12 @@ int main(void)
 		//	  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 100000);
 		 // sendadcvals_to_uart(&huart2, adcfilterregister1, adcfilterregister2, adcfilterregister3, 10000);
 
-		  if(!position) //Szaturacional==vonalelhagyasnal uccso erteket jegyezze meg.
-			  position=prevfilteredposition;
-		  else
-			  prevfilteredposition=position;
+		  //if(!position) //Szaturacional==vonalelhagyasnal uccso erteket jegyezze meg.
+			  //position=prevfilteredposition;
+		  //else
+			  //prevfilteredposition=position;
 
-		  handleWMAfilter(&filteredposition, &position);				//pozicio idobeli szurese
+		  //handleWMAfilter(&filteredposition, &position);				//pozicio idobeli szurese
 
 		  if(dovelocitymeasurement) //v=[mm/s], delta t = 10ms
 		  {//valami szamitas hibas, wma filter furi.
@@ -342,15 +373,15 @@ int main(void)
 				  //dir = __HAL_TIM_DIRECTION_STATUS(&htim2);
 				  encoder1=actualencoderval;
 				  encoderdiff=encoder1-encoderprev;
-				  velocity=((encoderdiff*10000)/743); //v[mm/s]
-				  filteredvelocitydiff=-filteredvelocity;
-				  WMAfilter(&filteredvelocity, &velocity, velocityarray, VELOCITY_FILTER_DEPTH);
-				  if(filteredvelocity>=0)
+				  //velocity=((encoderdiff*10000)/743); //v[mm/s]
+				  //filteredvelocitydiff=-filteredvelocity;
+				  //WMAfilter(&filteredvelocity, &velocity, velocityarray, VELOCITY_FILTER_DEPTH);
+				  /*if(filteredvelocity>=0)
 					  velocityabs = filteredvelocity;
 				  else
-					  velocityabs = -filteredvelocity;
+					  velocityabs = -filteredvelocity;*/
 				  encoderprev=encoder1;
-				  filteredvelocitydiff+=filteredvelocity;
+				  //filteredvelocitydiff+=filteredvelocity;
 				/*  for(int q=0; q<20; q++)
 					  string[q]=0;
 				  sprintf(string, "%"PRId32 "\t\n\r", filteredvelocity);
@@ -364,26 +395,418 @@ int main(void)
 				  //error handling...
 			  }
 			  dovelocitymeasurement=false;
-			  timestamp++;
-			  if((timestamp%100)==0)
+			  //timestamp++;
+			  if(timestamp == 1000)
+			  {
+				motorpulsePWM = 6932;
+				if (!stop)
+					__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 2000)
+			  {
+				motorpulsePWM = 7032;
+				if (!stop)
+					__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 3000)
+			  {
+				motorpulsePWM = 6932;
+				if (!stop)
+					__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 4000)
+			  {
+			  motorpulsePWM = 7132;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 5000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 6000)
+			  {
+			  motorpulsePWM = 7232;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 7000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 8000)
+			  {
+			  motorpulsePWM = 7332;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 9000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 10000)
+			  {
+			  motorpulsePWM = 7432;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 11000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 12000)
+			  {
+			  motorpulsePWM = 7532;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 13000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 14000)
+			  {
+			  motorpulsePWM = 7632;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 15000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 16000)
+			  {
+			  motorpulsePWM = 7732;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 17000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 18000)
+			  {
+			  motorpulsePWM = 7832;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 19000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 20000)
+			  {
+			  motorpulsePWM = 7932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 21000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 22000)
+			  {
+			  motorpulsePWM = 8032;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 23000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 24000)
+			  {
+			  motorpulsePWM = 8132;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 25000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 26000)
+			  {
+			  motorpulsePWM = 8232;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 27000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 28000)
+			  {
+			  motorpulsePWM = 8332;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 29000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 30000)
+			  {
+			  motorpulsePWM = 8432;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 31000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 32000)
+			  {
+			  motorpulsePWM = 8532;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 33000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 34000)
+			  {
+			  motorpulsePWM = 8632;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 35000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 36000)
+			  {
+			  motorpulsePWM = 8732;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 37000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 38000)
+			  {
+			  motorpulsePWM = 8832;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 39000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 40000)
+			  {
+			  motorpulsePWM = 8932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 41000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 42000)
+			  {
+			  motorpulsePWM = 9032;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 43000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 44000)
+			  {
+			  motorpulsePWM = 9132;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 45000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 46000)
+			  {
+			  motorpulsePWM = 9232;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 47000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 48000)
+			  {
+			  motorpulsePWM = 9332;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 49000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 50000)
+			  {
+			  motorpulsePWM = 9432;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 51000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 52000)
+			  {
+			  motorpulsePWM = 9532;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 53000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 54000)
+			  {
+			  motorpulsePWM = 9632;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 55000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 56000)
+			  {
+			  motorpulsePWM = 9732;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 57000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 58000)
+			  {
+			  motorpulsePWM = 9832;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 59000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 60000)
+			  {
+			  motorpulsePWM = 9932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 61000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 62000)
+			  {
+			  motorpulsePWM = 10032;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 63000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  sprintf(string,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
+			  sprintf(string,"%d %d\n\r",motorpulsePWM,encoderdiff);
+			  HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);
+			  /*if((timestamp%100)==0)
 			  {
 				  //kesobb ha lesz ido atirni, hogy pointereket kapjon a fg(), hatha ugy gyorsabb, mert az uart sok idot elvesz
 				  dili_telemetria(&huart4, (uint32_t) linetype, (uint32_t) velocity_state, filteredposition, timestamp, (int32_t) actualencoderval, (int32_t) filteredvelocity, (int32_t) filteredvelocitydiff*100,  1000);
-			  }
+			  }*/
 		  }
-		  if (endrxuart) 	//uart command lekezelese
+		  if (stop != stopm1)
+		  {
+			  if (!stop)
+				  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  else if (encoderdiff > 10)
+				  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (4000));
+			  else
+				  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (6932));
+			  stopm1 = stop;
+		  }
+
+		  /*if (endrxuart) 	//uart command lekezelese
 		  {
 			  handle_QT_command(pData);
 			  endrxuart=false;
-		  }
+		  }*/
 		 /* sebessegto(1000);*///-------------------------------------------------------------
 
 		//  Pszabalyozopozicio=(((filteredposition-100)*140)/2300)-70;	//2400 100 tartomany (filteredposition ertektartomanya) illesztese a -70 70 tartomanyhoz (Pszab bemeneti ertektartomany)
 		//  szervoPszabalyozo((int16_t)Pszabalyozopozicio);				//szabalyozo PWM kezelojenek meghivasa
 		 // szervoPszabalyozo((int16_t)filteredposition);				//szabalyozo PWM kezelojenek meghivasa
 
-		  if(filteredvelocity!=0)
-			  szervoPDszabalyozo(filteredposition, filteredvelocity);
+		  /*if(filteredvelocity!=0)
+			  szervoPDszabalyozo(filteredposition, filteredvelocity);*/
 		  //szervoPDszabalyozo(filteredposition, 1000);
 
 		 /*send32bitdecimal_to_uart(&huart2,&filteredposition,10000);
@@ -395,34 +818,34 @@ int main(void)
 
 
 
-		  line_register1=0;
+		  /*line_register1=0;
 		  line_register2=0;
 		  line_register3=0;
 		  line_count=0;
-		  i=0;
-	  }
+		  i=0;*/
+	  //}
 
 
-	  while(!adcwaitdone);
+	  //while(!adcwaitdone);
 	  /*TCRT:280usec varakozas vege---------------------------------------------------------------------*/
-	  HAL_TIM_Base_Stop_IT(&htim6);
+	  //HAL_TIM_Base_Stop_IT(&htim6);
 
 	  //ADC inditasa, majd varakozas a konverzio vegere
-	  adcvalid=false;
+	  /*adcvalid=false;
 	  HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adcmeasuredvalues, 3);
-	  while (!adcvalid);
+	  while (!adcvalid);*/
 
 	  //mert ADC ertekek eltarolasa
-	  adcvalregister1[i]=adcmeasuredvalues[0];
+	  /*adcvalregister1[i]=adcmeasuredvalues[0];
 	  adcvalregister2[i]=adcmeasuredvalues[1];
 	  adcvalregister3[i]=adcmeasuredvalues[2];
 	  if(i==4)
 		  adcvalregister3[4]=adcvalregister3[4]-300; //20. TCRT kicsit erosebb, a zajt jobban athozza----------------------
-
+*/
 
 	  //Az ADC ertekek thresholdozasa: a minimalis szint alatti ertekeket nem vesszuk figyelembe i 0tol 7ig fut
 	  //line register: 3 sima 8 bites tarolo, melyben taroljuk, hogy hol latunk vonalat.
-	  if (adcvalregister1[i]>threshold)
+/*	  if (adcvalregister1[i]>threshold)
 	  {
 		  line_register1+=spidata;
 		  line_count++;
@@ -453,9 +876,9 @@ int main(void)
 		  adcfilterregister3[i]=0;
 	  }
 	  i++;
-
+*/
 	  /*State machine (8 state) for SPI data (LED drivers output) and MUX signals (MUX for analog input)*/
-	  if (spidata==0b10000000)
+/*	  if (spidata==0b10000000)
 	  {
 		  spidata=0b00000001;
 		  HAL_GPIO_WritePin(MUX1_GPIO_Port,MUX1_Pin,GPIO_PIN_SET);
@@ -520,7 +943,7 @@ int main(void)
 
 	  }
 
-	 // HAL_Delay(10);
+	 // HAL_Delay(10);*/
   }
   /* USER CODE END 3 */
 
