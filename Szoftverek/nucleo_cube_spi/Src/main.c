@@ -241,6 +241,7 @@ int main(void)
 
   /*Initialize variables for main()*/
   uint8_t stop = 0;
+  uint8_t stopm1 = 0;
   uint8_t spidata = 0b00000010;
   uint8_t endline=10;
   uint8_t CR=13;
@@ -398,30 +399,400 @@ int main(void)
 			  if(timestamp == 1000)
 			  {
 				motorpulsePWM = 6932;
+				if (!stop)
+					__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
 			  }
 			  if(timestamp == 2000)
 			  {
-				motorpulsePWM = 7232;
+				motorpulsePWM = 7032;
+				if (!stop)
+					__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
 			  }
 			  if(timestamp == 3000)
 			  {
-				//motorpulsePWM = 6932;
+				motorpulsePWM = 6932;
+				if (!stop)
+					__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 4000)
+			  {
+			  motorpulsePWM = 7132;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 5000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 6000)
+			  {
+			  motorpulsePWM = 7232;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 7000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 8000)
+			  {
+			  motorpulsePWM = 7332;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 9000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 10000)
+			  {
+			  motorpulsePWM = 7432;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 11000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 12000)
+			  {
+			  motorpulsePWM = 7532;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 13000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 14000)
+			  {
+			  motorpulsePWM = 7632;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 15000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 16000)
+			  {
+			  motorpulsePWM = 7732;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 17000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 18000)
+			  {
+			  motorpulsePWM = 7832;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 19000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 20000)
+			  {
+			  motorpulsePWM = 7932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 21000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 22000)
+			  {
+			  motorpulsePWM = 8032;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 23000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 24000)
+			  {
+			  motorpulsePWM = 8132;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 25000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 26000)
+			  {
+			  motorpulsePWM = 8232;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 27000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 28000)
+			  {
+			  motorpulsePWM = 8332;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 29000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 30000)
+			  {
+			  motorpulsePWM = 8432;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 31000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 32000)
+			  {
+			  motorpulsePWM = 8532;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 33000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 34000)
+			  {
+			  motorpulsePWM = 8632;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 35000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 36000)
+			  {
+			  motorpulsePWM = 8732;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 37000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 38000)
+			  {
+			  motorpulsePWM = 8832;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 39000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 40000)
+			  {
+			  motorpulsePWM = 8932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 41000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 42000)
+			  {
+			  motorpulsePWM = 9032;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 43000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 44000)
+			  {
+			  motorpulsePWM = 9132;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 45000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 46000)
+			  {
+			  motorpulsePWM = 9232;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 47000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 48000)
+			  {
+			  motorpulsePWM = 9332;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 49000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 50000)
+			  {
+			  motorpulsePWM = 9432;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 51000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 52000)
+			  {
+			  motorpulsePWM = 9532;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 53000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 54000)
+			  {
+			  motorpulsePWM = 9632;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 55000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 56000)
+			  {
+			  motorpulsePWM = 9732;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 57000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 58000)
+			  {
+			  motorpulsePWM = 9832;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 59000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 60000)
+			  {
+			  motorpulsePWM = 9932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 61000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 62000)
+			  {
+			  motorpulsePWM = 10032;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  }
+			  if(timestamp == 63000)
+			  {
+			  motorpulsePWM = 6932;
+			  if (!stop)
+			  	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
 			  }
 			  sprintf(string,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
-			  sprintf(string,"%d %d %d %d\n\r",timestamp,((actualmotorinput < previousmotorinput) ? actualmotorinput : previousmotorinput),motorpulsePWM,encoderdiff);
-			  HAL_UART_Transmit(&huart2, &string, sizeof(string)*sizeof(uint8_t), 10000);
+			  sprintf(string,"%d %d\n\r",motorpulsePWM,encoderdiff);
+			  HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);
 			  /*if((timestamp%100)==0)
 			  {
 				  //kesobb ha lesz ido atirni, hogy pointereket kapjon a fg(), hatha ugy gyorsabb, mert az uart sok idot elvesz
 				  dili_telemetria(&huart4, (uint32_t) linetype, (uint32_t) velocity_state, filteredposition, timestamp, (int32_t) actualencoderval, (int32_t) filteredvelocity, (int32_t) filteredvelocitydiff*100,  1000);
 			  }*/
 		  }
-		  if (!stop)
-			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
-		  else if (encoderdiff > 10)
-			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (4000));
-		  else
-			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (6932));
+		  if (stop != stopm1)
+		  {
+			  if (!stop)
+				  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+			  else if (encoderdiff > 10)
+				  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (4000));
+			  else
+				  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (6932));
+			  stopm1 = stop;
+		  }
 
 		  /*if (endrxuart) 	//uart command lekezelese
 		  {
