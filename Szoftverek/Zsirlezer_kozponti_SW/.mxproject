@@ -1,7 +1,7 @@
 [PreviousGenFiles]
-HeaderPath=F:/BME/RobonAUT/Zsirlezer/Szoftverek/Zsirlezer_kozponti_SW/Inc
+HeaderPath=C:/BME/RobonAUT/Zsirlezer/Zsirlezer_SW/Szoftverek/Zsirlezer_kozponti_SW/Inc
 HeaderFiles=stm32f4xx_it.h;stm32f4xx_hal_conf.h;main.h;gpio.h;adc.h;spi.h;tim.h;usart.h;dma.h;
-SourcePath=F:/BME/RobonAUT/Zsirlezer/Szoftverek/Zsirlezer_kozponti_SW/Src
+SourcePath=C:/BME/RobonAUT/Zsirlezer/Zsirlezer_SW/Szoftverek/Zsirlezer_kozponti_SW/Src
 SourceFiles=stm32f4xx_it.h;stm32f4xx_hal_conf.h;main.h;stm32f4xx_it.c;stm32f4xx_hal_msp.c;main.c;gpio.h;adc.h;spi.h;tim.h;usart.h;gpio.c;adc.c;spi.c;tim.c;usart.c;dma.h;dma.c;
 
 [PreviousLibFiles]
