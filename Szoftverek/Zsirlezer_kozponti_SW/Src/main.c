@@ -34,35 +34,37 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 #include "adc.h"
+#include "dma.h"
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "stdbool.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-float Simulator_dt;
-uint32_t RobotState_status;
-uint32_t RobotState_timestamp;
-float RobotState_x;
-float RobotState_v;
-float RobotState_a;
-uint32_t RobotState_light;
+//float Simulator_dt;
+//uint32_t RobotState_status;
+//uint32_t RobotState_timestamp;
+//float RobotState_x;
+//float RobotState_v;
+//float RobotState_a;
+//uint32_t RobotState_light;
 volatile uint8_t tick;
-volatile uint8_t dataReady;
-uint32_t inputStream[7]={0,0,0,0,0,0,0};
-uint32_t receivedState_status;
-uint32_t receivedState_timestamp;
-float receivedState_x;
-float receivedState_v;
-float receivedState_a;
-uint32_t receivedState_light;
+//volatile uint8_t dataReady;
+//uint32_t inputStream[7]={0,0,0,0,0,0,0};
+//uint32_t receivedState_status;
+//uint32_t receivedState_timestamp;
+//float receivedState_x;
+//float receivedState_v;
+//float receivedState_a;
+//uint32_t receivedState_light;
+volatile bool SHARP_valid;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -71,23 +73,28 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-void Simulator_start(float intervalsec);
+/*void Simulator_start(float intervalsec);
 void Simulator_tick();
 void Simulator_dataReady();
 void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint32_t timestamp, float x, float v, float a, uint32_t light, uint32_t Timeout);
-void Simulator_ReadFrom();
+void Simulator_ReadFrom();*/
 uint32_t reverse_byte_order_32(uint32_t value);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+	if (hadc->Instance == ADC1)
+		SHARP_valid = true;
+}
 /* USER CODE END 0 */
 
 int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  uint16_t SHARPData[3];
+  uint8_t string[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -100,13 +107,12 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ADC1_Init();
   MX_ADC2_Init();
   MX_SPI1_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
-  MX_TIM3_Init();
-  MX_TIM4_Init();
   MX_TIM8_Init();
   MX_TIM12_Init();
   MX_UART4_Init();
@@ -119,7 +125,7 @@ int main(void)
   //HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
   //HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
   HAL_TIM_Base_Start_IT(&htim6);
-  Simulator_start(90000000/1373/65501);
+  //Simulator_start(90000000/1373/65501);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -130,14 +136,19 @@ int main(void)
   {
 	  if(tick == 1)
 	  {
-		  Simulator_tick();
+		  HAL_ADC_Start_DMA(&hadc1, (uint32_t*) SHARPData, 3);
+		  while(!SHARP_valid);
+		  sprintf(&string,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
+		  sprintf(&string,"%d %d %d\r\n",SHARPData[0],SHARPData[1],SHARPData[2]);
+		  HAL_UART_Transmit(&huart2, &string, sizeof(string)*sizeof(uint8_t), 10000);
 		  tick = 0;
 	  }
-	  if(dataReady == 1)
+
+	  /*if(dataReady == 1)
 	  {
 		  Simulator_dataReady();
 		  dataReady = 0;
-	  }
+	  }*/
 
   /* USER CODE END WHILE */
 
@@ -212,7 +223,7 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void Simulator_start(float intervalsec)
+/*void Simulator_start(float intervalsec)
 {   // Kukori, Kotkoda, toj�sb�l lesz a csoda
 	Simulator_dt = intervalsec;
 	RobotState_status = ROBOTSTATE_STATUS_DEFAULT;
@@ -310,7 +321,7 @@ void Simulator_ReadFrom()
 	receivedState_v = (float) inputStream[4];
 	receivedState_a = (float) inputStream[5];
 	receivedState_light = inputStream[6];
-}
+}*/
 /*void szervoPszabalyozo(int16_t *vonalpozicio)
 {
 	  uint16_t servo_pulse;
@@ -329,19 +340,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		tick = 1;
 	}
 }
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+/*void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if(huart->Instance == USART2)
 	{
 		HAL_UART_Receive_IT(huart, (uint8_t *) inputStream, sizeof(inputStream));
 		dataReady = 1;
 	}
-}
-void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint32_t timestamp, float x, float v, float a, uint32_t light, uint32_t Timeout)
+}*/
+/*void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint32_t timestamp, float x, float v, float a, uint32_t light, uint32_t Timeout)
 {
 	//uint32_t i = 20;
 	uint32_t state[7];
-	state[0] = reverse_byte_order_32(sizeof(state));
+	state[0] = reverse_byte_order_32(sizeof(state));*/
 /*	HAL_UART_Transmit(huart, &i, sizeof(i), Timeout);
 	HAL_UART_Transmit(huart, (uint8_t *)&status, sizeof(status), Timeout);
 	HAL_UART_Transmit(huart, (uint8_t *)timestamp, sizeof(uint16_t), Timeout);
@@ -388,14 +399,14 @@ void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint32_t timesta
 		state[i+21] = *(((uint8_t *)&a)+3-i);
 	}
 	state[25] = light;*/
-	state[1] = reverse_byte_order_32(status);
+	/*state[1] = reverse_byte_order_32(status);
 	state[2] = reverse_byte_order_32(timestamp);
 	state[3] = reverse_byte_order_32((uint32_t *)&x);
 	state[4] = reverse_byte_order_32((uint32_t *)&v);
 	state[5] = reverse_byte_order_32((uint32_t *)&a);
 	state[6] = reverse_byte_order_32(light);
 	HAL_UART_Transmit(huart, (uint8_t*) state, sizeof(state), Timeout);
-}
+}*/
 uint32_t reverse_byte_order_32(uint32_t value)
 {
 	uint8_t lolo = (value >> 0) & 0xFF;
