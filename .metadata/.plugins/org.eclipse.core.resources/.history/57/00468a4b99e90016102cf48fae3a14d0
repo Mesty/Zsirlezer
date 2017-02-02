@@ -521,8 +521,8 @@ void drone()
 	static uint32_t encoderatstop = 0;
 	static uint32_t timestampatfly = 0;
 	if (SHARP_F > 1552)
-		stop_drone = true;
-	if ((stop_drone) && (encoderdiff == 0))
+		stop = true;
+	if ((stop) && (encoderdiff == 0))
 	{
 		if (encoderatstop == 0)
 		{
@@ -530,7 +530,7 @@ void drone()
 			timestampatfly = timestamp;
 		}
 		if ((SHARP_F < 1241) && (timestamp - timestampatfly > 200))
-			stop_drone = false;
+			stop = false;
 	}
 	//if (encoder1 - encoderatstop > 2100) // Feladat vege, allapotvaltas, a 2100 itt random szam, a lenyeg, hogy uthosszt figyelunk a dron elotti megallasi helytol
 }

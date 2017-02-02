@@ -69,8 +69,6 @@ volatile uint32_t previousmotorinput = 0;
 volatile uint32_t actualmotorinput = 0;
 bool stop = false;
 bool stopm1 = false;
-bool stop_deadman = false;
-bool stop_drone = false;
 int32_t motorpulsePWM;
 volatile uint32_t timestamp = 0;
 volatile uint32_t actualencoderval=0;
@@ -196,25 +194,20 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  motorpulsePWM = 7332;
-  if (!stop)
-	  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+
 
   while (1)
   {
 	  /* Deadman emergency brake */
 	  if(((actualmotorinput < previousmotorinput) ? actualmotorinput : previousmotorinput) < 4000)
-		  stop_deadman = true;
-	  else
-		  stop_deadman = false;
-	  if (stop_deadman || stop_drone)
 		  stop = true;
-	  else
-		  stop = false;
+	  /*else
+		  stop = false;*/
+	  motorpulsePWM = 7332;
+	  if (!stop)
+		  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
 	  if (stop != stopm1)
 	  {
-		  if (!stop)
-			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
 		  if (encoderdiff > 10)
 			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (4000));
 		  else
@@ -521,8 +514,8 @@ void drone()
 	static uint32_t encoderatstop = 0;
 	static uint32_t timestampatfly = 0;
 	if (SHARP_F > 1552)
-		stop_drone = true;
-	if ((stop_drone) && (encoderdiff == 0))
+		stop = true;
+	if ((stop) && (encoderdiff == 0))
 	{
 		if (encoderatstop == 0)
 		{
@@ -530,7 +523,7 @@ void drone()
 			timestampatfly = timestamp;
 		}
 		if ((SHARP_F < 1241) && (timestamp - timestampatfly > 200))
-			stop_drone = false;
+			stop = false;
 	}
 	//if (encoder1 - encoderatstop > 2100) // Feladat vege, allapotvaltas, a 2100 itt random szam, a lenyeg, hogy uthosszt figyelunk a dron elotti megallasi helytol
 }
