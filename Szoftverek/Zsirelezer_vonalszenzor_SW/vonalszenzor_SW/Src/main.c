@@ -51,8 +51,17 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 /* Defines */
+//WMA
 #define WMAFILTERMELYSEG 4
-#define UJVONALERZEKELES_ITERACIOUTAN 4
+//Vonalszam
+#define NINCSVONAL 10
+#define EGYVONAL 1
+#define KETVONAL 2
+#define HAROMVONAL 3
+#define VONALHIBA 20
+//UTVONANALVALASZTAS
+#define JOBB 30
+#define BAL 40
 
 /* Global Variable definition */
 //ADC
@@ -66,6 +75,9 @@ volatile bool varakozas280usec = false;
 uint32_t wmafilterarray_elso[WMAFILTERMELYSEG];
 uint32_t wmafilterarray_masodik[WMAFILTERMELYSEG];
 
+//UART
+volatile uartcsomagerkezett=false;
+
 
 /* USER CODE END PV */
 
@@ -78,6 +90,11 @@ void Error_Handler(void);
 void MUXselectkuldes(uint8_t* infraLEDminta);
 void WMAfilterkezeles(uint32_t* WMAfilterarray, uint32_t* filteredposition, uint32_t* newelement);
 void szenzorertekatlagolas (uint16_t* forrastomb, uint8_t hossz, uint32_t* eredmeny);
+void koszszures(uint16_t* forrastomb, uint8_t hossz);
+void visszajelzesthresholdolttombbol(uint16_t* forrastomb, uint8_t* visszajelzotomb, uint8_t hossz);
+void vonalszam(uint16_t* forrastomb, uint8_t hossz, uint8_t* vonaltipus);
+
+
 //UART
 void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout);
 void sendadcvals_to_uart(UART_HandleTypeDef* huart, uint16_t* data1,uint16_t* data2, uint16_t* data3, uint16_t* data4,uint32_t Timeout);
@@ -108,7 +125,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 	{
 		varakozas280usec = true;
 	}
+}
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if (huart->Instance == USART1)
+	{
+		uartcsomagerkezett=true;
+	}
 }
 /* USER CODE END 0 */
 
@@ -135,20 +159,24 @@ int main(void)
 	uint32_t pozicio_elso=1600;
 	uint32_t pozicio_elozo_elso;
 	uint32_t pozicioWMA_elso;
-	bool vonal_elhagyva_elso=false;
-	uint16_t miota_van_ujra_vonal_elso=0;
+	uint8_t vonaltipus=EGYVONAL;
 
 	uint32_t pozicio_masodik=1200;
 	uint32_t pozicio_elozo_masodik;
 	uint32_t pozicioWMA_masodik;
-	bool vonal_elhagyva_masodik=false;
-	uint16_t miota_van_ujra_vonal_masodik=0;
 
+	//UTVONALVALASZTAS
+	bool utvonalvalasztas_aktiv=false;
+	bool jobbra_menjunk=false;
+	bool balra_menjunk=false;
 
 	//UART
 	 uint8_t endline=10;
 	 uint8_t CR=13;
 	 uint8_t tab=9;
+	 uint8_t zero[4]={48,48,48,48};
+	 uint16_t elkuldendo[3]={48,48,48};
+	 uint8_t uart_rx_csomag;
 
   /* USER CODE END 1 */
 
@@ -170,6 +198,7 @@ int main(void)
   MX_TIM7_Init();
 
   /* USER CODE BEGIN 2 */
+  HAL_UART_Receive_DMA(&huart1, uart_rx_csomag, 1);
 
   /* USER CODE END 2 */
 
@@ -202,94 +231,72 @@ int main(void)
 	  {
 
 		  //ELSO szenzorsor -----------
+		  koszszures(szenzorertekek_thresholddal_elso, 32);
+		  visszajelzesthresholdolttombbol(szenzorertekek_thresholddal_elso, visszajelzoLEDminta, 32);
 		  szenzorertekatlagolas(szenzorertekek_thresholddal_elso,32,&pozicio_elso);
 		  //Az elso szenzorsor forditva van bekotve, igy a poziciot at kell forditani a masik iranyba. De ha 0 a pozicio, akkor nem latunk vonalat, ekkor nem szabad valtoztatni. Ehhez ez kell:
 		  if(pozicio_elso)
 			  pozicio_elso=3300-pozicio_elso;
 
 		  //Elmentjuk az utolso poziciot, amit lattunk. Amennyiben leterunk a vonalrol, az utolso latott poziciot tartjuk.
-		  //Ha letertunk, de ujra latunk vonalat akkor csak akkor vesszuk be, ha legalabb UJVONALERZEKELES_ITERACIOUTAN szenzor-iteracioig valoban latunk nem 0 poziciot.
 		  //A nulla pozicio valos jelentese az hogy nem latunk vonalat. Egyebkent az ertektartomanya: [jobb:100,3200:bal]
 		  if (pozicio_elso==0)
 		  {
 			  pozicio_elso=pozicio_elozo_elso;
-			  vonal_elhagyva_elso=true;
-			  miota_van_ujra_vonal_elso=0;
 		  }
 		  else
 		  {
-			  if (vonal_elhagyva_elso)
-			  {
-				if(miota_van_ujra_vonal_elso >= UJVONALERZEKELES_ITERACIOUTAN)
-				{
-					vonal_elhagyva_elso=false;
-					miota_van_ujra_vonal_elso=0;
-					pozicio_elozo_elso=pozicio_elso;
-				}
-				else
-				{
-					miota_van_ujra_vonal_elso++;
-					pozicio_elso=pozicio_elozo_elso;
-				}
-			  }
-			  else
-			  {
-					pozicio_elozo_elso=pozicio_elso;
-			  }
+			  pozicio_elozo_elso=pozicio_elso;
 		  }
-
 
 		  WMAfilterkezeles(wmafilterarray_elso, &pozicioWMA_elso, &pozicio_elso);
 
-		  send16bitdecimal_to_uart(&huart1, (uint16_t*) &pozicioWMA_elso, 1000);
-		  HAL_UART_Transmit(&huart1,&tab, sizeof(uint8_t), 100000);
+		 /* send16bitdecimal_to_uart(&huart1, (uint16_t*) &pozicioWMA_elso, 1000);
+		  HAL_UART_Transmit(&huart1,&tab, sizeof(uint8_t), 100000);*/
+
 
 		  //MASODIK szenzorsor ---------------------
-
+		  koszszures(szenzorertekek_thresholddal_masodik, 24);
 		  szenzorertekatlagolas(szenzorertekek_thresholddal_masodik,24,&pozicio_masodik);
 
 		  //Elmentjuk az utolso poziciot, amit lattunk. Amennyiben leterunk a vonalrol, az utolso latott poziciot tartjuk.
-		  //Ha letertunk, de ujra latunk vonalat akkor csak akkor vesszuk be, ha legalabb UJVONALERZEKELES_ITERACIOUTAN szenzor-iteracioig valoban latunk nem 0 poziciot.
 		  //A nulla pozicio valos jelentese az hogy nem latunk vonalat. Egyebkent az ertektartomanya: [jobb:100,2400:bal]
 		  if (pozicio_masodik==0)
 		  {
 			  pozicio_masodik=pozicio_elozo_masodik;
-			  vonal_elhagyva_masodik=true;
-			  miota_van_ujra_vonal_masodik=0;
 		  }
 		  else
 		  {
-			  if (vonal_elhagyva_masodik)
-			  {
-				if(miota_van_ujra_vonal_masodik >= UJVONALERZEKELES_ITERACIOUTAN)
-				{
-					vonal_elhagyva_masodik=false;
-					miota_van_ujra_vonal_masodik=0;
-					pozicio_elozo_masodik=pozicio_masodik;
-				}
-				else
-				{
-					miota_van_ujra_vonal_masodik++;
-					pozicio_masodik=pozicio_elozo_masodik;
-				}
-			  }
-			  else
-			  {
-					pozicio_elozo_masodik=pozicio_masodik;
-			  }
+			  pozicio_elozo_masodik=pozicio_masodik;
 		  }
-
 
 		  WMAfilterkezeles(wmafilterarray_masodik, &pozicioWMA_masodik, &pozicio_masodik);
 
-		  send16bitdecimal_to_uart(&huart1, (uint16_t*) &pozicioWMA_masodik, 1000);
+		  /*send16bitdecimal_to_uart(&huart1, (uint16_t*) &pozicioWMA_masodik, 1000);
 		  HAL_UART_Transmit(&huart1,&endline, sizeof(uint8_t), 100000);
-		  HAL_UART_Transmit(&huart1,&CR, sizeof(uint8_t), 100000);
+		  HAL_UART_Transmit(&huart1,&CR, sizeof(uint8_t), 100000);*/
+
 
 		  //ADC adatok elkuldese ----------------------
-		  sendadcvals_to_uart(&huart1, szenzorertekek_elso[0], szenzorertekek_elso[1], szenzorertekek_elso[2], szenzorertekek_elso[3], 1000);
+
+		  //sendadcvals_to_uart(&huart1, szenzorertekek_elso[0], szenzorertekek_elso[1], szenzorertekek_elso[2], szenzorertekek_elso[3], 1000);
+
+		  if(uartcsomagerkezett)
+		  {
+			  //Ha kaptunk uzenetet a nucelotol, feldolgozzuk. (akadaly eseten jobbra, vagy balra megyunk)
+			  //A 3.-ik visszakuldendo csomagba egy ACK-t bele &-elunk (ACK: 0b00000111)
+			  ;
+		  }
 
 		  //NUCLEONAK UART-on pozicio es vonalszam elkuldese
+		  /*elkuldendo[0]= (uint16_t) pozicioWMA_elso;
+		  elkuldendo[1]= (uint16_t) pozicioWMA_masodik;
+		  vonalszam(szenzorertekek_thresholddal_elso, 32, &vonaltipus);
+		  elkuldendo[2]= vonaltipus;
+		  HAL_UART_Transmit_DMA(&huart1, elkuldendo, 3);*/
+
+
+
 
 	  }
 
@@ -315,17 +322,17 @@ int main(void)
 
 	  //ELSO
 	  //Gyors kijelzes threshold alapjan
-	  for (int q=0; q<4; q++)
+	 /* for (int q=0; q<4; q++)
 	  {
 		  if (adceredmenyelso[q] > threshold)
 		  {
-			  visszajelzoLEDminta[3-q] = visszajelzoLEDminta[3-q] | 1 << SPIIteracio-1; //infraLEDminta;
+			  visszajelzoLEDminta[3-q] = visszajelzoLEDminta[3-q] | (1 << (SPIIteracio-1)); //infraLEDminta;
 		  }
 		  else
 		  {
-			  visszajelzoLEDminta[3-q] = visszajelzoLEDminta[3-q] & ~(1 << SPIIteracio-1); //~infraLEDminta;
+			  visszajelzoLEDminta[3-q] = visszajelzoLEDminta[3-q] & ~(1 << (SPIIteracio-1)); //~infraLEDminta;
 		  }
-	  }
+	  }*/
 	  //ADC adatok mentese
 	  for (int q=0; q<4; q++)
 	  {
@@ -547,6 +554,85 @@ void szenzorertekatlagolas (uint16_t* forrastomb, uint8_t hossz, uint32_t* eredm
 		*eredmeny=*eredmeny/suly;
 	}
 }
+
+void koszszures(uint16_t* forrastomb, uint8_t hossz)
+{
+//Thresholdozas utan hasznalni! Forrastomb egyben az eredmeny helye is.
+//Ha lat a tombben egy nem nulla erteket, melyek szomszedai 0-k, akkor kinullazza azt is. Ertelme: 1 szenzor-szeles objektum az nem vonal, max kosz.
+//Azert nem median szurot hasznalok, mert az az ertekes eredmenyek csucsait is megszurne, ezzel pedig adatot es pontossagot vesztenenk.
+//A szelen is elvegzi a muveletet. Igy oldalrol bejovo vonal csak akkor lesz erzekelve, ha mar 2 szenzor is latja
+
+	for (int i=1; i<hossz-1; i++)
+	{
+		if(forrastomb[i] > 0)
+		{
+			if( forrastomb[i-1]==0 && forrastomb[i+1]==0)
+				forrastomb[i]=0;
+		}
+	}
+
+	if(forrastomb[0]>0 && forrastomb[1]==0)
+		forrastomb[0]=0;
+	if(forrastomb[hossz-1]>0 && forrastomb[hossz-2]==0)
+		forrastomb[hossz-1]=0;
+}
+
+void visszajelzesthresholdolttombbol(uint16_t* forrastomb, uint8_t* visszajelzotomb, uint8_t hossz)
+{
+	//Ha a thresholdolt tomb egy eleme nem 0, akkor az annak megfelelo bitet a LED-es visszajelzo tombben bebillentjuk 0-ba.
+	//Ha 0 a thresholdolt tomb eleme, akkor az ahhoz tartozó bitet kinullazuk.
+	//A visszajelzo tombot az SPI miatt forditott byte-sorrendben irjuk!
+	for (int i=0; i<hossz; i++)
+	{
+		if( forrastomb[i] > 0 )
+		{
+			visszajelzotomb[(hossz/8) - 1 - i/8] = visszajelzotomb[(hossz/8) - 1 - i/8] | (1 << (i%8));
+		}
+		else
+		{
+			visszajelzotomb[(hossz/8) - 1 - i/8] = visszajelzotomb[(hossz/8) - 1 - i/8] & ~(1 << (i%8));
+		}
+	}
+
+}
+
+void vonalszam(uint16_t* forrastomb, uint8_t hossz, uint8_t* vonaltipus)
+//Megszamolja, hogy hany el van a thresholdolt oszlopdiagramban (van ertek=nincs ertek -> a ketto valtakozasa egy el)
+{
+	bool vanvonal=false;
+	bool elozovanvonal=false;
+	uint8_t elekszama=0;
+
+	for (int i=0; i<hossz; i++)
+	{
+		if(forrastomb[i] > 0)
+		{
+			vanvonal=true;
+		}
+		else
+		{
+			vanvonal=false;
+		}
+		if (vanvonal^elozovanvonal)
+		{
+			elekszama++;
+		}
+		elozovanvonal=vanvonal;
+	}
+
+	if(elekszama==0)
+		*vonaltipus=NINCSVONAL;
+	else if(elekszama==1 || elekszama==2)
+		*vonaltipus=EGYVONAL;
+	else if(elekszama==3 || elekszama==4)
+		*vonaltipus=KETVONAL;
+	else if(elekszama==5 || elekszama==6)
+		*vonaltipus=HAROMVONAL;
+	else
+		*vonaltipus=VONALHIBA;
+}
+
+
 
 void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout)
 {

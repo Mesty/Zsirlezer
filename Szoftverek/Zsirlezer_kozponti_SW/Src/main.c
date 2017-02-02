@@ -139,8 +139,8 @@ int main(void)
 		  HAL_ADC_Start_DMA(&hadc1, (uint32_t*) SHARPData, 3);
 		  while(!SHARP_valid);
 		  sprintf(&string,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
-		  sprintf(&string,"%d %d %d\r\n",SHARPData[0],SHARPData[1],SHARPData[2]);
-		  HAL_UART_Transmit(&huart2, &string, sizeof(string)*sizeof(uint8_t), 10000);
+		  sprintf(&string,".%d.%d.%d.\r\n",SHARPData[0],SHARPData[1],SHARPData[2]);
+		  HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);
 		  tick = 0;
 	  }
 
