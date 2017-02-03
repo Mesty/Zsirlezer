@@ -153,7 +153,7 @@ int main(void)
 	uint16_t szenzorertekek_masodik[3][8];
 	uint16_t szenzorertekek_thresholddal_masodik[3][8];
 
-	uint16_t threshold=400;
+	uint16_t threshold=400; //felvenni 800-ra
 
 	//Szenzor adatok
 	uint32_t pozicio_elso=1600;
@@ -176,7 +176,7 @@ int main(void)
 	 uint8_t CR=13;
 	 uint8_t tab=9;
 	 uint8_t zero[4]={48,48,48,48};
-	 uint16_t elkuldendo[3]={48,48,48};
+	 uint8_t elkuldendo[5]={0,0,0,0,0};
 	 uint8_t uart_rx_csomag;
 	 bool uartcsomag_elkapva=false;
 
@@ -337,7 +337,25 @@ int main(void)
 		  }
 
 		  //NUCLEONAK UART-on pozicio es vonalszam elkuldese
-		  elkuldendo[0]= (uint16_t) pozicioWMA_elso;
+
+		  elkuldendo[0]= 0x000000ff & pozicioWMA_elso;
+		  elkuldendo[1]= (0x0000ff00 & pozicioWMA_elso)/0xff;
+		  elkuldendo[2]= 0x000000ff & pozicioWMA_masodik;
+		  elkuldendo[3]= (0x0000ff00 & pozicioWMA_masodik)/0xff;
+
+		  /*if(uartcsomag_elkapva==true)
+		  {
+			  //Acknowledge: a felso 4 bit 1-es, ha elkaptuk a csomagot
+			  //16-bites adatmerettel lehet hogy gondok lesznek...---
+			  elkuldendo[2]= (vonaltipus & 0b11110000);
+			  uartcsomag_elkapva=false;
+		  }
+		  else
+		  {
+			  elkuldendo[2]= vonaltipus;
+		  }*/
+		  elkuldendo[4] = vonaltipus;
+		  /*elkuldendo[0]= (uint16_t) pozicioWMA_elso;
 		  elkuldendo[1]= (uint16_t) pozicioWMA_masodik;
 		  if(uartcsomag_elkapva==true)
 		  {
@@ -349,8 +367,8 @@ int main(void)
 		  else
 		  {
 			  elkuldendo[2]= vonaltipus;
-		  }
-		  HAL_UART_Transmit_DMA(&huart1, elkuldendo, 3);
+		  }*/
+		  HAL_UART_Transmit_DMA(&huart1, elkuldendo, 5);
 
 	  }
 

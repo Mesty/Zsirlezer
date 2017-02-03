@@ -55,11 +55,11 @@ a = (3-3*(L+d)/kszi^2-eps)/5; % d_5s meredeksege [s]
 b = 3*(L+d)/kszi^2+eps; % d_5s 0 sebesseghez tartozo erteke [m]
 
 % Szoftver (kvantalas) parameterei
-T_p_a = 0.003; % Vonalpozicio alapjel mintavetelezesi ideje [s]
+T_p_a = 0.01; % Vonalpozicio alapjel mintavetelezesi ideje [s]
 T_v = 0.01; % Sebessegmeres mintavetelezesi ideje [s]
-T_delta = 0.003; % Vonalorientacio meres mintavetelezesi ideje [s]
-T_p = 0.003; % Vonalpozicio meres mintavetelezesi ideje [s]
-T_PWM = 0.003; % Beavatkozo jel mintavetelezesi ideje [s]
+T_delta = 0.01; % Vonalorientacio meres mintavetelezesi ideje [s]
+T_p = 0.01; % Vonalpozicio meres mintavetelezesi ideje [s]
+T_PWM = 0.01; % Beavatkozo jel mintavetelezesi ideje [s]
 p_1TCRTa = 100; % Elso szenzorsor minimalis erteke
 p_1TCRTb = 3200; % Elso szenzorsor maximalis erteke
 p_2TCRTa = 100; % Hatso szenzorsor minimalis erteke

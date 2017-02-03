@@ -47,11 +47,14 @@
 
 void SysTick_Handler(void);
 void TIM4_IRQHandler(void);
+void USART1_IRQHandler(void);
 void USART2_IRQHandler(void);
 void UART4_IRQHandler(void);
 void TIM6_DAC_IRQHandler(void);
 void TIM7_IRQHandler(void);
 void DMA2_Stream0_IRQHandler(void);
+void DMA2_Stream2_IRQHandler(void);
+void DMA2_Stream7_IRQHandler(void);
 
 #ifdef __cplusplus
 }

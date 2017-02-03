@@ -67,7 +67,7 @@ HAL_TIM_StateTypeDef state;
 uint32_t encoderprev=0;
 int32_t encoderdiff;
 uint32_t dir;
-//int32_t velocity;
+int32_t velocity;
 //int32_t filteredvelocity;
 //int32_t filteredvelocitydiff;
 //int32_t velocityarray[4]={0,0,0,0}; //Kis csalas, akkor jo, ha VELOCITY_FILTER_DEPTH = 4
@@ -82,6 +82,9 @@ int32_t SHARP_R_ARRAY[4] = {0,0,0,0};
 int32_t SHARP_L_ARRAY[4] = {0,0,0,0};
 /* UART-on kuldento string */
 uint8_t string[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+//UART, vonalszenzor
+volatile bool vonalszenzor_uzenetjott=false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -93,6 +96,8 @@ void Error_Handler(void);
 uint32_t reverse_byte_order_32(uint32_t value);
 void drone();
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth);
+void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout);
+
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -123,20 +128,35 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		dovelocitymeasurement=true;
 	}
 }
-/*void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	if(huart->Instance == USART2)
+	/*if(huart->Instance == USART2)
 	{
 		HAL_UART_Receive_IT(huart, (uint8_t *) inputStream, sizeof(inputStream));
 		dataReady = true;
+	}*/
+	if (huart->Instance ==USART1)
+	{
+		vonalszenzor_uzenetjott=true;
 	}
-}*/
+}
 /* USER CODE END 0 */
 
 int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+	//UART
+	uint8_t endline=10;
+	uint8_t CR=13;
+	uint8_t tab=9;
+	//Vonalszenzor
+	uint8_t uzenetarray[5]={0,0,0,0,0};
+	uint16_t pozicio_elso=1600;
+	uint16_t pozicio_masodik=1200;
+	uint8_t vonaltipus=1;
+
 
   /* USER CODE END 1 */
 
@@ -167,9 +187,14 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
-  HAL_Delay(5000);
+ // HAL_Delay(5000);
   HAL_TIM_Base_Start_IT(&htim6);
   HAL_TIM_IC_Start_IT(&htim4,TIM_CHANNEL_1);
+
+  //Vonalszenzortol uzenetek fogadasa
+  //HAL_UART_Receive_DMA(&huart1,uzenetarray,3);
+  HAL_UART_Receive_DMA(&huart1, uzenetarray, 5);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -180,6 +205,16 @@ int main(void)
 
   while (1)
   {
+	  //UART uzenet fogadasa a vonalszenzortol
+	  if(vonalszenzor_uzenetjott==true) //3ms-onkent kapunk uzenetet
+	  {
+		  pozicio_elso = uzenetarray[0] + uzenetarray[1]*0xff;
+		  pozicio_masodik = uzenetarray[2] + uzenetarray[3]*0xff;
+		  vonaltipus=uzenetarray[4];
+		  vonalszenzor_uzenetjott=false;
+	  }
+
+
 	  /* Deadman emergency brake */
 	  if(((actualmotorinput < previousmotorinput) ? actualmotorinput : previousmotorinput) < 4000)
 		  stop_deadman = true;
@@ -221,7 +256,7 @@ int main(void)
 			  dir = __HAL_TIM_DIRECTION_STATUS(&htim2);
 			  encoder1=actualencoderval;
 			  encoderdiff=encoder1-encoderprev;
-			  //velocity=((encoderdiff*10000)/743); //v[mm/s]
+			  velocity=((encoderdiff*10000)/743); //v[mm/s]
 			  //filteredvelocitydiff=-filteredvelocity;
 			  //WMAfilter(&filteredvelocity, &velocity, velocityarray, 4);
 			  /*if(filteredvelocity>=0)
@@ -353,6 +388,45 @@ void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32
 	*filteredval=*filteredval+array[filter_depth-1]*(filter_depth);
 	coeffsum+=(filter_depth);
 	*filteredval=*filteredval/coeffsum;
+}
+
+void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout)
+{
+	uint16_t data2 = *data;
+	uint16_t datacopy;
+	uint32_t decimals;
+	uint8_t txbyte;
+	uint8_t issent=0;
+	uint8_t space=32;
+	for (int i=5; i>0; i--)
+	{
+		datacopy = data2;
+		decimals=1;
+		for (int j=i-1; j>0; j--)
+		{
+			datacopy=datacopy/10;
+			decimals = decimals*10;
+		}
+		data2 -= datacopy*decimals;
+		txbyte = (uint8_t) (datacopy+48);
+
+		if(datacopy) //send spaces if zeros before the number
+			issent=1;
+		if(issent)
+			HAL_UART_Transmit(huart, &txbyte, sizeof(txbyte), Timeout);
+		else
+			HAL_UART_Transmit(huart, &space, sizeof(txbyte), Timeout);
+	}
+}
+
+void vonal_objektum_eszleles (uint8_t vonaltipus, uint32_t* encodervalue)
+{
+
+}
+
+void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny)
+{
+
 }
 /* USER CODE END 4 */
 
