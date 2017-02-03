@@ -54,7 +54,6 @@ volatile bool SHARP_valid;
 volatile uint32_t previousmotorinput = 0;
 volatile uint32_t actualmotorinput = 0;
 bool stop = false;
-bool stopm1 = false;
 bool stop_deadman = false;
 bool stop_drone = false;
 int32_t motorpulsePWM;
@@ -175,8 +174,6 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   motorpulsePWM = 7332;
-  if (!stop)
-	  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
 
   while (1)
   {
@@ -189,16 +186,13 @@ int main(void)
 		  stop = true;
 	  else
 		  stop = false;
-	  if (stop != stopm1)
-	  {
-		  if (!stop)
-			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
-		  if (encoderdiff > 10)
-			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (4000));
-		  else
-			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (6932));
-		  stopm1 = stop;
-	  }
+
+	  if (!stop)
+		  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, motorpulsePWM);
+	  else if (encoderdiff > 10)
+		  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 4000);
+	  else
+		  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 6932);
 	  /* SHARP olvasas es kuldes */
 	  if(tick)
 	  {
