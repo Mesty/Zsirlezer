@@ -37,7 +37,7 @@ s_s = 52/3; % Maximalis szaturacio nelkuli szogsebesseg szoghibaja [fok]
 
 % Jarmu parameterezese
 L = 0.22; % Tengelytavolsag [m]
-d = 0.07; % Elso szenzorsor tavolsaga az elso tengelytol [m]
+d = 0.065; % Elso szenzorsor tavolsaga az elso tengelytol [m]
 p_1s = 0.0917605; % Elso szenzorsor szelessegenek fele [m]
 p_2s = 0.068075; % Hatso szenzorsor szelessegenek fele [m]
 L_sensor = 0.13; % Ket szenzorsor tavolsaga egymastol [m]
@@ -55,11 +55,11 @@ a = (3-3*(L+d)/kszi^2-eps)/5; % d_5s meredeksege [s]
 b = 3*(L+d)/kszi^2+eps; % d_5s 0 sebesseghez tartozo erteke [m]
 
 % Szoftver (kvantalas) parameterei
-T_p_a = 0.01; % Vonalpozicio alapjel mintavetelezesi ideje [s]
+T_p_a = 0.003; % Vonalpozicio alapjel mintavetelezesi ideje [s]
 T_v = 0.01; % Sebessegmeres mintavetelezesi ideje [s]
-T_delta = 0.01; % Vonalorientacio meres mintavetelezesi ideje [s]
-T_p = 0.01; % Vonalpozicio meres mintavetelezesi ideje [s]
-T_PWM = 0.01; % Beavatkozo jel mintavetelezesi ideje [s]
+T_delta = 0.003; % Vonalorientacio meres mintavetelezesi ideje [s]
+T_p = 0.003; % Vonalpozicio meres mintavetelezesi ideje [s]
+T_PWM = 0.003; % Beavatkozo jel mintavetelezesi ideje [s]
 p_1TCRTa = 100; % Elso szenzorsor minimalis erteke
 p_1TCRTb = 3200; % Elso szenzorsor maximalis erteke
 p_2TCRTa = 100; % Hatso szenzorsor minimalis erteke
