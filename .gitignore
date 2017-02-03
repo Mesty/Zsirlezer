@@ -33,3 +33,4 @@ _ReSharper*/
 [Tt]est[Rr]esult*
 *Debug
 *.metadata/
+*.settings/
