@@ -208,7 +208,7 @@ int main(void)
 		  WMAfilter(SHARP_R,SHARPData[1],SHARP_R_ARRAY,4);
 		  WMAfilter(SHARP_L,SHARPData[2],SHARP_L_ARRAY,4);
 		  sprintf(&string,"..................\r\n");
-		  sprintf(&string,".%d.%d.%d.",SHARPData[0],SHARPData[1],SHARPData[2]);
+		  sprintf(&string,".%d.%d.%d.",SHARP_F,SHARP_R,SHARP_L);
 		  HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);
 		  tick = 0;
 	  }
