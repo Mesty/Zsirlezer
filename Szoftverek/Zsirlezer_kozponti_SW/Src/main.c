@@ -1000,7 +1000,13 @@ void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* se
 {
 	float arctaneredmeny;
 	arctaneredmeny=atan_lut[*orientacio+2300];
-	*PWMeredmeny = (uint32_t) ( -3.1667*((float)*pozicio)/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+(-0.855-0.00063*((float)*sebesseg))*arctaneredmeny/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+6763.5);
+	*PWMeredmeny = (uint32_t) (251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+(-0.855-0.00063*((float)*sebesseg))*arctaneredmeny/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+6763.5);
+	if(*PWMeredmeny > 7883)
+		*PWMeredmeny=7883;
+	else if(*PWMeredmeny < 5644)
+		*PWMeredmeny=5644;
+
+	//*PWMeredmeny = (uint32_t) ( -3.1667*((float)*pozicio)/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+(-0.855-0.00063*((float)*sebesseg))*arctaneredmeny/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+6763.5);
 }
 /* USER CODE END 4 */
 
