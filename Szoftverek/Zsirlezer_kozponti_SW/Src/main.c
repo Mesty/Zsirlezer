@@ -54,7 +54,6 @@ volatile bool SHARP_valid;
 volatile uint32_t previousmotorinput = 0;
 volatile uint32_t actualmotorinput = 0;
 bool stop = false;
-bool stopm1 = false;
 bool stop_deadman = false;
 bool stop_drone = false;
 int32_t motorpulsePWM;
@@ -200,8 +199,6 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   motorpulsePWM = 7332;
-  if (!stop)
-	  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
 
   while (1)
   {
@@ -224,16 +221,13 @@ int main(void)
 		  stop = true;
 	  else
 		  stop = false;
-	  if (stop != stopm1)
-	  {
-		  if (!stop)
-			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
-		  if (encoderdiff > 10)
-			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (4000));
-		  else
-			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (6932));
-		  stopm1 = stop;
-	  }
+
+	  if (!stop)
+		  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, motorpulsePWM);
+	  else if (encoderdiff > 10)
+		  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 4000);
+	  else
+		  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 6932);
 	  /* SHARP olvasas es kuldes */
 	  if(tick)
 	  {
@@ -243,7 +237,7 @@ int main(void)
 		  WMAfilter(SHARP_R,SHARPData[1],SHARP_R_ARRAY,4);
 		  WMAfilter(SHARP_L,SHARPData[2],SHARP_L_ARRAY,4);
 		  sprintf(&string,"..................\r\n");
-		  sprintf(&string,".%d.%d.%d.",SHARPData[0],SHARPData[1],SHARPData[2]);
+		  sprintf(&string,".%d.%d.%d.",SHARP_F,SHARP_R,SHARP_L);
 		  HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);
 		  tick = 0;
 	  }
