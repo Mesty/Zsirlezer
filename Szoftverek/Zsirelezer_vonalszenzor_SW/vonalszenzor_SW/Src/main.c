@@ -58,10 +58,10 @@
 #define EGYVONAL 1
 #define KETVONAL 2
 #define HAROMVONAL 3
-#define VONALHIBA 20
+#define VONALHIBA 15
 //UTVONANALVALASZTAS
 #define JOBB 30
-#define BAL 40
+#define BAL 45
 
 /* Global Variable definition */
 //ADC
@@ -76,7 +76,7 @@ uint32_t wmafilterarray_elso[WMAFILTERMELYSEG];
 uint32_t wmafilterarray_masodik[WMAFILTERMELYSEG];
 
 //UART
-volatile uartcsomagerkezett=false;
+volatile bool uartcsomagerkezett=false;
 
 
 /* USER CODE END PV */
@@ -93,7 +93,7 @@ void szenzorertekatlagolas (uint16_t* forrastomb, uint8_t hossz, uint32_t* eredm
 void koszszures(uint16_t* forrastomb, uint8_t hossz);
 void visszajelzesthresholdolttombbol(uint16_t* forrastomb, uint8_t* visszajelzotomb, uint8_t hossz);
 void vonalszam(uint16_t* forrastomb, uint8_t hossz, uint8_t* vonaltipus);
-
+void utvonalvalasztas_szenzoradatokbol(uint16_t* forrastomb, uint8_t hossz, uint8_t irany);
 
 //UART
 void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout);
@@ -169,6 +169,7 @@ int main(void)
 	bool utvonalvalasztas_aktiv=false;
 	bool jobbra_menjunk=false;
 	bool balra_menjunk=false;
+	uint8_t vonaltipus_elozo=EGYVONAL;
 
 	//UART
 	 uint8_t endline=10;
@@ -177,6 +178,7 @@ int main(void)
 	 uint8_t zero[4]={48,48,48,48};
 	 uint16_t elkuldendo[3]={48,48,48};
 	 uint8_t uart_rx_csomag;
+	 bool uartcsomag_elkapva=false;
 
   /* USER CODE END 1 */
 
@@ -198,7 +200,7 @@ int main(void)
   MX_TIM7_Init();
 
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_DMA(&huart1, uart_rx_csomag, 1);
+  HAL_UART_Receive_DMA(&huart1, &uart_rx_csomag, 1);
 
   /* USER CODE END 2 */
 
@@ -231,8 +233,21 @@ int main(void)
 	  {
 
 		  //ELSO szenzorsor -----------
+		  //FONTOS! Egyes fuggvenyek a megkapott tomboket manipulaljak, igy a sorrendjuk nem mindegy!!!
 		  koszszures(szenzorertekek_thresholddal_elso, 32);
+		  vonalszam(szenzorertekek_thresholddal_elso, 32, &vonaltipus);
 		  visszajelzesthresholdolttombbol(szenzorertekek_thresholddal_elso, visszajelzoLEDminta, 32);
+
+		  //Ha kell utvonalat valasztani az ugyessegin, akkor a thresholdolt tombot manipulaljuk
+		  //Csak a megfelelo iranyban levo vonal marad meg, ebbol szamoljuk a poziciot
+		  if(utvonalvalasztas_aktiv==true)
+		  {
+			  if(balra_menjunk)
+				  utvonalvalasztas_szenzoradatokbol(szenzorertekek_thresholddal_elso, 32, BAL);
+			  else if(jobbra_menjunk)
+				  utvonalvalasztas_szenzoradatokbol(szenzorertekek_thresholddal_elso, 32, JOBB);
+		  }
+
 		  szenzorertekatlagolas(szenzorertekek_thresholddal_elso,32,&pozicio_elso);
 		  //Az elso szenzorsor forditva van bekotve, igy a poziciot at kell forditani a masik iranyba. De ha 0 a pozicio, akkor nem latunk vonalat, ekkor nem szabad valtoztatni. Ehhez ez kell:
 		  if(pozicio_elso)
@@ -256,7 +271,27 @@ int main(void)
 
 
 		  //MASODIK szenzorsor ---------------------
+		  //FONTOS! Egyes fuggvenyek a megkapott tomboket manipulaljak, igy a sorrendjuk nem mindegy!!!
 		  koszszures(szenzorertekek_thresholddal_masodik, 24);
+
+		  //Ha kell utvonalat valasztani az ugyessegin, akkor a thresholdolt tombot manipulaljuk
+		  //Csak a megfelelo iranyban levo vonal marad meg, ebbol szamoljuk a poziciot
+		  if(utvonalvalasztas_aktiv==true)
+		  {
+			  if(balra_menjunk)
+				  utvonalvalasztas_szenzoradatokbol(szenzorertekek_thresholddal_masodik, 24, BAL);
+			  else if(jobbra_menjunk)
+				  utvonalvalasztas_szenzoradatokbol(szenzorertekek_thresholddal_masodik, 24, JOBB);
+			  //Ha ujra egy vonalat latunk, akkor vege az utvonalvalaszto allapotnak
+			  if(vonaltipus==EGYVONAL && vonaltipus_elozo==KETVONAL)
+			  {
+				  utvonalvalasztas_aktiv=false;
+				  balra_menjunk=false;
+				  jobbra_menjunk=false;
+			  }
+			  vonaltipus_elozo=vonaltipus;
+		  }
+
 		  szenzorertekatlagolas(szenzorertekek_thresholddal_masodik,24,&pozicio_masodik);
 
 		  //Elmentjuk az utolso poziciot, amit lattunk. Amennyiben leterunk a vonalrol, az utolso latott poziciot tartjuk.
@@ -284,19 +319,38 @@ int main(void)
 		  if(uartcsomagerkezett)
 		  {
 			  //Ha kaptunk uzenetet a nucelotol, feldolgozzuk. (akadaly eseten jobbra, vagy balra megyunk)
-			  //A 3.-ik visszakuldendo csomagba egy ACK-t bele &-elunk (ACK: 0b00000111)
-			  ;
+			  //A 3.-ik visszakuldendo csomagba egy ACK-t bele &-elunk (ACK: 0b11110000)
+			  if(uart_rx_csomag==BAL)
+			  {
+				  utvonalvalasztas_aktiv=true;
+				  balra_menjunk=true;
+				  jobbra_menjunk=false;
+			  }
+			  if(uart_rx_csomag==JOBB)
+			  {
+				  utvonalvalasztas_aktiv=true;
+				  balra_menjunk=false;
+				  jobbra_menjunk=true;
+			  }
+			  uartcsomag_elkapva=true;
+			  uartcsomagerkezett=false; //Ez jo lesz, ha ez alatt veletlen nem kapunk uzenetet (az elvesz). Viszont varhatoan a nucelo ilyenkor nem kuld...---
 		  }
 
 		  //NUCLEONAK UART-on pozicio es vonalszam elkuldese
-		  /*elkuldendo[0]= (uint16_t) pozicioWMA_elso;
+		  elkuldendo[0]= (uint16_t) pozicioWMA_elso;
 		  elkuldendo[1]= (uint16_t) pozicioWMA_masodik;
-		  vonalszam(szenzorertekek_thresholddal_elso, 32, &vonaltipus);
-		  elkuldendo[2]= vonaltipus;
-		  HAL_UART_Transmit_DMA(&huart1, elkuldendo, 3);*/
-
-
-
+		  if(uartcsomag_elkapva==true)
+		  {
+			  //Acknowledge: a felso 4 bit 1-es, ha elkaptuk a csomagot
+			  //16-bites adatmerettel lehet hogy gondok lesznek...---
+			  elkuldendo[2]= (vonaltipus & 0b11110000);
+			  uartcsomag_elkapva=false;
+		  }
+		  else
+		  {
+			  elkuldendo[2]= vonaltipus;
+		  }
+		  HAL_UART_Transmit_DMA(&huart1, elkuldendo, 3);
 
 	  }
 
@@ -388,7 +442,6 @@ int main(void)
 
 	  //Elso szenzorsor ADC konverzio vegere valo varakozas
 	  while (!adckeszelso);
-
 
 
   /* USER CODE END WHILE */
@@ -632,7 +685,82 @@ void vonalszam(uint16_t* forrastomb, uint8_t hossz, uint8_t* vonaltipus)
 		*vonaltipus=VONALHIBA;
 }
 
+void utvonalvalasztas_szenzoradatokbol(uint16_t* forrastomb, uint8_t hossz, uint8_t irany)
+{
+	//Thresholdolt tombot var bemenetkent, ertek==0 ->nincs vonal; ertek!=0 -> van vonal
+	//A megadott tombbol kivalasztja a legszelso jobb vagy bal egybefuggo vonalat, a tobbit pedig kinullazza
+	//Bal oldal: a szenzorertek-tomb magas indexe felol
+	//Jobb oldal: a szenzorertek-tomb alacsony indexe felol
+	bool vanvonal=false;
+	bool elozovanvonal=false;
+	bool mar_megvan_a_kivalasztott_vonal=false;
+	uint8_t elekszama=0;
 
+	if(irany==BAL)
+	{
+		for(int i=hossz-1; i!=0; i--)
+		{
+			if(elekszama==2)
+			{
+				mar_megvan_a_kivalasztott_vonal=true;
+			}
+
+			if(mar_megvan_a_kivalasztott_vonal==false)
+			{
+				if(forrastomb[i] > 0)
+				{
+					vanvonal=true;
+				}
+				else
+				{
+					vanvonal=false;
+				}
+				if (vanvonal^elozovanvonal)
+				{
+					elekszama++;
+				}
+				elozovanvonal=vanvonal;
+			}
+			else
+			{
+				forrastomb[i]=0;
+			}
+		}
+	}
+
+	if(irany==JOBB)
+	{
+		for(int i=0; i<hossz; i++)
+		{
+			if(elekszama==2)
+			{
+				mar_megvan_a_kivalasztott_vonal=true;
+			}
+
+			if(mar_megvan_a_kivalasztott_vonal==false)
+			{
+				if(forrastomb[i] > 0)
+				{
+					vanvonal=true;
+				}
+				else
+				{
+					vanvonal=false;
+				}
+				if (vanvonal^elozovanvonal)
+				{
+					elekszama++;
+				}
+				elozovanvonal=vanvonal;
+			}
+			else
+			{
+				forrastomb[i]=0;
+			}
+		}
+	}
+
+}
 
 void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout)
 {
