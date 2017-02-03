@@ -55,7 +55,7 @@
 //float RobotState_v;
 //float RobotState_a;
 //uint32_t RobotState_light;
-volatile uint8_t tick;
+volatile bool tick = false;
 //volatile uint8_t dataReady;
 //uint32_t inputStream[7]={0,0,0,0,0,0,0};
 //uint32_t receivedState_status;
@@ -65,6 +65,37 @@ volatile uint8_t tick;
 //float receivedState_a;
 //uint32_t receivedState_light;
 volatile bool SHARP_valid;
+volatile uint32_t previousmotorinput = 0;
+volatile uint32_t actualmotorinput = 0;
+bool stop = false;
+bool stopm1 = false;
+bool stop_deadman = false;
+bool stop_drone = false;
+int32_t motorpulsePWM;
+volatile uint32_t timestamp = 0;
+volatile uint32_t actualencoderval=0;
+volatile bool dovelocitymeasurement=false;
+/*Encoder vars*/
+uint32_t encoder1;
+HAL_TIM_StateTypeDef state;
+uint32_t encoderprev=0;
+int32_t encoderdiff;
+uint32_t dir;
+//int32_t velocity;
+//int32_t filteredvelocity;
+//int32_t filteredvelocitydiff;
+//int32_t velocityarray[4]={0,0,0,0}; //Kis csalas, akkor jo, ha VELOCITY_FILTER_DEPTH = 4
+//uint32_t velocityabs;
+/* SHARP vars */
+uint16_t SHARPData[3] = {0,0,0};
+int32_t SHARP_F = 0;
+int32_t SHARP_R = 0;
+int32_t SHARP_L = 0;
+int32_t SHARP_F_ARRAY[4] = {0,0,0,0};
+int32_t SHARP_R_ARRAY[4] = {0,0,0,0};
+int32_t SHARP_L_ARRAY[4] = {0,0,0,0};
+/* UART-on kuldento string */
+uint8_t string[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -79,6 +110,8 @@ void Simulator_dataReady();
 void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint32_t timestamp, float x, float v, float a, uint32_t light, uint32_t Timeout);
 void Simulator_ReadFrom();*/
 uint32_t reverse_byte_order_32(uint32_t value);
+void drone();
+void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -87,14 +120,43 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 	if (hadc->Instance == ADC1)
 		SHARP_valid = true;
 }
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef* htim)
+{
+	if (htim->Instance == TIM4)
+	{
+		previousmotorinput = actualmotorinput;
+		actualmotorinput = HAL_TIM_ReadCapturedValue(&htim4,TIM_CHANNEL_1);
+		__HAL_TIM_SET_COUNTER(&htim4,0);
+	}
+}
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if(htim->Instance == TIM6)
+	{
+		tick = true;
+	}
+	if(htim->Instance == TIM7)
+	{
+		timestamp++;
+		actualencoderval=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
+		dovelocitymeasurement=true;
+	}
+}
+/*void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance == USART2)
+	{
+		HAL_UART_Receive_IT(huart, (uint8_t *) inputStream, sizeof(inputStream));
+		dataReady = 1;
+	}
+}*/
 /* USER CODE END 0 */
 
 int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  uint16_t SHARPData[3];
-  uint8_t string[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -120,30 +182,84 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM6_Init();
   MX_USART2_UART_Init();
+  MX_TIM4_Init();
+  MX_TIM7_Init();
 
   /* USER CODE BEGIN 2 */
-  //HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-  //HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
+  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+  HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
+  HAL_Delay(5000);
   HAL_TIM_Base_Start_IT(&htim6);
+  HAL_TIM_IC_Start_IT(&htim4,TIM_CHANNEL_1);
   //Simulator_start(90000000/1373/65501);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
+  motorpulsePWM = 7332;
+  if (!stop)
+	  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
 
   while (1)
   {
-	  if(tick == 1)
+	  /* Deadman emergency brake */
+	  if(((actualmotorinput < previousmotorinput) ? actualmotorinput : previousmotorinput) < 4000)
+		  stop_deadman = true;
+	  else
+		  stop_deadman = false;
+	  if (stop_deadman || stop_drone)
+		  stop = true;
+	  else
+		  stop = false;
+	  if (stop != stopm1)
+	  {
+		  if (!stop)
+			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (motorpulsePWM));
+		  if (encoderdiff > 10)
+			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (4000));
+		  else
+			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (6932));
+		  stopm1 = stop;
+	  }
+	  /* SHARP olvasas es kuldes */
+	  if(tick)
 	  {
 		  HAL_ADC_Start_DMA(&hadc1, (uint32_t*) SHARPData, 3);
 		  while(!SHARP_valid);
-		  sprintf(&string,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
-		  sprintf(&string,".%d.%d.%d.\r\n",SHARPData[0],SHARPData[1],SHARPData[2]);
+		  WMAfilter(SHARP_F,SHARPData[0],SHARP_F_ARRAY,4);
+		  WMAfilter(SHARP_R,SHARPData[1],SHARP_R_ARRAY,4);
+		  WMAfilter(SHARP_L,SHARPData[2],SHARP_L_ARRAY,4);
+		  sprintf(&string,"..................\r\n");
+		  sprintf(&string,".%d.%d.%d.",SHARPData[0],SHARPData[1],SHARPData[2]);
 		  HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);
 		  tick = 0;
 	  }
-
+	  /* Sebessegmeres */
+	  if(dovelocitymeasurement) //v=[mm/s], delta t = 10ms
+	  {//valami szamitas hibas, wma filter furi.
+		  state = HAL_TIM_Encoder_GetState(&htim2);
+		  if(state==HAL_TIM_STATE_READY)
+		  {
+			  dir = __HAL_TIM_DIRECTION_STATUS(&htim2);
+			  encoder1=actualencoderval;
+			  encoderdiff=encoder1-encoderprev;
+			  //velocity=((encoderdiff*10000)/743); //v[mm/s]
+			  //filteredvelocitydiff=-filteredvelocity;
+			  //WMAfilter(&filteredvelocity, &velocity, velocityarray, 4);
+			  /*if(filteredvelocity>=0)
+				  velocityabs = filteredvelocity;
+			  else
+				  velocityabs = -filteredvelocity;*/
+			  encoderprev=encoder1;
+			  //filteredvelocitydiff+=filteredvelocity;
+		  }
+		  else
+		  {
+			  //error handling...
+		  }
+		  dovelocitymeasurement=false;
+	  }
+	  //drone();
 	  /*if(dataReady == 1)
 	  {
 		  Simulator_dataReady();
@@ -321,8 +437,8 @@ void Simulator_ReadFrom()
 	receivedState_v = (float) inputStream[4];
 	receivedState_a = (float) inputStream[5];
 	receivedState_light = inputStream[6];
-}*/
-/*void szervoPszabalyozo(int16_t *vonalpozicio)
+}
+void szervoPszabalyozo(int16_t *vonalpozicio)
 {
 	  uint16_t servo_pulse;
 	  servo_pulse = (-10*(*vonalpozicio))*KC+6707;
@@ -332,23 +448,8 @@ void Simulator_ReadFrom()
 		  servo_pulse=6007;
 	  MX_TIM1_Init(servo_pulse);
 	  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-}*/
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-	if(htim->Instance == TIM6)
-	{
-		tick = 1;
-	}
 }
-/*void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-	if(huart->Instance == USART2)
-	{
-		HAL_UART_Receive_IT(huart, (uint8_t *) inputStream, sizeof(inputStream));
-		dataReady = 1;
-	}
-}*/
-/*void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint32_t timestamp, float x, float v, float a, uint32_t light, uint32_t Timeout)
+void Uart_sendstate(UART_HandleTypeDef *huart, uint32_t status, uint32_t timestamp, float x, float v, float a, uint32_t light, uint32_t Timeout)
 {
 	//uint32_t i = 20;
 	uint32_t state[7];
@@ -414,6 +515,40 @@ uint32_t reverse_byte_order_32(uint32_t value)
 	uint8_t hilo = (value >> 16) & 0xFF;
 	uint8_t hihi = (value >> 24) & 0xFF;
 	return (hihi << 0) | (hilo << 8) | (lohi << 16) | (lolo << 24);
+}
+void drone()
+{
+	static uint32_t encoderatstop = 0;
+	static uint32_t timestampatfly = 0;
+	if (SHARP_F > 1552)
+		stop_drone = true;
+	if ((stop_drone) && (encoderdiff == 0))
+	{
+		if (encoderatstop == 0)
+		{
+			encoderatstop = encoder1;
+			timestampatfly = timestamp;
+		}
+		if ((SHARP_F < 1241) && (timestamp - timestampatfly > 200))
+			stop_drone = false;
+	}
+	//if (encoder1 - encoderatstop > 2100) // Feladat vege, allapotvaltas, a 2100 itt random szam, a lenyeg, hogy uthosszt figyelunk a dron elotti megallasi helytol
+}
+void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth)
+{
+	*filteredval=0;
+	int32_t coeffsum=0;
+
+	for(int i=0; i<filter_depth-1; i++)
+	{
+		array[i]=array[i+1];
+		*filteredval=*filteredval+array[i]*(i+1);
+		coeffsum+=(i+1);
+	}
+	array[filter_depth-1]=*newelement;
+	*filteredval=*filteredval+array[filter_depth-1]*(filter_depth);
+	coeffsum+=(filter_depth);
+	*filteredval=*filteredval/coeffsum;
 }
 /* USER CODE END 4 */
 
