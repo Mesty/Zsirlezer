@@ -1,7 +1,7 @@
 [PreviousGenFiles]
-HeaderPath=F:/BME/RobonAUT/Zsirlezer/Szoftverek/Zsirlezer_kozponti_SW/Inc
+HeaderPath=E:/adokhumenthumok/bme/1MSC/2_felev/robonAUT/gitrepo_zsirlezer/Zsirlezer/Szoftverek/Zsirlezer_kozponti_SW/Inc
 HeaderFiles=gpio.h;adc.h;dma.h;spi.h;tim.h;usart.h;stm32f4xx_it.h;stm32f4xx_hal_conf.h;main.h;
-SourcePath=F:/BME/RobonAUT/Zsirlezer/Szoftverek/Zsirlezer_kozponti_SW/Src
+SourcePath=E:/adokhumenthumok/bme/1MSC/2_felev/robonAUT/gitrepo_zsirlezer/Zsirlezer/Szoftverek/Zsirlezer_kozponti_SW/Src
 SourceFiles=gpio.h;adc.h;dma.h;spi.h;tim.h;usart.h;stm32f4xx_it.h;stm32f4xx_hal_conf.h;main.h;gpio.c;adc.c;dma.c;spi.c;tim.c;usart.c;stm32f4xx_it.c;stm32f4xx_hal_msp.c;main.c;
 
 [PreviousLibFiles]

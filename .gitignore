@@ -32,3 +32,9 @@ obj/
 _ReSharper*/
 [Tt]est[Rr]esult*
 *Debug
+*.metadata/
+*.settings/
+Szoftverek/Zsirlezer_kozponti_SW/.settings/language.settings.xml
+Szoftverek/Zsirlezer_kozponti_SW/.settings/language.settings.xml
+Szoftverek/Zsirelezer_vonalszenzor_SW/vonalszenzor_SW/.settings/language.settings.xml
+Szoftverek/nucleo_cube_spi/.settings/language.settings.xml

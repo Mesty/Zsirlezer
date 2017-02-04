@@ -16,8 +16,8 @@ clear scrsz defaultFigurePosition vonalorientacio str
 
 %% Gyakran valtoztatott parameterek (valtozoneveket atirni nem szabad)
 
-p_0 = 0.09; % Kezdeti vonalpozicio [m]
-delta_0 = 0; % Kezdeti vonalorientacio [fok]
+p_0 = 0.01; % Kezdeti vonalpozicio [m]
+delta_0 = -5; % Kezdeti vonalorientacio [fok]
 v = 5; % Sebesseg [m/s]
 % d_5s 5%-os beallasi ut
 % d_5s = a*v+b, ahol v sebesseg, a[s] meredekseg, b[m] konstans
@@ -31,13 +31,13 @@ kszi = 0.9; % Csillapitasi tenyezo
 % Kormanyszervo parameterezese (jelenleg tanszeki modell alapjan)
 T_H = 0.03; % Holtido [s]
 T_M = 0.01; % Motor idoallandoja [s]
-fi_m = 20; % Kormanyszervo mechanikai korlatja az egyeneshez kepest [fok]
+fi_m = 14; % Kormanyszervo mechanikai korlatja az egyeneshez kepest [fok]
 m = 260; % Kormanyszervo szogsebesseg korlatja [fok/s]
 s_s = 52/3; % Maximalis szaturacio nelkuli szogsebesseg szoghibaja [fok]
 
 % Jarmu parameterezese
 L = 0.22; % Tengelytavolsag [m]
-d = 0.07; % Elso szenzorsor tavolsaga az elso tengelytol [m]
+d = 0.065; % Elso szenzorsor tavolsaga az elso tengelytol [m]
 p_1s = 0.0917605; % Elso szenzorsor szelessegenek fele [m]
 p_2s = 0.068075; % Hatso szenzorsor szelessegenek fele [m]
 L_sensor = 0.13; % Ket szenzorsor tavolsaga egymastol [m]
@@ -51,21 +51,21 @@ L_sensor = 0.13; % Ket szenzorsor tavolsaga egymastol [m]
 % k_p = -9*(L+d)/(kszi^2*d_5s^2) -> mindig negativ
 % k_delta = (L+d)/(kszi^2*d_5s^2)*(9*(L+d)-6*kszi^2*d_5s)
 % csak akkor negativ, ha 9*(L+d) < 6*kszi^2*d_5s => b > 3*(L+d)/kszi^2
-a = (3-3*(L+d)/kszi^2-eps)/5; % d_5s meredeksege [s]
+a = 3/5; %(3-3*(L+d)/kszi^2-eps)/5; % d_5s meredeksege [s]
 b = 3*(L+d)/kszi^2+eps; % d_5s 0 sebesseghez tartozo erteke [m]
 
 % Szoftver (kvantalas) parameterei
-T_p_a = 0.01; % Vonalpozicio alapjel mintavetelezesi ideje [s]
+T_p_a = 0.003; % Vonalpozicio alapjel mintavetelezesi ideje [s]
 T_v = 0.01; % Sebessegmeres mintavetelezesi ideje [s]
-T_delta = 0.01; % Vonalorientacio meres mintavetelezesi ideje [s]
-T_p = 0.01; % Vonalpozicio meres mintavetelezesi ideje [s]
-T_PWM = 0.01; % Beavatkozo jel mintavetelezesi ideje [s]
+T_delta = 0.003; % Vonalorientacio meres mintavetelezesi ideje [s]
+T_p = 0.003; % Vonalpozicio meres mintavetelezesi ideje [s]
+T_PWM = 0.003; % Beavatkozo jel mintavetelezesi ideje [s]
 p_1TCRTa = 100; % Elso szenzorsor minimalis erteke
 p_1TCRTb = 3200; % Elso szenzorsor maximalis erteke
 p_2TCRTa = 100; % Hatso szenzorsor minimalis erteke
 p_2TCRTb = 2400; % Hatso szenzorsor maximalis erteke
-SERVO_JOBB = 7883; % Legkisebb szoghoz tartozo PWM pulse
-SERVO_BAL = 5644; % Legnagyobb szoghoz tartozo PWM pulse
+SERVO_JOBB = 5644; % Legkisebb szoghoz tartozo PWM pulse
+SERVO_BAL = 7883; % Legnagyobb szoghoz tartozo PWM pulse
 
 % Kezdeti feltetelek
 %p_0 = p_0; % Kezdeti vonalpozicio [m]
@@ -168,6 +168,6 @@ end
 disp([char(9),str,' ',num2str(3*(L+d)/kszi^2*L*(SERVO_BAL-SERVO_JOBB)*atan((2*p_1s*max(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa)/(p_1TCRTb-p_1TCRTa)-p_1s+p_2s)/L_sensor)/(2*fi_m*(L+d))),'};']);
 disp(' ');
 disp('// A szabalyozas megvalositasa');
-disp(['pulsePWM = ',num2str(-9*(L+d)/kszi^2),'*vonalpozicio/((',num2str(a),'*v+',num2str(b),')*(',num2str(a),'*v+',num2str(b),'))+(',num2str(3*(L+d)-2*kszi^2*b),num2str(-2*kszi^2*a),'*v)*atan[vonalorientacio+',num2str(-min(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa)),']/((',num2str(a),'*v+',num2str(b),')*(',num2str(a),'*v+',num2str(b),'))+',num2str((SERVO_JOBB+SERVO_BAL)/2),';']);
+disp(['pulsePWM = ',num2str(-4.5*L*(SERVO_BAL-SERVO_JOBB)*p_1s/kszi^2),'*(2*vonalpozicio-',num2str(p_1TCRTb+p_1TCRTa),')/(',num2str((fi_m*(p_1TCRTb-p_1TCRTa))),'*(',num2str(a),'*v+',num2str(b),')*(',num2str(a),'*v+',num2str(b),'))+(',num2str(3*(L+d)-2*kszi^2*b),num2str(-2*kszi^2*a),'*v)*atan[vonalorientacio+',num2str(-min(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa)),']/((',num2str(a),'*v+',num2str(b),')*(',num2str(a),'*v+',num2str(b),'))+',num2str((SERVO_JOBB+SERVO_BAL)/2),';']);
 disp(' ');
 %%
