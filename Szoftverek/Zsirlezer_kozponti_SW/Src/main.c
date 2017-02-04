@@ -42,6 +42,29 @@
 
 /* USER CODE BEGIN Includes */
 #include "stdbool.h"
+
+//Defineok
+//Vonalszam
+#define NINCSVONAL 10
+#define EGYVONAL 1
+#define KETVONAL 2
+#define HAROMVONAL 3
+#define VONALHIBA 15
+//UTVONANALVALASZTAS
+#define JOBB 30
+#define BAL 45
+
+//Vonalobjektumok
+#define GYORSITO 5
+#define LASSITO 6
+
+#define DRONE 7
+#define GYALOGOS 8
+#define HORDO 9
+#define KORFORGO 11
+#define CEL 12
+#define SIMA_VEZETOVONAL 13
+
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -642,7 +665,7 @@ void drone();
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth);
 void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout);
 void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny);
-void vonal_objektum_eszleles (uint8_t vonaltipus, uint32_t* encodervalue);
+void vonal_objektum_eszleles_ugyessegi (uint8_t vonaltipus, uint8_t* objektumtipus);
 
 
 /* USER CODE END PFP */
@@ -688,6 +711,19 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		vonalszenzor_uzenetjott=true;
 	}
 }
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+	if (huart->Instance ==USART1)
+	{
+	    if (huart->ErrorCode == HAL_UART_ERROR_ORE)//Néha random overrun hiba, ekkor kinullázuk
+	    {
+	            // remove the error condition
+	            huart->ErrorCode = HAL_UART_ERROR_NONE;
+	            // set the correct state, so that the UART_RX_IT works correctly
+	            huart->gState = HAL_UART_STATE_BUSY_RX;
+	    }
+	}
+}
 /* USER CODE END 0 */
 
 int main(void)
@@ -702,7 +738,8 @@ int main(void)
 	uint8_t uzenetarray[5]={0,0,0,0,0};
 	uint16_t pozicio_elso=1600;
 	uint16_t pozicio_masodik=1200;
-	uint8_t vonaltipus=1;
+	uint8_t vonaltipus=EGYVONAL;
+	uint8_t vonalobjektumtipus=SIMA_VEZETOVONAL;
 	int16_t orientacio=0;
 	uint32_t szervoPWM;
 
@@ -738,7 +775,10 @@ int main(void)
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
  // HAL_Delay(5000);
   HAL_TIM_Base_Start_IT(&htim6);
+  HAL_TIM_Base_Start_IT(&htim7);
   HAL_TIM_IC_Start_IT(&htim4,TIM_CHANNEL_1);
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
+
 
   //Vonalszenzortol uzenetek fogadasa
   //HAL_UART_Receive_DMA(&huart1,uzenetarray,3);
@@ -761,6 +801,17 @@ int main(void)
 		  orientacio=pozicio_elso-pozicio_masodik;
 		  allapotteres_szabalyozo(&pozicio_elso, &orientacio, &velocity, &szervoPWM);
 		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, szervoPWM);
+
+		  vonal_objektum_eszleles_ugyessegi(vonaltipus, &vonalobjektumtipus);
+
+		  vonalobjektumtipus+=48;
+		  HAL_UART_Transmit(&huart4, &vonalobjektumtipus, sizeof(uint8_t), 1000);
+		  vonalobjektumtipus-=48;
+		  HAL_UART_Transmit(&huart4,&endline, sizeof(uint8_t), 1000);
+		  HAL_UART_Transmit(&huart4,&CR, sizeof(uint8_t), 1000);
+
+
+
 		  vonalszenzor_uzenetjott=false;
 	  }
 
@@ -789,9 +840,9 @@ int main(void)
 		  WMAfilter(SHARP_F,SHARPData[0],SHARP_F_ARRAY,4);
 		  WMAfilter(SHARP_R,SHARPData[1],SHARP_R_ARRAY,4);
 		  WMAfilter(SHARP_L,SHARPData[2],SHARP_L_ARRAY,4);
-		  sprintf(&string,"..................\r\n");
+		/*  sprintf(&string,"..................\r\n");
 		  sprintf(&string,".%d.%d.%d.",SHARP_F,SHARP_R,SHARP_L);
-		  HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);
+		  HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);*/
 		  tick = 0;
 	  }
 	  /* Sebessegmeres */
@@ -803,7 +854,7 @@ int main(void)
 			  dir = __HAL_TIM_DIRECTION_STATUS(&htim2);
 			  encoder1=actualencoderval;
 			  encoderdiff=encoder1-encoderprev;
-			  velocity=((encoderdiff*10000)/743); //v[mm/s]
+			  velocity=encoderdiff*10000/743;//velocity=((encoderdiff*10000)/743); //v[mm/s]
 			  //filteredvelocitydiff=-filteredvelocity;
 			  //WMAfilter(&filteredvelocity, &velocity, velocityarray, 4);
 			  /*if(filteredvelocity>=0)
@@ -966,16 +1017,84 @@ void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t
 	}
 }
 
-void vonal_objektum_eszleles (uint8_t vonaltipus, uint32_t* encodervalue)
+void vonal_objektum_eszleles_ugyessegi (uint8_t vonaltipus, uint8_t* objektumtipus)
 {
+	static bool vonalobjektum_megfigyeles = false;
+	static uint8_t elozo_vonaltipus = EGYVONAL;
+	static encodervalelso = 0;
+	static nemvonalak=0;
+	static egyvonalak=0;
+	static ketvonalak=0;
+	static haromvonalak=0;
 
+	if(vonalobjektum_megfigyeles==false && (vonaltipus == KETVONAL || vonaltipus == HAROMVONAL || vonaltipus == NINCSVONAL))
+	{
+		vonalobjektum_megfigyeles=true;
+		encodervalelso = actualencoderval;
+	}
+	if(vonalobjektum_megfigyeles==true)
+	{
+		//223 encoder ertek = 3cm
+		if(elozo_vonaltipus != vonaltipus)//Uj vonaltipusra erkeztunk
+		{
+
+			if ((actualencoderval-encodervalelso)> 223) //nagyobb a vonalminta, mint 3cm, vagy csak kamu?
+			{
+				if(elozo_vonaltipus==EGYVONAL)
+					egyvonalak++;
+				else if(elozo_vonaltipus==KETVONAL)
+					ketvonalak++;
+				else if(elozo_vonaltipus==HAROMVONAL)
+					haromvonalak++;
+				else
+					nemvonalak++;
+
+				//Vegen vagyunk mar az objektumnak???
+				//Milyen objektumnak?
+				if(((actualencoderval-encodervalelso)> 1485) && elozo_vonaltipus==HAROMVONAL) //Hosszu 20cm 3-vonal: dron
+				{
+					*objektumtipus=DRONE;
+				}
+				if((elozo_vonaltipus==HAROMVONAL) && haromvonalak > 1 && egyvonalak > 0)
+				{
+					*objektumtipus=GYALOGOS;
+				}
+				if((elozo_vonaltipus==KETVONAL) && ketvonalak > 1 && egyvonalak > 0)
+				{
+					*objektumtipus=HORDO;
+				}
+				if((elozo_vonaltipus==NINCSVONAL) && nemvonalak > 1 && egyvonalak > 0)
+				{
+					*objektumtipus=KORFORGO;
+				}
+				encodervalelso=actualencoderval;
+
+			}
+		}
+
+		if(vonaltipus==EGYVONAL)
+			{
+				if((actualencoderval-encodervalelso)> 2230)
+				{
+					//Ha 30 cm ota egyvonal van, akkor vege az objektumfigyelesnek
+					vonalobjektum_megfigyeles=false;
+					nemvonalak=0;
+					egyvonalak=0;
+					ketvonalak=0;
+					haromvonalak=0;
+				}
+			}
+
+		elozo_vonaltipus=vonaltipus;
+	}
+// ha semmi sem igaz, akkor nem allitjuk az sima vezetovonalra a vonaltipust, az az akadalykezelo fuggveny dolga
 }
 
 void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny)
 {
 	float arctaneredmeny;
 	arctaneredmeny=atan_lut[*orientacio+2300];
-	*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))-(-0.855-0.00063*((float)*sebesseg))*arctaneredmeny/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+6763.5);
+	*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))-(-0.855-0.00063*(0.0))*arctaneredmeny/((0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))+6763.5);
 	if(*PWMeredmeny > 7883)
 		*PWMeredmeny=7883;
 	else if(*PWMeredmeny < 5644)
