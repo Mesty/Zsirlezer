@@ -641,14 +641,17 @@ int32_t velocity;
 //uint32_t velocityabs;
 /* SHARP vars */
 uint16_t SHARPData[3] = {0,0,0};
+int32_t SHARPData2[3] = {0,0,0};
 int32_t SHARP_F = 0;
 int32_t SHARP_R = 0;
 int32_t SHARP_L = 0;
-int32_t SHARP_F_ARRAY[4] = {0,0,0,0};
-int32_t SHARP_R_ARRAY[4] = {0,0,0,0};
-int32_t SHARP_L_ARRAY[4] = {0,0,0,0};
+int32_t SHARP_F_ARRAY[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int32_t SHARP_R_ARRAY[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int32_t SHARP_L_ARRAY[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 /* UART-on kuldento string */
 uint8_t string[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+uint8_t vonalobjektumtipus=SIMA_VEZETOVONAL;
 
 //UART, vonalszenzor
 volatile bool vonalszenzor_uzenetjott=false;
@@ -687,15 +690,17 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef* htim)
 }
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	if(htim->Instance == TIM6)
+	/*if(htim->Instance == TIM6)
 	{
-		tick = true;
-	}
+
+	}*/
 	if(htim->Instance == TIM7)
 	{
 		timestamp++;
 		actualencoderval=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
-		dovelocitymeasurement=true;
+		//dovelocitymeasurement=true;
+		tick = true;
+
 	}
 }
 
@@ -739,7 +744,6 @@ int main(void)
 	uint16_t pozicio_elso=1600;
 	uint16_t pozicio_masodik=1200;
 	uint8_t vonaltipus=EGYVONAL;
-	uint8_t vonalobjektumtipus=SIMA_VEZETOVONAL;
 	int16_t orientacio=0;
 	uint32_t szervoPWM;
 
@@ -754,6 +758,8 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
+
+
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
@@ -765,7 +771,7 @@ int main(void)
   MX_UART4_Init();
   MX_UART5_Init();
   MX_USART1_UART_Init();
-  MX_TIM6_Init();
+  //MX_TIM6_Init();
   MX_USART2_UART_Init();
   MX_TIM4_Init();
   MX_TIM7_Init();
@@ -773,8 +779,9 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
- // HAL_Delay(5000);
-  HAL_TIM_Base_Start_IT(&htim6);
+  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 6932);
+  //HAL_Delay(5000);*/
+  //HAL_TIM_Base_Start_IT(&htim6);
   HAL_TIM_Base_Start_IT(&htim7);
   HAL_TIM_IC_Start_IT(&htim4,TIM_CHANNEL_1);
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
@@ -788,7 +795,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  motorpulsePWM = 7332;
+  motorpulsePWM = 7252;
 
   while (1)
   {
@@ -826,28 +833,36 @@ int main(void)
 	  else
 		  stop = false;
 
-	  if (!stop)
-		  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, motorpulsePWM);
-	  else if (encoderdiff > 10)
-		  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 4000);
-	  else
-		  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 6932);
+	  if(timestamp > 500)
+	  {
+		  if (!stop)
+			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, motorpulsePWM);
+		  else if (encoderdiff > 3)
+			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 4000);
+		  else
+			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 6932);
+	  }
 	  /* SHARP olvasas es kuldes */
 	  if(tick)
 	  {
 		  HAL_ADC_Start_DMA(&hadc1, (uint32_t*) SHARPData, 3);
 		  while(!SHARP_valid);
-		  WMAfilter(SHARP_F,SHARPData[0],SHARP_F_ARRAY,4);
-		  WMAfilter(SHARP_R,SHARPData[1],SHARP_R_ARRAY,4);
-		  WMAfilter(SHARP_L,SHARPData[2],SHARP_L_ARRAY,4);
+		  SHARPData2[2]=SHARPData[2];
+		  SHARPData2[1]=SHARPData[1];
+		  SHARPData2[0]=SHARPData[0];
+		  WMAfilter(&SHARP_F,SHARPData2,SHARP_F_ARRAY,20);
+		  WMAfilter(&SHARP_R,SHARPData2+1,SHARP_R_ARRAY,20);
+		  WMAfilter(&SHARP_L,SHARPData2+2,SHARP_L_ARRAY,20);
+		 /* SHARP_F=SHARPData[0];
+		  SHARP_R=SHARPData[1];
+		  SHARP_L=SHARPData[2];*/
 		/*  sprintf(&string,"..................\r\n");
 		  sprintf(&string,".%d.%d.%d.",SHARP_F,SHARP_R,SHARP_L);
 		  HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);*/
-		  tick = 0;
-	  }
+	  //}
 	  /* Sebessegmeres */
-	  if(dovelocitymeasurement) //v=[mm/s], delta t = 10ms
-	  {//valami szamitas hibas, wma filter furi.
+	 // if(dovelocitymeasurement) //v=[mm/s], delta t = 10ms
+	  //{//valami szamitas hibas, wma filter furi.
 		  state = HAL_TIM_Encoder_GetState(&htim2);
 		  if(state==HAL_TIM_STATE_READY)
 		  {
@@ -868,9 +883,11 @@ int main(void)
 		  {
 			  //error handling...
 		  }
-		  dovelocitymeasurement=false;
+		  //dovelocitymeasurement=false;
+		  tick = false;
 	  }
-	  //drone();
+	  if(vonalobjektumtipus==DRONE)
+		  drone();
 
   /* USER CODE END WHILE */
 
@@ -955,21 +972,30 @@ uint32_t reverse_byte_order_32(uint32_t value)
 }
 void drone()
 {
+	//Q2 meresek:
+	//60cm : 1150-1160
+	//55cm : 1275-1285
+	//50cm : 1405-1415
+	//45cm : 1555-1565
 	static uint32_t encoderatstop = 0;
 	static uint32_t timestampatfly = 0;
-	if (SHARP_F > 1552)
+	if (SHARP_F > 1280) //1130
 		stop_drone = true;
 	if ((stop_drone) && (encoderdiff == 0))
 	{
 		if (encoderatstop == 0)
 		{
 			encoderatstop = encoder1;
-			timestampatfly = timestamp;
 		}
-		if ((SHARP_F < 1241) && (timestamp - timestampatfly > 200))
+		if((SHARP_F < 745) && timestampatfly == 0)
+			timestampatfly = timestamp;
+
+		if ((SHARP_F < 745) && (timestamp - timestampatfly > 300))
 			stop_drone = false;
 	}
-	//if (encoder1 - encoderatstop > 2100) // Feladat vege, allapotvaltas, a 2100 itt random szam, a lenyeg, hogy uthosszt figyelunk a dron elotti megallasi helytol
+	//if (encoder1 - encoderatstop > 3000) // Feladat vege, allapotvaltas,40cm uthosszt figyelunk a dron elotti megallasi helytol
+	//	vonalobjektumtipus=SIMA_VEZETOVONAL;
+
 }
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth)
 {
