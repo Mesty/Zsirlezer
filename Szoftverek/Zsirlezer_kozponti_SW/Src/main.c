@@ -49,27 +49,6 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
-//Vonaltipus
-#define NINCSVONAL 10
-#define EGYVONAL 1
-#define KETVONAL 2
-#define HAROMVONAL 3
-#define VONALHIBA 15
-//UTVONANALVALASZTAS
-#define JOBB 30
-#define BAL 45
-//Vonalobjektum
-#define VEZETOVONAL 1
-#define GYORSITO 2
-#define LASSITO 3
-#define DRONE 4
-#define GYALOGOS 5
-#define HORDO 6
-#define KORFORGO 7
-#define CEL 8
-
-
-
 float atan_lut[5400] = {
 	 2320.5616,
 	 2320.0878, 2319.6137, 2319.1394, 2318.6649, 2318.1902, 2317.7153, 2317.2401, 2316.7648, 2316.2892, 2315.8135,
@@ -663,8 +642,7 @@ void drone();
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth);
 void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout);
 void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny);
-void vonal_objektum_eszleles_GYORSASAGI (uint8_t* vonaltipus, uint32_t* encodervalue, uint8_t* objektumtipus);
-void vonal_objektum_eszleles_UGYESSEGI (uint8_t* vonaltipus, uint32_t* encodervalue, uint8_t* objektumtipus);
+void vonal_objektum_eszleles (uint8_t vonaltipus, uint32_t* encodervalue);
 
 
 /* USER CODE END PFP */
@@ -987,11 +965,8 @@ void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t
 			HAL_UART_Transmit(huart, &space, sizeof(txbyte), Timeout);
 	}
 }
-void vonal_objektum_eszleles_GYORSASAGI (uint8_t* vonaltipus, uint32_t* encodervalue, uint8_t* objektumtipus)
-{
 
-}
-void vonal_objektum_eszleles_UGYESSEGI (uint8_t* vonaltipus, uint32_t* encodervalue, uint8_t* objektumtipus)
+void vonal_objektum_eszleles (uint8_t vonaltipus, uint32_t* encodervalue)
 {
 
 }
@@ -1000,7 +975,7 @@ void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* se
 {
 	float arctaneredmeny;
 	arctaneredmeny=atan_lut[*orientacio+2300];
-	*PWMeredmeny = (uint32_t) (251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+(-0.855-0.00063*((float)*sebesseg))*arctaneredmeny/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+6763.5);
+	*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))-(-0.855-0.00063*((float)*sebesseg))*arctaneredmeny/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+6763.5);
 	if(*PWMeredmeny > 7883)
 		*PWMeredmeny=7883;
 	else if(*PWMeredmeny < 5644)

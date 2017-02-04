@@ -153,7 +153,7 @@ int main(void)
 	uint16_t szenzorertekek_masodik[3][8];
 	uint16_t szenzorertekek_thresholddal_masodik[3][8];
 
-	uint16_t threshold=400; //felvenni 800-ra
+	uint16_t threshold=900;
 
 	//Szenzor adatok
 	uint32_t pozicio_elso=1600;
