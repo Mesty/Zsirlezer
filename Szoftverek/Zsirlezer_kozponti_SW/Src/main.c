@@ -650,6 +650,11 @@ int32_t SHARP_L_ARRAY[4] = {0,0,0,0};
 /* UART-on kuldento string */
 uint8_t string[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
+
+uint8_t vonalobjektumtipus=SIMA_VEZETOVONAL;
+volatile uint8_t uzenetarray[5]={0,0,0,0,0};
+
+
 //UART, vonalszenzor
 volatile bool vonalszenzor_uzenetjott=false;
 /* USER CODE END PV */
@@ -709,18 +714,21 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	if (huart->Instance ==USART1)
 	{
 		vonalszenzor_uzenetjott=true;
+
 	}
 }
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
 	if (huart->Instance ==USART1)
 	{
-	    if (huart->ErrorCode == HAL_UART_ERROR_ORE)//Néha random overrun hiba, ekkor kinullázuk
+	    if (huart->ErrorCode != HAL_UART_ERROR_NONE)//== HAL_UART_ERROR_ORE)//Néha random overrun hiba, ekkor kinullázuk
 	    {
 	            // remove the error condition
 	            huart->ErrorCode = HAL_UART_ERROR_NONE;
 	            // set the correct state, so that the UART_RX_IT works correctly
 	            huart->gState = HAL_UART_STATE_BUSY_RX;
+	            HAL_UART_Receive_IT(&huart1, uzenetarray, 5);
+
 	    }
 	}
 }
@@ -735,11 +743,9 @@ int main(void)
 	uint8_t CR=13;
 	uint8_t tab=9;
 	//Vonalszenzor
-	uint8_t uzenetarray[5]={0,0,0,0,0};
 	uint16_t pozicio_elso=1600;
 	uint16_t pozicio_masodik=1200;
 	uint8_t vonaltipus=EGYVONAL;
-	uint8_t vonalobjektumtipus=SIMA_VEZETOVONAL;
 	int16_t orientacio=0;
 	uint32_t szervoPWM;
 
@@ -773,16 +779,21 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
- // HAL_Delay(5000);
+
+  //Motor pwm init
+  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 6932);
+  HAL_Delay(5000);
+
   HAL_TIM_Base_Start_IT(&htim6);
-  HAL_TIM_Base_Start_IT(&htim7);
+  //HAL_TIM_Base_Start_IT(&htim7);
   HAL_TIM_IC_Start_IT(&htim4,TIM_CHANNEL_1);
-  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
+  //HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
 
 
   //Vonalszenzortol uzenetek fogadasa
   //HAL_UART_Receive_DMA(&huart1,uzenetarray,3);
   HAL_UART_Receive_DMA(&huart1, uzenetarray, 5);
+  //HAL_UART_Receive_IT(&huart1, uzenetarray, 5);
 
   /* USER CODE END 2 */
 
@@ -793,8 +804,10 @@ int main(void)
   while (1)
   {
 	  //UART uzenet fogadasa a vonalszenzortol
+
 	  if(vonalszenzor_uzenetjott==true) //3ms-onkent kapunk uzenetet
 	  {
+		  //HAL_UART_Receive_IT(&huart1, uzenetarray, 5);
 		  pozicio_elso = uzenetarray[0] + uzenetarray[1]*0xff;
 		  pozicio_masodik = uzenetarray[2] + uzenetarray[3]*0xff;
 		  vonaltipus=uzenetarray[4];
@@ -804,11 +817,11 @@ int main(void)
 
 		  vonal_objektum_eszleles_ugyessegi(vonaltipus, &vonalobjektumtipus);
 
-		  vonalobjektumtipus+=48;
+		  /*vonalobjektumtipus+=48;
 		  HAL_UART_Transmit(&huart4, &vonalobjektumtipus, sizeof(uint8_t), 1000);
 		  vonalobjektumtipus-=48;
 		  HAL_UART_Transmit(&huart4,&endline, sizeof(uint8_t), 1000);
-		  HAL_UART_Transmit(&huart4,&CR, sizeof(uint8_t), 1000);
+		  HAL_UART_Transmit(&huart4,&CR, sizeof(uint8_t), 1000);*/
 
 
 
@@ -854,7 +867,7 @@ int main(void)
 			  dir = __HAL_TIM_DIRECTION_STATUS(&htim2);
 			  encoder1=actualencoderval;
 			  encoderdiff=encoder1-encoderprev;
-			  velocity=encoderdiff*10000/743;//velocity=((encoderdiff*10000)/743); //v[mm/s]
+			  velocity=((encoderdiff*10000)/743); //v[mm/s] velocity=encoderdiff*10000/743;//
 			  //filteredvelocitydiff=-filteredvelocity;
 			  //WMAfilter(&filteredvelocity, &velocity, velocityarray, 4);
 			  /*if(filteredvelocity>=0)
@@ -870,7 +883,10 @@ int main(void)
 		  }
 		  dovelocitymeasurement=false;
 	  }
-	  //drone();
+
+	  if(vonalobjektumtipus==DRONE)
+		  drone();
+
 
   /* USER CODE END WHILE */
 
@@ -964,12 +980,15 @@ void drone()
 		if (encoderatstop == 0)
 		{
 			encoderatstop = encoder1;
-			timestampatfly = timestamp;
 		}
-		if ((SHARP_F < 1241) && (timestamp - timestampatfly > 200))
+		if ((SHARP_F < 1241) && timestampatfly == 0)
+			timestampatfly=timestamp;
+
+		if ((SHARP_F < 1241) && ((timestamp - timestampatfly) > 300))
 			stop_drone = false;
 	}
-	//if (encoder1 - encoderatstop > 2100) // Feladat vege, allapotvaltas, a 2100 itt random szam, a lenyeg, hogy uthosszt figyelunk a dron elotti megallasi helytol
+	if (encoder1 - encoderatstop > 3000) // Feladat vege, allapotvaltas, uthosszt figyelunk a dron elotti megallasi helytol: 40cm
+		vonalobjektumtipus=SIMA_VEZETOVONAL;
 }
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth)
 {
@@ -1021,11 +1040,11 @@ void vonal_objektum_eszleles_ugyessegi (uint8_t vonaltipus, uint8_t* objektumtip
 {
 	static bool vonalobjektum_megfigyeles = false;
 	static uint8_t elozo_vonaltipus = EGYVONAL;
-	static encodervalelso = 0;
-	static nemvonalak=0;
-	static egyvonalak=0;
-	static ketvonalak=0;
-	static haromvonalak=0;
+	static uint32_t encodervalelso = 0;
+	static uint8_t nemvonalak=0;
+	static uint8_t egyvonalak=0;
+	static uint8_t ketvonalak=0;
+	static uint8_t haromvonalak=0;
 
 	if(vonalobjektum_megfigyeles==false && (vonaltipus == KETVONAL || vonaltipus == HAROMVONAL || vonaltipus == NINCSVONAL))
 	{
@@ -1094,7 +1113,7 @@ void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* se
 {
 	float arctaneredmeny;
 	arctaneredmeny=atan_lut[*orientacio+2300];
-	*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))-(-0.855-0.00063*(0.0))*arctaneredmeny/((0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))+6763.5);
+	*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))-(-0.855-0.00063*((float)*sebesseg))*arctaneredmeny/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+6763.5);
 	if(*PWMeredmeny > 7883)
 		*PWMeredmeny=7883;
 	else if(*PWMeredmeny < 5644)
