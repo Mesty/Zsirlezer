@@ -665,6 +665,7 @@ void Error_Handler(void);
 /* Private function prototypes -----------------------------------------------*/
 uint32_t reverse_byte_order_32(uint32_t value);
 void drone();
+void gyalogos();
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth);
 void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout);
 void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny);
@@ -888,6 +889,8 @@ int main(void)
 	  }
 	  if(vonalobjektumtipus==DRONE)
 		  drone();
+	  if(vonalobjektumtipus==GYALOGOS)
+		  gyalogos();
 
   /* USER CODE END WHILE */
 
@@ -972,29 +975,47 @@ uint32_t reverse_byte_order_32(uint32_t value)
 }
 void drone()
 {
-	//Q2 meresek:
+	//Q2 meresek: 480*140mm lemez feher
+	//fekut 15cm
+	//70cm: 1000-1010
 	//60cm : 1150-1160
 	//55cm : 1275-1285
 	//50cm : 1405-1415
 	//45cm : 1555-1565
 	static uint32_t encoderatstop = 0;
+	static uint32_t encoderatmeasure = 0;
 	static uint32_t timestampatfly = 0;
-	if (SHARP_F > 1280) //1130
-		stop_drone = true;
+	static bool measure_distance = false;
+	if ((SHARP_F > 932) && (!measure_distance)) //1010 jo volt egyenes szakaszon, 932 volt ivesen
+	{
+		encoderatmeasure = encoder1;
+		measure_distance = true;
+	}
+	if (measure_distance)
+	{
+		if((encoder1 - encoderatmeasure) > 1500)
+		{
+			stop_drone = true;
+			measure_distance = false;
+		}
+	}
 	if ((stop_drone) && (encoderdiff == 0))
 	{
 		if (encoderatstop == 0)
-		{
 			encoderatstop = encoder1;
-		}
-		if((SHARP_F < 745) && timestampatfly == 0)
+
+		if((SHARP_F < 650) && timestampatfly == 0)
 			timestampatfly = timestamp;
 
-		if ((SHARP_F < 745) && (timestamp - timestampatfly > 300))
+		if ((SHARP_F < 650) && (timestamp - timestampatfly > 300))
 			stop_drone = false;
 	}
-	//if (encoder1 - encoderatstop > 3000) // Feladat vege, allapotvaltas,40cm uthosszt figyelunk a dron elotti megallasi helytol
-	//	vonalobjektumtipus=SIMA_VEZETOVONAL;
+	if (((encoder1 - encoderatstop) > 3000) && (encoderatstop != 0)) // Feladat vege, allapotvaltas,40cm uthosszt figyelunk a dron elotti megallasi helytol
+		vonalobjektumtipus=SIMA_VEZETOVONAL;
+
+}
+void gyalogos()
+{
 
 }
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth)
