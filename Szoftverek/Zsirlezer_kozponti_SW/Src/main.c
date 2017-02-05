@@ -860,8 +860,8 @@ int main(void)
 		 /* SHARP_F=SHARPData[0];
 		  SHARP_R=SHARPData[1];
 		  SHARP_L=SHARPData[2];*/
-		/*  sprintf(&string,"..................\r\n");
-		  sprintf(&string,".%d.%d.%d.",SHARP_F,SHARP_R,SHARP_L);
+		  /*sprintf(&string,"..................\r\n");
+		  sprintf(&string,"%d\t%d",SHARPData2[2],SHARPData2[1]);
 		  HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);*/
 	  //}
 	  /* Sebessegmeres */
@@ -871,7 +871,7 @@ int main(void)
 		  if(state==HAL_TIM_STATE_READY)
 		  {
 			  dir = __HAL_TIM_DIRECTION_STATUS(&htim2);
-			  encoder1=actualencoderval;
+			  encoder1=actualencoderval*2;//valami rossza az enkoderrel, valszeg nem kapjuk meg az egyik channelt
 			  encoderdiff=encoder1-encoderprev;
 			  velocity=encoderdiff*10000/743;//velocity=((encoderdiff*10000)/743); //v[mm/s]
 			  //filteredvelocitydiff=-filteredvelocity;
@@ -1061,6 +1061,7 @@ void korforgo()
 	static uint32_t startpozicio=0;
 	static uint32_t kanyarstartpozicio=0;
 	static uint8_t irany=0;
+
 	static bool kanyarodunk = false;
 	static bool elso_iteracio = false;
 	/*sprintf(&string,"...............\r\n");
@@ -1070,11 +1071,11 @@ void korforgo()
 		startpozicio=encoder1;
 		elso_iteracio=true;
 
-	if (SHARP_L > 800 && irany==0)
+	if (SHARP_L > 700 && irany==0)
 	{
 		irany=BAL;
 	}
-	else if (SHARP_R > 800 && irany==0)
+	else if (SHARP_R > 700 && irany==0)
 	{
 		irany = JOBB;
 	}
@@ -1102,17 +1103,28 @@ void korforgo()
 	if(kanyarodunk==true)
 	{
 		//Ha az enkoder ertek eleg nagy 340 fok, kilepunk, -> normal vezetovonal, es vonalfigyeles, kanyar false
-		if(irany==BAL && (encoder1 - kanyarstartpozicio > 41883) )
+		if(irany==BAL && (encoder1 - kanyarstartpozicio > 39000) )
 		{
 			kanyarodunk=false;
 			vonalat_ignoraljuk=false;
 			vonalobjektumtipus=SIMA_VEZETOVONAL;
+			kanyarodunk=false;
+			elso_iteracio=false;
+			irany=0;
+			kanyarstartpozicio=0;
+			startpozicio=0;
+
 		}
-		else if(irany==JOBB && (encoder1-kanyarstartpozicio > 37475))
+		else if(irany==JOBB && (encoder1-kanyarstartpozicio > 35000))
 		{
 			kanyarodunk=false;
 			vonalat_ignoraljuk=false;
 			vonalobjektumtipus=SIMA_VEZETOVONAL;
+			kanyarodunk=false;
+			elso_iteracio=false;
+			irany=0;
+			kanyarstartpozicio=0;
+			startpozicio=0;
 		}
 	}
 
@@ -1205,7 +1217,7 @@ void vonal_objektum_eszleles_ugyessegi (uint8_t vonaltipus, uint8_t* objektumtip
 					*objektumtipus=DRONE;
 				}
 				//if((elozo_vonaltipus==HAROMVONAL) && haromvonalak > 1 && egyvonalak > 0)
-				if((elozo_vonaltipus==HAROMVONAL) && haromvonalak > 4 && egyvonalak > 2)
+				if((elozo_vonaltipus==HAROMVONAL) && haromvonalak > 3 && egyvonalak > 2)
 				{
 					*objektumtipus=GYALOGOS;
 				}
@@ -1213,7 +1225,8 @@ void vonal_objektum_eszleles_ugyessegi (uint8_t vonaltipus, uint8_t* objektumtip
 				{
 					*objektumtipus=HORDO;
 				}
-				if((elozo_vonaltipus==NINCSVONAL) && nemvonalak > 1 && egyvonalak > 0)
+				//if((elozo_vonaltipus==NINCSVONAL) && nemvonalak > 1 && egyvonalak > 0)
+				if((elozo_vonaltipus==NINCSVONAL) && nemvonalak > 2 && egyvonalak > 1)
 				{
 					*objektumtipus=KORFORGO;
 				}
@@ -1238,6 +1251,13 @@ void vonal_objektum_eszleles_ugyessegi (uint8_t vonaltipus, uint8_t* objektumtip
 		elozo_vonaltipus=vonaltipus;
 	}
 // ha semmi sem igaz, akkor nem allitjuk az sima vezetovonalra a vonaltipust, az az akadalykezelo fuggveny dolga
+}
+void oldal_objektum_eszeleles()
+//Utanfuto: 2 fal 50cm, majd egy fal, es ujra 2 fal
+//
+{
+
+
 }
 
 void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny)
