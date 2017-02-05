@@ -1293,7 +1293,7 @@ void oldal_objektum_eszeleles()
 	static int32_t oldaltavolsag_bordahoz=0;
 	static bool bordas=false;
 	static bool elsore_nem_latunk_semmit=true;
-
+	static bool varakozas_az_oldalobjektum_vegere=false;
 
 	if(SHARP_L > 700 && SHARP_R > 700)
 	{
@@ -1315,24 +1315,43 @@ void oldal_objektum_eszeleles()
 		oldalobjektummegfigyeles=true;
 		encoder_elso=encoder1;
 	}
-	if(oldalobjektummegfigyeles==true)
+	if(varakozas_az_oldalobjektum_vegere==true)
+	{
+		//ha mar 5cm ota nem latunk semmit, akkor kilepunk. ide akkor lepunk, ha mar fixen detektaltuk az egyik allapotot
+		if(oldal==0)
+		{
+			if(elsore_nem_latunk_semmit==true)
+			{
+				elsore_nem_latunk_semmit=false;
+				encoder_utolso=encoder1;
+			}
+			if(encoder1-encoder_utolso > 446 && elsore_nem_latunk_semmit==false) //6cm utan semmit se latnuk, akkor exit
+			{
+				//kilepes, reset
+				elsore_nem_latunk_semmit=true;
+				oldalobjektummegfigyeles=false;
+				bordas=false;
+			}
+		}
+	}
+	if(oldalobjektummegfigyeles==true && varakozas_az_oldalobjektum_vegere==false)
 	{
 
 		if(elozo_oldal==oldal && (oldal==JOBB || oldal==BAL) && bordas==false)
 		{
 			if(encoder1-encoder_elso > 223) //3cm utab merunk, hogy milyen messze van a fal (bordashoz kell)
 			{
-				if(oldal==JOBB)
+				if(oldal==JOBB && oldaltavolsag_bordahoz==0)
 					oldaltavolsag_bordahoz=SHARP_R;
-				else if (oldal==BAL)
+				else if (oldal==BAL && oldaltavolsag_bordahoz==0)
 					oldaltavolsag_bordahoz=SHARP_L;
 			}
-			if(oldal==JOBB && oldaltavolsag_bordahoz-SHARP_R > 110)
+			if(oldal==JOBB && oldaltavolsag_bordahoz-SHARP_R > 160)
 			{
 				bordas=true;
 				oldaltavolsag_bordahoz=0;
 			}
-			if(oldal==BAL && oldaltavolsag_bordahoz-SHARP_L > 110)
+			if(oldal==BAL && oldaltavolsag_bordahoz-SHARP_L > 160)
 			{
 				bordas=true;
 				oldaltavolsag_bordahoz=0;
@@ -1386,6 +1405,7 @@ void oldal_objektum_eszeleles()
 					//KAPU, ekkor nincs semmi
 				}
 				oldaltavolsag_bordahoz=0;
+				varakozas_az_oldalobjektum_vegere=true;
 				//oldalobjektummegfigyeles=false;
 				//bordas=false;
 			}
