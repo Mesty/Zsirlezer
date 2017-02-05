@@ -1264,9 +1264,9 @@ void vonal_objektum_eszleles_ugyessegi (uint8_t vonaltipus, uint8_t* objektumtip
 
 		if(vonaltipus==EGYVONAL)
 			{
-				if((actualencoderval-encodervalelso)> 2230)
+				if((actualencoderval-encodervalelso)> 1115)
 				{
-					//Ha 30 cm ota egyvonal van, akkor vege az objektumfigyelesnek
+					//Ha 15 cm ota egyvonal van, akkor vege az objektumfigyelesnek
 					vonalobjektum_megfigyeles=false;
 					nemvonalak=0;
 					egyvonalak=0;
@@ -1290,20 +1290,22 @@ void oldal_objektum_eszeleles()
 	static uint8_t elozo_oldal=0; //
 	static uint32_t encoder_elso=0;
 	static uint32_t encoder_utolso=0;
-	static int32_t oldaltavolsag_bordahoz=0;
+	//static int32_t oldaltavolsag_bordahoz=0;
 	static bool bordas=false;
 	static bool elsore_nem_latunk_semmit=true;
 	static bool varakozas_az_oldalobjektum_vegere=false;
+	static int32_t SHARPmax=0;
+	static int32_t SHARPmin=4096;
 
-	if(SHARP_L > 700 && SHARP_R > 700)
+	if(SHARP_L > 600 && SHARP_R > 600)
 	{
 		oldal=MINDKET_OLDAL;
 	}
-	else if(SHARP_L > 700)
+	else if(SHARP_L > 600)
 	{
 		oldal=BAL;
 	}
-	else if(SHARP_R > 700)
+	else if(SHARP_R > 600)
 	{
 		oldal=JOBB;
 	}
@@ -1330,6 +1332,7 @@ void oldal_objektum_eszeleles()
 				//kilepes, reset
 				elsore_nem_latunk_semmit=true;
 				oldalobjektummegfigyeles=false;
+				varakozas_az_oldalobjektum_vegere=false;
 				bordas=false;
 			}
 		}
@@ -1337,25 +1340,55 @@ void oldal_objektum_eszeleles()
 	if(oldalobjektummegfigyeles==true && varakozas_az_oldalobjektum_vegere==false)
 	{
 
-		if(elozo_oldal==oldal && (oldal==JOBB || oldal==BAL) && bordas==false)
+		if(elozo_oldal==oldal && (oldal==JOBB || oldal==BAL) && bordas==false && encoder1-encoder_elso > 745 && encoder1-encoder_elso < 3725) //10cm utan merunk de csak 50cm-ig
 		{
-			if(encoder1-encoder_elso > 223) //3cm utab merunk, hogy milyen messze van a fal (bordashoz kell)
+			if(oldal==JOBB)
+			{
+				if(SHARPmax < SHARP_R)
+				{
+					SHARPmax=SHARP_R;
+				}
+				if(SHARPmin > SHARP_R)
+				{
+					SHARPmin=SHARP_R;
+				}
+			}
+			else if(oldal==BAL)
+			{
+				if(SHARPmax < SHARP_L)
+				{
+					SHARPmax=SHARP_L;
+				}
+				if(SHARPmin > SHARP_L)
+				{
+					SHARPmin=SHARP_L;
+				}
+			}
+			if(SHARPmax-SHARPmin > 200)
+			{
+				bordas=true;
+				SHARPmax=0;
+				SHARPmin=4096;
+				//oldaltavolsag_bordahoz=0;
+			}
+
+			/*if(encoder1-encoder_elso > 745) //10cm utab merunk, hogy milyen messze van a fal (bordashoz kell)
 			{
 				if(oldal==JOBB && oldaltavolsag_bordahoz==0)
 					oldaltavolsag_bordahoz=SHARP_R;
 				else if (oldal==BAL && oldaltavolsag_bordahoz==0)
 					oldaltavolsag_bordahoz=SHARP_L;
 			}
-			if(oldal==JOBB && oldaltavolsag_bordahoz-SHARP_R > 160)
+			if(oldal==JOBB && oldaltavolsag_bordahoz-SHARP_R > 110)
 			{
 				bordas=true;
 				oldaltavolsag_bordahoz=0;
 			}
-			if(oldal==BAL && oldaltavolsag_bordahoz-SHARP_L > 160)
+			if(oldal==BAL && oldaltavolsag_bordahoz-SHARP_L > 110)
 			{
 				bordas=true;
 				oldaltavolsag_bordahoz=0;
-			}
+			}*/
 		}
 
 		if(oldal==0)
@@ -1404,10 +1437,10 @@ void oldal_objektum_eszeleles()
 					;
 					//KAPU, ekkor nincs semmi
 				}
-				oldaltavolsag_bordahoz=0;
+				//oldaltavolsag_bordahoz=0;
 				varakozas_az_oldalobjektum_vegere=true;
 				//oldalobjektummegfigyeles=false;
-				//bordas=false;
+				bordas=false;
 			}
 		}
 
