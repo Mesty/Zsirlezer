@@ -624,6 +624,7 @@ volatile uint32_t actualmotorinput = 0;
 bool stop = false;
 bool stop_deadman = false;
 bool stop_drone = false;
+bool stop_gyalogos = false;
 int32_t motorpulsePWM;
 volatile uint32_t timestamp = 0;
 volatile uint32_t actualencoderval=0;
@@ -652,6 +653,7 @@ int32_t SHARP_L_ARRAY[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 uint8_t string[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 uint8_t vonalobjektumtipus=SIMA_VEZETOVONAL;
+volatile bool vonalat_ignoraljuk=false;
 
 //UART, vonalszenzor
 volatile bool vonalszenzor_uzenetjott=false;
@@ -666,6 +668,7 @@ void Error_Handler(void);
 uint32_t reverse_byte_order_32(uint32_t value);
 void drone();
 void gyalogos();
+void korforgo();
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth);
 void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout);
 void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny);
@@ -801,7 +804,7 @@ int main(void)
   while (1)
   {
 	  //UART uzenet fogadasa a vonalszenzortol
-	  if(vonalszenzor_uzenetjott==true) //3ms-onkent kapunk uzenetet
+	  if(vonalszenzor_uzenetjott==true && vonalat_ignoraljuk==false) //3ms-onkent kapunk uzenetet
 	  {
 		  pozicio_elso = uzenetarray[0] + uzenetarray[1]*0xff;
 		  pozicio_masodik = uzenetarray[2] + uzenetarray[3]*0xff;
@@ -812,11 +815,11 @@ int main(void)
 
 		  vonal_objektum_eszleles_ugyessegi(vonaltipus, &vonalobjektumtipus);
 
-		  vonalobjektumtipus+=48;
+		 /* vonalobjektumtipus+=48;
 		  HAL_UART_Transmit(&huart4, &vonalobjektumtipus, sizeof(uint8_t), 1000);
 		  vonalobjektumtipus-=48;
 		  HAL_UART_Transmit(&huart4,&endline, sizeof(uint8_t), 1000);
-		  HAL_UART_Transmit(&huart4,&CR, sizeof(uint8_t), 1000);
+		  HAL_UART_Transmit(&huart4,&CR, sizeof(uint8_t), 1000);*/
 
 
 
@@ -829,7 +832,7 @@ int main(void)
 		  stop_deadman = true;
 	  else
 		  stop_deadman = false;
-	  if (stop_deadman || stop_drone)
+	  if (stop_deadman || stop_drone || stop_gyalogos)
 		  stop = true;
 	  else
 		  stop = false;
@@ -891,6 +894,8 @@ int main(void)
 		  drone();
 	  if(vonalobjektumtipus==GYALOGOS)
 		  gyalogos();
+	  if(vonalobjektumtipus==KORFORGO)
+		  korforgo();
 
   /* USER CODE END WHILE */
 
@@ -982,6 +987,9 @@ void drone()
 	//55cm : 1275-1285
 	//50cm : 1405-1415
 	//45cm : 1555-1565
+	//Kanyar miatt mokolas: ha meglatjuk kb 80cm-re a dront, akkor meg megyunk elore 10 cm-t (+fekut)
+	//Ez utan viszont pont ugy allunk, hogy nem latjuk a dront, igy elindulnank: ezert kamura varjunk 8s-t a 3 helyett
+
 	static uint32_t encoderatstop = 0;
 	static uint32_t encoderatmeasure = 0;
 	static uint32_t timestampatfly = 0;
@@ -993,7 +1001,7 @@ void drone()
 	}
 	if (measure_distance)
 	{
-		if((encoder1 - encoderatmeasure) > 1500)
+		if((encoder1 - encoderatmeasure) > 600) //20cm (1500), kicsit sok, eleg a ~10 (600)
 		{
 			stop_drone = true;
 			measure_distance = false;
@@ -1007,7 +1015,7 @@ void drone()
 		if((SHARP_F < 650) && timestampatfly == 0)
 			timestampatfly = timestamp;
 
-		if ((SHARP_F < 650) && (timestamp - timestampatfly > 300))
+		if ((SHARP_F < 650) && (timestamp - timestampatfly > 800)) //3(300) masodperc, legyen 8(800)
 			stop_drone = false;
 	}
 	if (((encoder1 - encoderatstop) > 3000) && (encoderatstop != 0)) // Feladat vege, allapotvaltas,40cm uthosszt figyelunk a dron elotti megallasi helytol
@@ -1015,9 +1023,103 @@ void drone()
 
 }
 void gyalogos()
+//Sharppal merni, megallni, ha latjuk(threshold) egyszer, majd megyunk 2s utan elengedjuk.
 {
+	static bool gyalogos_elottunk=false;
+	static uint32_t timestamp_gyalogos=0;
 
+	/*sprintf(&string,"...............\r\n");
+	sprintf(&string,".%d",SHARP_F);
+	HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);*/
+
+	if(timestamp_gyalogos == 0)
+		stop_gyalogos=true;
+	if(SHARP_F > 1000)
+	{
+		gyalogos_elottunk=true;
+	}
+	if(gyalogos_elottunk && SHARP_F < 400)
+	{
+		gyalogos_elottunk = false;
+		timestamp_gyalogos=timestamp;
+		//wait 2s + indulas
+	}
+	if(timestamp_gyalogos != 0)
+		{
+			if(timestamp - timestamp_gyalogos > 180) //3s varakozas
+			{
+				stop_gyalogos=false;
+				//allapotvisszaallitas 40cm utan
+			}
+		}
 }
+
+void korforgo()
+{
+	//JOBB kanyar kisebb atmero, 170cm -> 74,3*pi*d  39680
+	//BAL kanyar nagyobb atmero, 190cm -> 44350
+	static uint32_t startpozicio=0;
+	static uint32_t kanyarstartpozicio=0;
+	static uint8_t irany=0;
+	static bool kanyarodunk = false;
+	static bool elso_iteracio = false;
+	/*sprintf(&string,"...............\r\n");
+	sprintf(&string,"%d%\t%d",SHARP_L, SHARP_R);
+	HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);*/
+	if(elso_iteracio==false)
+		startpozicio=encoder1;
+		elso_iteracio=true;
+
+	if (SHARP_L > 800 && irany==0)
+	{
+		irany=BAL;
+	}
+	else if (SHARP_R > 800 && irany==0)
+	{
+		irany = JOBB;
+	}
+
+	if(irany!=0 && kanyarodunk==false)
+	{
+		if(encoder1-startpozicio > 12300) //165 cm a vonalminta felismeresetol //4100) //55cm utan forditjuk a kanyart
+		{
+			kanyarodunk=true;
+			//vonalszenzort nem figyeljuk
+			vonalat_ignoraljuk=true;
+			//kanyarodunk
+			if(irany==BAL)
+			{
+				  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 5644);
+			}
+			else //jobb
+			{
+				  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 7883);
+			}
+			//elmentjuk a poziciot
+			kanyarstartpozicio=encoder1;
+		}
+	}
+	if(kanyarodunk==true)
+	{
+		//Ha az enkoder ertek eleg nagy 340 fok, kilepunk, -> normal vezetovonal, es vonalfigyeles, kanyar false
+		if(irany==BAL && (encoder1 - kanyarstartpozicio > 41883) )
+		{
+			kanyarodunk=false;
+			vonalat_ignoraljuk=false;
+			vonalobjektumtipus=SIMA_VEZETOVONAL;
+		}
+		else if(irany==JOBB && (encoder1-kanyarstartpozicio > 37475))
+		{
+			kanyarodunk=false;
+			vonalat_ignoraljuk=false;
+			vonalobjektumtipus=SIMA_VEZETOVONAL;
+		}
+	}
+
+	//megvarjuk, mig latjuk a korforgot
+	//elore megyunk x-et, kicspajuka kormanyt, korbemegyunk, aztan vonalkovetes
+}
+
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth)
 {
 	*filteredval=0;
@@ -1068,11 +1170,11 @@ void vonal_objektum_eszleles_ugyessegi (uint8_t vonaltipus, uint8_t* objektumtip
 {
 	static bool vonalobjektum_megfigyeles = false;
 	static uint8_t elozo_vonaltipus = EGYVONAL;
-	static encodervalelso = 0;
-	static nemvonalak=0;
-	static egyvonalak=0;
-	static ketvonalak=0;
-	static haromvonalak=0;
+	static uint32_t encodervalelso = 0;
+	static uint8_t nemvonalak=0;
+	static uint8_t egyvonalak=0;
+	static uint8_t ketvonalak=0;
+	static uint8_t haromvonalak=0;
 
 	if(vonalobjektum_megfigyeles==false && (vonaltipus == KETVONAL || vonaltipus == HAROMVONAL || vonaltipus == NINCSVONAL))
 	{
@@ -1102,7 +1204,8 @@ void vonal_objektum_eszleles_ugyessegi (uint8_t vonaltipus, uint8_t* objektumtip
 				{
 					*objektumtipus=DRONE;
 				}
-				if((elozo_vonaltipus==HAROMVONAL) && haromvonalak > 1 && egyvonalak > 0)
+				//if((elozo_vonaltipus==HAROMVONAL) && haromvonalak > 1 && egyvonalak > 0)
+				if((elozo_vonaltipus==HAROMVONAL) && haromvonalak > 4 && egyvonalak > 2)
 				{
 					*objektumtipus=GYALOGOS;
 				}
