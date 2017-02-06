@@ -1286,6 +1286,7 @@ void oldal_objektum_eszeleles()
 //sima fal
 {
 	static bool oldalobjektummegfigyeles = false;
+	static bool parkolosejtes=false;
 	static uint8_t oldal=0;
 	static uint8_t elozo_oldal=0; //
 	static uint32_t encoder_elso=0;
@@ -1296,6 +1297,7 @@ void oldal_objektum_eszeleles()
 	static bool varakozas_az_oldalobjektum_vegere=false;
 	static int32_t SHARPmax=0;
 	static int32_t SHARPmin=4096;
+	static uint32_t parkolosejtesencoder=0;
 
 	if(SHARP_L > 600 && SHARP_R > 600)
 	{
@@ -1319,6 +1321,23 @@ void oldal_objektum_eszeleles()
 	}
 	if(varakozas_az_oldalobjektum_vegere==true)
 	{
+		//vajon parkolo volt amibol kileptunk?
+		if(parkolosejtes && oldal!=0)
+		{
+			if(encoder1-parkolosejtesencoder > 743) //ha 10cm ota latunk oldalvonalat, akkor parkolo lesz
+			{
+				if(oldal==BAL)
+				{
+					vonalobjektumtipus=PARKOLO_JOBBRA;
+				}
+				else if(oldal==JOBB)
+				{
+					vonalobjektumtipus=PARKOLO_BALRA;
+				}
+				parkolosejtes=false;
+			}
+		}
+
 		//ha mar 5cm ota nem latunk semmit, akkor kilepunk. ide akkor lepunk, ha mar fixen detektaltuk az egyik allapotot
 		if(oldal==0)
 		{
@@ -1326,6 +1345,11 @@ void oldal_objektum_eszeleles()
 			{
 				elsore_nem_latunk_semmit=false;
 				encoder_utolso=encoder1;
+				if(parkolosejtes)
+				{
+					parkolosejtes=false;
+					//Kapu, semmit sem csinalunk
+				}
 			}
 			if(encoder1-encoder_utolso > 446 && elsore_nem_latunk_semmit==false) //6cm utan semmit se latnuk, akkor exit
 			{
@@ -1364,7 +1388,7 @@ void oldal_objektum_eszeleles()
 					SHARPmin=SHARP_L;
 				}
 			}
-			if(SHARPmax-SHARPmin > 200)
+			if(SHARPmax-SHARPmin > 150)
 			{
 				bordas=true;
 				SHARPmax=0;
@@ -1412,6 +1436,7 @@ void oldal_objektum_eszeleles()
 
 		if(elozo_oldal!=oldal)
 		{
+
 			if(encoder1-encoder_elso > 2230) //30cm utan vesszuk figyelembe a targyat
 			{
 				if(bordas && elozo_oldal==JOBB)
@@ -1424,18 +1449,16 @@ void oldal_objektum_eszeleles()
 				if(!bordas && elozo_oldal==BAL)
 					vonalobjektumtipus=LIBIKOKA_JOBBRA;
 
-				if(elozo_oldal==MINDKET_OLDAL && oldal==BAL)
+				if(elozo_oldal==MINDKET_OLDAL && (oldal==BAL || oldal==JOBB))
 				{
-					vonalobjektumtipus=PARKOLO_JOBBRA;
-				}
-				else if(elozo_oldal==MINDKET_OLDAL && oldal==JOBB)
-				{
-					vonalobjektumtipus=PARKOLO_BALRA;
+					parkolosejtes=true;
+					parkolosejtesencoder=encoder1;
 				}
 				else
 				{
 					;
-					//KAPU, ekkor nincs semmi
+					//KAPU, ekkor nincs semmi, bar ilyen valszeg sose lesz, mert a kapu egyik oldala bezajol.
+					//erre valo a parkolosejtes, kesobb (feljebb) vizsgaljuk, hogy kajak van oldalfal, vagy csak egy par cm maradt az egyik kapuoldalbol
 				}
 				//oldaltavolsag_bordahoz=0;
 				varakozas_az_oldalobjektum_vegere=true;
