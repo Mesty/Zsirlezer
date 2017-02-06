@@ -53,6 +53,7 @@
 //UTVONANALVALASZTAS
 #define JOBB 30
 #define BAL 45
+#define NORMAL_VONALKOVETES 50
 #define MINDKET_OLDAL 60
 
 //Vonalobjektumok
@@ -65,7 +66,7 @@
 #define KORFORGO 11
 #define CEL 12
 #define SIMA_VEZETOVONAL 13
-
+#define STARTRA_VAR 22
 #define LIBIKOKA_JOBBRA 16
 #define LIBIKOKA_BALRA 17
 #define TELEPHELY_JOBBRA 18
@@ -634,10 +635,17 @@ bool stop = false;
 bool stop_deadman = false;
 bool stop_drone = false;
 bool stop_gyalogos = false;
+volatile bool stop_radios_modulra_var = true;
+volatile uint8_t radios_uart_vevo = 0;
 int32_t motorpulsePWM;
 volatile uint32_t timestamp = 0;
 volatile uint32_t actualencoderval=0;
 volatile bool dovelocitymeasurement=false;
+
+uint8_t uartcsomagokszama_vonalszenzor=10;
+uint8_t merre_menjunk_ha_van_oldalfal=0;
+uint32_t utvalaszto_encoder_start=0;
+
 /*Encoder vars*/
 uint32_t encoder1;
 HAL_TIM_StateTypeDef state;
@@ -730,6 +738,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	{
 		vonalszenzor_uzenetjott=true;
 	}
+	if(huart->Instance==UART5)
+	{
+		if(radios_uart_vevo==0x30)
+			stop_radios_modulra_var=false;
+	}
 }
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
@@ -742,6 +755,17 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 	            // set the correct state, so that the UART_RX_IT works correctly
 	            huart->gState = HAL_UART_STATE_BUSY_RX;
 	    }
+	}
+	if(huart -> Instance == UART5)
+	{
+		if (huart->ErrorCode == HAL_UART_ERROR_ORE)//Néha random overrun hiba, ekkor kinullázuk
+		{
+				// remove the error condition
+				huart->ErrorCode = HAL_UART_ERROR_NONE;
+				// set the correct state, so that the UART_RX_IT works correctly
+				huart->gState = HAL_UART_STATE_BUSY_RX;
+		}
+
 	}
 }
 /* USER CODE END 0 */
@@ -773,8 +797,6 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
-
-
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
@@ -786,7 +808,7 @@ int main(void)
   MX_UART4_Init();
   MX_UART5_Init();
   MX_USART1_UART_Init();
-  //MX_TIM6_Init();
+  MX_TIM6_Init();
   MX_USART2_UART_Init();
   MX_TIM4_Init();
   MX_TIM7_Init();
@@ -805,6 +827,7 @@ int main(void)
   //Vonalszenzortol uzenetek fogadasa
   //HAL_UART_Receive_DMA(&huart1,uzenetarray,3);
   HAL_UART_Receive_DMA(&huart1, uzenetarray, 5);
+  HAL_UART_Receive_DMA(&huart5, &radios_uart_vevo, 1);
 
   /* USER CODE END 2 */
 
@@ -841,7 +864,7 @@ int main(void)
 		  stop_deadman = true;
 	  else
 		  stop_deadman = false;
-	  if (stop_deadman || stop_drone || stop_gyalogos)
+	  if (stop_deadman || stop_drone || stop_gyalogos || stop_radios_modulra_var)
 		  stop = true;
 	  else
 		  stop = false;
@@ -901,6 +924,23 @@ int main(void)
 		  if(oldalobjektumfigyelest_ignoraljuk==false)
 		  {
 			  oldal_objektum_eszeleles();
+		  }
+
+		  if(uartcsomagokszama_vonalszenzor < 10)
+			  //Elkuldjuk a vonalszenzornak hogy merre menjen, es tobbszor is 10ms-enkent, hogy tuti megkapja
+		  {
+			  	HAL_UART_Transmit_DMA(&huart1, &merre_menjunk_ha_van_oldalfal, 1);
+				uartcsomagokszama_vonalszenzor++;
+//				if(utvalaszto_encoder_start!=0 && uartcsomagokszama_vonalszenzor==9 && merre_menjunk_ha_van_oldalfal==NORMAL_VONALKOVETES) //Ha ide mar akkor leptunk vissza, mikor mar a 10. NORMAL
+					//vonalkoveto csomagot kuldtuk el, akkor kilepunk az uartkuldesbol
+//					utvalaszto_encoder_start=0;
+		  }
+
+		  if(utvalaszto_encoder_start!=0 && encoder1-utvalaszto_encoder_start > 11150) // 150cm
+		  {
+			  merre_menjunk_ha_van_oldalfal=NORMAL_VONALKOVETES;
+			  uartcsomagokszama_vonalszenzor=0;
+			  utvalaszto_encoder_start=0;
 		  }
 
 		  tick = false;
@@ -1444,14 +1484,33 @@ void oldal_objektum_eszeleles()
 			if(encoder1-encoder_elso > 2230) //30cm utan vesszuk figyelembe a targyat
 			{
 				if(bordas && elozo_oldal==JOBB)
+				{
 					vonalobjektumtipus=TELEPHELY_BALRA;
+					uartcsomagokszama_vonalszenzor=0;
+					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
+					merre_menjunk_ha_van_oldalfal=BAL;
+				}
 				if(bordas && elozo_oldal==BAL)
+				{
 					vonalobjektumtipus=TELEPHELY_JOBBRA;
-
+					uartcsomagokszama_vonalszenzor=0;
+					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
+					merre_menjunk_ha_van_oldalfal=JOBB;
+				}
 				if(bordas==false && elozo_oldal==JOBB)
+				{
 					vonalobjektumtipus=LIBIKOKA_BALRA;
+					uartcsomagokszama_vonalszenzor=0;
+					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
+					merre_menjunk_ha_van_oldalfal=JOBB; ///!!!!!
+				}
 				if(bordas==false && elozo_oldal==BAL)
+				{
 					vonalobjektumtipus=LIBIKOKA_JOBBRA;
+					uartcsomagokszama_vonalszenzor=0;
+					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
+					merre_menjunk_ha_van_oldalfal=BAL; ////!!!!!!
+				}
 
 				if(elozo_oldal==MINDKET_OLDAL && (oldal==BAL || oldal==JOBB))
 				{
