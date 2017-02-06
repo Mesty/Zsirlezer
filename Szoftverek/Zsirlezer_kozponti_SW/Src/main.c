@@ -779,6 +779,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 int main(void)
 	{
 
+
   /* USER CODE BEGIN 1 */
 	//UART
 	uint8_t endline=10;
