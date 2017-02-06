@@ -1053,19 +1053,20 @@ void drone()
 	static uint32_t encoderatmeasure = 0;
 	static uint32_t timestampatfly = 0;
 	static bool measure_distance = false;
-	if ((SHARP_F > 932) && (!measure_distance)) //1010 jo volt egyenes szakaszon, 932 volt ivesen
+	if ((SHARP_F > 1010/*932*/) && (!measure_distance)) //1010 jo volt egyenes szakaszon, 932 volt ivesen
 	{
-		encoderatmeasure = encoder1;
-		measure_distance = true;
+		//encoderatmeasure = encoder1;
+		//measure_distance = true;
+		stop_drone=true;
 	}
-	if (measure_distance)
+	/*if (measure_distance)
 	{
 		if((encoder1 - encoderatmeasure) > 600) //20cm (1500), kicsit sok, eleg a ~10 (600)
 		{
 			stop_drone = true;
 			measure_distance = false;
 		}
-	}
+	}*/
 	if ((stop_drone) && (encoderdiff == 0))
 	{
 		if (encoderatstop == 0)
@@ -1074,7 +1075,7 @@ void drone()
 		if((SHARP_F < 650) && timestampatfly == 0)
 			timestampatfly = timestamp;
 
-		if ((SHARP_F < 650) && (timestamp - timestampatfly > 800)) //3(300) masodperc, legyen 8(800)
+		if ((SHARP_F < 650) && (timestamp - timestampatfly > 300))//800)) //3(300) masodperc, legyen 8(800)
 			stop_drone = false;
 	}
 	if (((encoder1 - encoderatstop) > 3000) && (encoderatstop != 0)) // Feladat vege, allapotvaltas,40cm uthosszt figyelunk a dron elotti megallasi helytol
@@ -1488,28 +1489,28 @@ void oldal_objektum_eszeleles()
 					vonalobjektumtipus=TELEPHELY_BALRA;
 					uartcsomagokszama_vonalszenzor=0;
 					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
-					merre_menjunk_ha_van_oldalfal=BAL;
+					merre_menjunk_ha_van_oldalfal=JOBB;//BAL; gany
 				}
 				if(bordas && elozo_oldal==BAL)
 				{
 					vonalobjektumtipus=TELEPHELY_JOBBRA;
 					uartcsomagokszama_vonalszenzor=0;
 					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
-					merre_menjunk_ha_van_oldalfal=JOBB;
+					merre_menjunk_ha_van_oldalfal=BAL;//JOBB; gany
 				}
 				if(bordas==false && elozo_oldal==JOBB)
 				{
 					vonalobjektumtipus=LIBIKOKA_BALRA;
 					uartcsomagokszama_vonalszenzor=0;
 					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
-					merre_menjunk_ha_van_oldalfal=JOBB; ///!!!!!
+					merre_menjunk_ha_van_oldalfal=BAL; //JOBB;gany ///!!!!!
 				}
 				if(bordas==false && elozo_oldal==BAL)
 				{
 					vonalobjektumtipus=LIBIKOKA_JOBBRA;
 					uartcsomagokszama_vonalszenzor=0;
 					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
-					merre_menjunk_ha_van_oldalfal=BAL; ////!!!!!!
+					merre_menjunk_ha_van_oldalfal=JOBB; //BAL;gany ////!!!!!!
 				}
 
 				if(elozo_oldal==MINDKET_OLDAL && (oldal==BAL || oldal==JOBB))
