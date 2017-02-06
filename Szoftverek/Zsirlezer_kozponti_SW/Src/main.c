@@ -1358,6 +1358,8 @@ void oldal_objektum_eszeleles()
 				oldalobjektummegfigyeles=false;
 				varakozas_az_oldalobjektum_vegere=false;
 				bordas=false;
+				SHARPmax=0;
+				SHARPmin=4096;
 			}
 		}
 	}
@@ -1388,7 +1390,7 @@ void oldal_objektum_eszeleles()
 					SHARPmin=SHARP_L;
 				}
 			}
-			if(SHARPmax-SHARPmin > 150)
+			if(SHARPmax-SHARPmin > 140)
 			{
 				bordas=true;
 				SHARPmax=0;
@@ -1428,6 +1430,8 @@ void oldal_objektum_eszeleles()
 				elsore_nem_latunk_semmit=true;
 				oldalobjektummegfigyeles=false;
 				bordas=false;
+				SHARPmax=0;
+				SHARPmin=4096;
 			}
 		}
 		if(oldal!=0)
@@ -1444,9 +1448,9 @@ void oldal_objektum_eszeleles()
 				if(bordas && elozo_oldal==BAL)
 					vonalobjektumtipus=TELEPHELY_JOBBRA;
 
-				if(!bordas && elozo_oldal==JOBB)
+				if(bordas==false && elozo_oldal==JOBB)
 					vonalobjektumtipus=LIBIKOKA_BALRA;
-				if(!bordas && elozo_oldal==BAL)
+				if(bordas==false && elozo_oldal==BAL)
 					vonalobjektumtipus=LIBIKOKA_JOBBRA;
 
 				if(elozo_oldal==MINDKET_OLDAL && (oldal==BAL || oldal==JOBB))
@@ -1464,6 +1468,8 @@ void oldal_objektum_eszeleles()
 				varakozas_az_oldalobjektum_vegere=true;
 				//oldalobjektummegfigyeles=false;
 				bordas=false;
+				SHARPmax=0;
+				SHARPmin=4096;
 			}
 		}
 
