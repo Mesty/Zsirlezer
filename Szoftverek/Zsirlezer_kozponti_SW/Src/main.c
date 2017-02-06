@@ -50,6 +50,8 @@
 #define KETVONAL 2
 #define HAROMVONAL 3
 #define VONALHIBA 15
+#define FULLVONAL 70
+
 //UTVONANALVALASZTAS
 #define JOBB 30
 #define BAL 45
@@ -840,12 +842,12 @@ int main(void)
   while (1)
   {
 
-	  vonalobjektumtipus+=48;
+	 /* vonalobjektumtipus+=48;
 	  HAL_UART_Transmit(&huart2, &vonalobjektumtipus, sizeof(uint8_t), 1000);
 	  vonalobjektumtipus-=48;
 	  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 1000);
 	  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 1000);
-
+*/
 	  //UART uzenet fogadasa a vonalszenzortol
 	  if(vonalszenzor_uzenetjott==true && vonalat_ignoraljuk==false) //3ms-onkent kapunk uzenetet
 	  {

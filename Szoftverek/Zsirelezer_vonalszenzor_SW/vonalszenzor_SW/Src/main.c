@@ -59,8 +59,8 @@
 #define KETVONAL 2
 #define HAROMVONAL 3
 #define VONALHIBA 15
+#define FULLVONAL 70
 #define NORMAL_VONALKOVETES 50
-#define CEL 100
 //UTVONANALVALASZTAS
 #define JOBB 30
 #define BAL 45
@@ -682,12 +682,14 @@ void vonalszam(uint16_t* forrastomb, uint8_t hossz, uint8_t* vonaltipus)
 	bool vanvonal=false;
 	bool elozovanvonal=false;
 	uint8_t elekszama=0;
+	uint8_t hanyszenzorerzekel=0;
 
 	for (int i=0; i<hossz; i++)
 	{
 		if(forrastomb[i] > 0)
 		{
 			vanvonal=true;
+			hanyszenzorerzekel++;
 		}
 		else
 		{
@@ -710,6 +712,11 @@ void vonalszam(uint16_t* forrastomb, uint8_t hossz, uint8_t* vonaltipus)
 		*vonaltipus=HAROMVONAL;
 	else
 		*vonaltipus=VONALHIBA;
+
+	if(hanyszenzorerzekel>28)
+	{
+		*vonaltipus=FULLVONAL;
+	}
 }
 
 void utvonalvalasztas_szenzoradatokbol(uint16_t* forrastomb, uint8_t hossz, uint8_t irany)
