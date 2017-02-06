@@ -646,6 +646,8 @@ uint8_t uartcsomagokszama_vonalszenzor=10;
 uint8_t merre_menjunk_ha_van_oldalfal=0;
 uint32_t utvalaszto_encoder_start=0;
 
+bool stop_hordo=false;
+
 /*Encoder vars*/
 uint32_t encoder1;
 HAL_TIM_StateTypeDef state;
@@ -771,7 +773,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 /* USER CODE END 0 */
 
 int main(void)
-{
+	{
 
   /* USER CODE BEGIN 1 */
 	//UART
@@ -864,7 +866,7 @@ int main(void)
 		  stop_deadman = true;
 	  else
 		  stop_deadman = false;
-	  if (stop_deadman || stop_drone || stop_gyalogos || stop_radios_modulra_var)
+	  if (stop_deadman || stop_drone || stop_gyalogos || stop_radios_modulra_var || stop_hordo)
 		  stop = true;
 	  else
 		  stop = false;
@@ -889,6 +891,9 @@ int main(void)
 		  WMAfilter(&SHARP_F,SHARPData2,SHARP_F_ARRAY,20);
 		  WMAfilter(&SHARP_R,SHARPData2+1,SHARP_R_ARRAY,20);
 		  WMAfilter(&SHARP_L,SHARPData2+2,SHARP_L_ARRAY,20);
+		  /*sprintf(&string,"..................\r\n");
+		  sprintf(&string,"%d\t%d",SHARP_L,SHARP_R);
+		  HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);*/
 		 /* SHARP_F=SHARPData[0];
 		  SHARP_R=SHARPData[1];
 		  SHARP_L=SHARPData[2];*/
@@ -951,6 +956,10 @@ int main(void)
 		  gyalogos();
 	  if(vonalobjektumtipus==KORFORGO)
 		  korforgo();
+	  if(vonalobjektumtipus==HORDO)
+	  {
+		  hordo();
+	  }
 
 	  //HORDONAL KAPCSOLJUK KI AZ OLDALOBJEKTUM ES VONALFIGYELEST
 	  //TOLATASNAL kapcsoljuk ki az oldalobjektum es voalfigyelest
@@ -1198,6 +1207,47 @@ void korforgo()
 
 	//megvarjuk, mig latjuk a korforgot
 	//elore megyunk x-et, kicspajuka kormanyt, korbemegyunk, aztan vonalkovetes
+}
+
+void hordo()
+{
+//Ha belepunk, gyorsitunk. 1m utan nincs vonalerzekeles, es kozepallasban megy
+//Encoderrel 2m utan HA a sharpok egyike < 400 visszadjuk a kormanyzast, es lassitunk le egybol, majd pwm-et beallitjuk a normalra
+	static bool kormanyzas_elvetel=false;
+	static uint32_t fekezes_kezdete=0;
+	static uint32_t hordostart=0;
+
+	if(hordostart==0)
+	{
+		hordostart=encoder1;
+		motorpulsePWM=7800; //gyorsitas
+	}
+	if(encoder1-hordostart > 7430 && kormanyzas_elvetel==false) //1m
+	{
+		//kormanyzas elvetel
+		vonalat_ignoraljuk=true;
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 6763);
+		kormanyzas_elvetel=true;
+	}
+	if(encoder1-hordostart > 14860 && kormanyzas_elvetel==true &&/* (SHARP_L < 400 || SHARP_R < 400) &&*/ fekezes_kezdete==0)
+	{
+		//nem allitjuk a kormanyzaselvetelt, mert ujra belepunk az egyel ezelotti if-be, es beblokkolunk!!!
+		stop_hordo=true;
+		vonalat_ignoraljuk=false;
+		fekezes_kezdete=timestamp;
+	}
+	if(fekezes_kezdete!=0 && timestamp-fekezes_kezdete>50)
+	{
+		stop_hordo=false;  //ez majd kell
+		motorpulsePWM=7252;
+		vonalobjektumtipus=SIMA_VEZETOVONAL;
+
+		//reset, de elvileg nem kell
+		kormanyzas_elvetel=false;
+		fekezes_kezdete=0;
+		hordostart=0;
+	}
+
 }
 
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth)
