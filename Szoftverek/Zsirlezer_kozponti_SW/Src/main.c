@@ -637,6 +637,7 @@ bool stop = false;
 bool stop_deadman = false;
 bool stop_drone = false;
 bool stop_gyalogos = false;
+bool stop_cel = false;
 volatile bool stop_radios_modulra_var = true;
 volatile uint8_t radios_uart_vevo = 0;
 int32_t motorpulsePWM;
@@ -676,6 +677,7 @@ uint8_t string[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 uint8_t vonalobjektumtipus=SIMA_VEZETOVONAL;
 volatile bool vonalat_ignoraljuk=false;
 volatile bool oldalobjektumfigyelest_ignoraljuk=false;
+bool voltmarkorforgo=false;
 
 //UART, vonalszenzor
 volatile bool vonalszenzor_uzenetjott=false;
@@ -842,6 +844,8 @@ int main(void)
   while (1)
   {
 
+	  if(voltmarkorforgo==true && vonaltipus==FULLVONAL)
+		  stop_cel=true;
 	 /* vonalobjektumtipus+=48;
 	  HAL_UART_Transmit(&huart2, &vonalobjektumtipus, sizeof(uint8_t), 1000);
 	  vonalobjektumtipus-=48;
@@ -868,7 +872,7 @@ int main(void)
 		  stop_deadman = true;
 	  else
 		  stop_deadman = false;
-	  if (stop_deadman || stop_drone || stop_gyalogos || stop_radios_modulra_var || stop_hordo)
+	  if (stop_deadman || stop_drone || stop_gyalogos || stop_radios_modulra_var || stop_hordo || stop_cel)
 		  stop = true;
 	  else
 		  stop = false;
@@ -1192,6 +1196,8 @@ void korforgo()
 			kanyarstartpozicio=0;
 			startpozicio=0;
 
+			voltmarkorforgo=true;
+
 		}
 		else if(irany==JOBB && (encoder1-kanyarstartpozicio > 35000))
 		{
@@ -1204,6 +1210,8 @@ void korforgo()
 			irany=0;
 			kanyarstartpozicio=0;
 			startpozicio=0;
+
+			voltmarkorforgo=true;
 		}
 	}
 
