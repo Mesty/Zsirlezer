@@ -543,4 +543,4 @@ float atan_lut[5400] = {
 	 3308.8613, 3309.5407, 3310.2199, 3310.8987, 3311.5772, 3312.2554, 3312.9333, 3313.6109, 3314.2882, 3314.9652};
  
 // A szabalyozas megvalositasa
-*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.5*((float)*sebesseg)+0.5)*(0.5*((float)*sebesseg)+0.5))+(0.045-0.81*((float)*sebesseg))*atan_lutorientacio+2300]/((0.5*((float)*sebesseg)+0.5)*(0.5*((float)*sebesseg)+0.5))+6763.5);
+*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.5*((float)*sebesseg)+0.537)*(0.5*((float)*sebesseg)+0.537))+(-0.01494-0.81*((float)*sebesseg))*atan_lut[*orientacio+2300]/((0.5*((float)*sebesseg)+0.537)*(0.5*((float)*sebesseg)+0.537))+6763.5);
