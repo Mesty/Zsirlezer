@@ -43,6 +43,7 @@
 /* USER CODE BEGIN Includes */
 #include "stdbool.h"
 
+
 //Defineok
 //Vonalszam
 #define NINCSVONAL 10
@@ -50,32 +51,10 @@
 #define KETVONAL 2
 #define HAROMVONAL 3
 #define VONALHIBA 15
-#define FULLVONAL 70
-
-//UTVONANALVALASZTAS
-#define JOBB 30
-#define BAL 45
-#define NORMAL_VONALKOVETES 50
-#define MINDKET_OLDAL 60
 
 //Vonalobjektumok
 #define GYORSITO 5
 #define LASSITO 6
-
-#define DRONE 7
-#define GYALOGOS 8
-#define HORDO 9
-#define KORFORGO 11
-#define CEL 12
-#define SIMA_VEZETOVONAL 13
-#define STARTRA_VAR 22
-#define LIBIKOKA_JOBBRA 16
-#define LIBIKOKA_BALRA 17
-#define TELEPHELY_JOBBRA 18
-#define TELEPHELY_BALRA 19
-#define PARKOLO_BALRA 20
-#define PARKOLO_JOBBRA 21
-
 
 /* USER CODE END Includes */
 
@@ -628,59 +607,49 @@ float atan_lut[5400] = {
 	 -2316.2029, -2316.6785, -2317.1539, -2317.6291, -2318.104, -2318.5788, -2319.0533, -2319.5276, -2320.0018, -2320.4757};
 
 
-volatile bool dataReady = false;
-volatile bool tick = false;
-volatile bool SHARP_valid;
-volatile uint32_t previousmotorinput = 0;
-volatile uint32_t actualmotorinput = 0;
-bool stop = false;
+//GLOBALISAK
+//Sharp ADC
+volatile bool SHARP_FRONT_valid=false;
+uint16_t SHARP_FRONT_raw =0;
+int32_t SHARP_FRONT_filtered=0;
+int32_t SHARP_FRONT_array[20]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+//LABRANGATO
+volatile uint32_t actualmotorinput=0;
+volatile uint32_t previousmotorinput=0;
 bool stop_deadman = false;
-bool stop_drone = false;
-bool stop_gyalogos = false;
+
+//Motor
+uint32_t motorpulsePWM=0;
+bool stop = false;
 bool stop_cel = false;
-volatile bool stop_radios_modulra_var = true;
-volatile uint8_t radios_uart_vevo = 0;
-int32_t motorpulsePWM;
-volatile uint32_t timestamp = 0;
-volatile uint32_t actualencoderval=0;
-volatile bool dovelocitymeasurement=false;
 
-uint8_t uartcsomagokszama_vonalszenzor=10;
-uint8_t merre_menjunk_ha_van_oldalfal=0;
-uint32_t utvalaszto_encoder_start=0;
+//Utemezo
+volatile uint32_t timestamp;
+volatile bool tick=false;
 
-bool stop_hordo=false;
-
-/*Encoder vars*/
-uint32_t encoder1;
-HAL_TIM_StateTypeDef state;
-uint32_t encoderprev=0;
-int32_t encoderdiff;
-uint32_t dir;
+//Encoder
+volatile int32_t actualencoderval=0;
+int32_t encoder_aktualis=0;
+int32_t encoder_elozo=0;
+int32_t encoder_diff=0;
 int32_t velocity;
-//int32_t filteredvelocity;
-//int32_t filteredvelocitydiff;
-//int32_t velocityarray[4]={0,0,0,0}; //Kis csalas, akkor jo, ha VELOCITY_FILTER_DEPTH = 4
-//uint32_t velocityabs;
-/* SHARP vars */
-uint16_t SHARPData[3] = {0,0,0};
-int32_t SHARPData2[3] = {0,0,0};
-int32_t SHARP_F = 0;
-int32_t SHARP_R = 0;
-int32_t SHARP_L = 0;
-int32_t SHARP_F_ARRAY[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-int32_t SHARP_R_ARRAY[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-int32_t SHARP_L_ARRAY[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-/* UART-on kuldento string */
-uint8_t string[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+HAL_TIM_StateTypeDef encoder_state;
 
-uint8_t vonalobjektumtipus=SIMA_VEZETOVONAL;
-volatile bool vonalat_ignoraljuk=false;
-volatile bool oldalobjektumfigyelest_ignoraljuk=false;
-bool voltmarkorforgo=false;
 
-//UART, vonalszenzor
+//Vonalszenzor UART
 volatile bool vonalszenzor_uzenetjott=false;
+uint8_t uzenetarray[5]={0,0,0,0,0};
+uint16_t pozicio_elso=1600;
+uint16_t pozicio_masodik=1200;
+uint8_t vonaltipus=EGYVONAL;
+int16_t orientacio=0;
+uint32_t szervoPWM;
+
+
+
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -689,25 +658,19 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-uint32_t reverse_byte_order_32(uint32_t value);
-void drone();
-void gyalogos();
-void korforgo();
-void hordo();
-void oldal_objektum_eszeleles();
-void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth);
-void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout);
+void Motorkezeles();
+void Vonalszenzorkezeles_uartfogadas();
 void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny);
-void vonal_objektum_eszleles_ugyessegi (uint8_t vonaltipus, uint8_t* objektumtipus);
-
-
+void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth);
+void Encoder_beolvasas();
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
 	if (hadc->Instance == ADC1)
-		SHARP_valid = true;
+		SHARP_FRONT_valid = true; //eleg egyet beolvasni
 }
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef* htim)
 {
@@ -720,37 +683,22 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef* htim)
 }
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	/*if(htim->Instance == TIM6)
-	{
-
-	}*/
 	if(htim->Instance == TIM7)
 	{
 		timestamp++;
 		actualencoderval=HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
-		//dovelocitymeasurement=true;
 		tick = true;
-
 	}
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	/*if(huart->Instance == USART2)
-	{
-		HAL_UART_Receive_IT(huart, (uint8_t *) inputStream, sizeof(inputStream));
-		dataReady = true;
-	}*/
 	if (huart->Instance ==USART1)
 	{
 		vonalszenzor_uzenetjott=true;
 	}
-	if(huart->Instance==UART5)
-	{
-		if(radios_uart_vevo==0x30)
-			stop_radios_modulra_var=false;
-	}
 }
+//Uart neha csinal random ORE-t
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
 	if (huart->Instance ==USART1)
@@ -763,37 +711,15 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 	            huart->gState = HAL_UART_STATE_BUSY_RX;
 	    }
 	}
-	if(huart -> Instance == UART5)
-	{
-		if (huart->ErrorCode == HAL_UART_ERROR_ORE)//Néha random overrun hiba, ekkor kinullázuk
-		{
-				// remove the error condition
-				huart->ErrorCode = HAL_UART_ERROR_NONE;
-				// set the correct state, so that the UART_RX_IT works correctly
-				huart->gState = HAL_UART_STATE_BUSY_RX;
-		}
-
-	}
 }
+
+
 /* USER CODE END 0 */
 
 int main(void)
-	{
-
+{
 
   /* USER CODE BEGIN 1 */
-	//UART
-	uint8_t endline=10;
-	uint8_t CR=13;
-	uint8_t tab=9;
-	//Vonalszenzor
-	uint8_t uzenetarray[5]={0,0,0,0,0};
-	uint16_t pozicio_elso=1600;
-	uint16_t pozicio_masodik=1200;
-	uint8_t vonaltipus=EGYVONAL;
-	int16_t orientacio=0;
-	uint32_t szervoPWM;
-
 
   /* USER CODE END 1 */
 
@@ -822,161 +748,48 @@ int main(void)
   MX_TIM7_Init();
 
   /* USER CODE BEGIN 2 */
+
   HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
   __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 6932);
-  //HAL_Delay(5000);*/
-  //HAL_TIM_Base_Start_IT(&htim6);
   HAL_TIM_Base_Start_IT(&htim7);
   HAL_TIM_IC_Start_IT(&htim4,TIM_CHANNEL_1);
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
 
-
   //Vonalszenzortol uzenetek fogadasa
-  //HAL_UART_Receive_DMA(&huart1,uzenetarray,3);
   HAL_UART_Receive_DMA(&huart1, uzenetarray, 5);
-  HAL_UART_Receive_DMA(&huart5, &radios_uart_vevo, 1);
+
+  //Alap sebesseg megadasa
+  motorpulsePWM = 7500;
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  motorpulsePWM = 7252;
-
   while (1)
   {
-
-	  if(voltmarkorforgo==true && vonaltipus==FULLVONAL)
-		  stop_cel=true;
-	 /* vonalobjektumtipus+=48;
-	  HAL_UART_Transmit(&huart2, &vonalobjektumtipus, sizeof(uint8_t), 1000);
-	  vonalobjektumtipus-=48;
-	  HAL_UART_Transmit(&huart2,&endline, sizeof(uint8_t), 1000);
-	  HAL_UART_Transmit(&huart2,&CR, sizeof(uint8_t), 1000);
-*/
-	  //UART uzenet fogadasa a vonalszenzortol
-	  if(vonalszenzor_uzenetjott==true && vonalat_ignoraljuk==false) //3ms-onkent kapunk uzenetet
-	  {
-		  pozicio_elso = uzenetarray[0] + uzenetarray[1]*0xff;
-		  pozicio_masodik = uzenetarray[2] + uzenetarray[3]*0xff;
-		  vonaltipus=uzenetarray[4];
-		  orientacio=pozicio_elso-pozicio_masodik;
-		  allapotteres_szabalyozo(&pozicio_elso, &orientacio, &velocity, &szervoPWM);
-		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, szervoPWM);
-
-		  vonal_objektum_eszleles_ugyessegi(vonaltipus, &vonalobjektumtipus);
-		  vonalszenzor_uzenetjott=false;
-	  }
-
-
-	  /* Deadman emergency brake */
-	  if(((actualmotorinput < previousmotorinput) ? actualmotorinput : previousmotorinput) < 4000)
-		  stop_deadman = true;
-	  else
-		  stop_deadman = false;
-	  if (stop_deadman || stop_drone || stop_gyalogos || stop_radios_modulra_var || stop_hordo || stop_cel)
-		  stop = true;
-	  else
-		  stop = false;
-
-	  if(timestamp > 500)
-	  {
-		  if (!stop)
-			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, motorpulsePWM);
-		  else if (encoderdiff > 3)
-			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 4000);
-		  else
-			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 6932);
-	  }
-	  /* SHARP olvasas es kuldes */
-	  if(tick)
-	  {
-		  HAL_ADC_Start_DMA(&hadc1, (uint32_t*) SHARPData, 3);
-		  while(!SHARP_valid);
-		  SHARPData2[2]=SHARPData[2];
-		  SHARPData2[1]=SHARPData[1];
-		  SHARPData2[0]=SHARPData[0];
-		  WMAfilter(&SHARP_F,SHARPData2,SHARP_F_ARRAY,20);
-		  WMAfilter(&SHARP_R,SHARPData2+1,SHARP_R_ARRAY,20);
-		  WMAfilter(&SHARP_L,SHARPData2+2,SHARP_L_ARRAY,20);
-		  /*sprintf(&string,"..................\r\n");
-		  sprintf(&string,"%d\t%d",SHARP_L,SHARP_R);
-		  HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);*/
-		 /* SHARP_F=SHARPData[0];
-		  SHARP_R=SHARPData[1];
-		  SHARP_L=SHARPData[2];*/
-		  /*sprintf(&string,"..................\r\n");
-		  sprintf(&string,"%d\t%d",SHARPData2[2],SHARPData2[1]);
-		  HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);*/
-	  //}
-	  /* Sebessegmeres */
-	 // if(dovelocitymeasurement) //v=[mm/s], delta t = 10ms
-	  //{//valami szamitas hibas, wma filter furi.
-		  state = HAL_TIM_Encoder_GetState(&htim2);
-		  if(state==HAL_TIM_STATE_READY)
-		  {
-			  dir = __HAL_TIM_DIRECTION_STATUS(&htim2);
-			  encoder1=actualencoderval*2;//valami rossza az enkoderrel, valszeg nem kapjuk meg az egyik channelt
-			  encoderdiff=encoder1-encoderprev;
-			  velocity=encoderdiff*10000/743;//velocity=((encoderdiff*10000)/743); //v[mm/s]
-			  //filteredvelocitydiff=-filteredvelocity;
-			  //WMAfilter(&filteredvelocity, &velocity, velocityarray, 4);
-			  /*if(filteredvelocity>=0)
-				  velocityabs = filteredvelocity;
-			  else
-				  velocityabs = -filteredvelocity;*/
-			  encoderprev=encoder1;
-			  //filteredvelocitydiff+=filteredvelocity;
-		  }
-		  else
-		  {
-			  //error handling...
-		  }
-		  //dovelocitymeasurement=false;
-
-		  if(oldalobjektumfigyelest_ignoraljuk==false)
-		  {
-			  oldal_objektum_eszeleles();
-		  }
-
-		  if(uartcsomagokszama_vonalszenzor < 10)
-			  //Elkuldjuk a vonalszenzornak hogy merre menjen, es tobbszor is 10ms-enkent, hogy tuti megkapja
-		  {
-			  	HAL_UART_Transmit_DMA(&huart1, &merre_menjunk_ha_van_oldalfal, 1);
-				uartcsomagokszama_vonalszenzor++;
-//				if(utvalaszto_encoder_start!=0 && uartcsomagokszama_vonalszenzor==9 && merre_menjunk_ha_van_oldalfal==NORMAL_VONALKOVETES) //Ha ide mar akkor leptunk vissza, mikor mar a 10. NORMAL
-					//vonalkoveto csomagot kuldtuk el, akkor kilepunk az uartkuldesbol
-//					utvalaszto_encoder_start=0;
-		  }
-
-		  if(utvalaszto_encoder_start!=0 && encoder1-utvalaszto_encoder_start > 11150) // 150cm
-		  {
-			  merre_menjunk_ha_van_oldalfal=NORMAL_VONALKOVETES;
-			  uartcsomagokszama_vonalszenzor=0;
-			  utvalaszto_encoder_start=0;
-		  }
-
-		  tick = false;
-	  }
-	  if(vonalobjektumtipus==DRONE)
-		  drone();
-	  if(vonalobjektumtipus==GYALOGOS)
-		  gyalogos();
-	  if(vonalobjektumtipus==KORFORGO)
-		  korforgo();
-	  if(vonalobjektumtipus==HORDO)
-	  {
-		  hordo();
-	  }
-
-	  //HORDONAL KAPCSOLJUK KI AZ OLDALOBJEKTUM ES VONALFIGYELEST
-	  //TOLATASNAL kapcsoljuk ki az oldalobjektum es voalfigyelest
-	  //TODO
-
   /* USER CODE END WHILE */
-
   /* USER CODE BEGIN 3 */
 
+	  if(vonalszenzor_uzenetjott==true) //3ms-onkent kapunk uzenetet
+	  {
+		  Vonalszenzorkezeles_uartfogadas();
+	  }
+	  Motorkezeles();
+
+
+	  if(tick)
+	  {
+		  HAL_ADC_Start_DMA(&hadc1, (uint32_t*) &SHARP_FRONT_raw, 1); //SHARP front adc elinditasa
+
+		  Encoder_beolvasas();
+
+
+		  while(!SHARP_FRONT_valid);//Ha mar letelt az ad konverzio ideje, akkor szurjuk a kapott AD erteket
+		  WMAfilter(&SHARP_FRONT_filtered,(int32_t*)&(SHARP_FRONT_raw),SHARP_FRONT_array,20);
+
+		  tick=false;
+	  }
   }
   /* USER CODE END 3 */
 
@@ -1046,222 +859,52 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-uint32_t reverse_byte_order_32(uint32_t value)
+void Vonalszenzorkezeles_uartfogadas()
 {
-	uint8_t lolo = (value >> 0) & 0xFF;
-	uint8_t lohi = (value >> 8) & 0xFF;
-	uint8_t hilo = (value >> 16) & 0xFF;
-	uint8_t hihi = (value >> 24) & 0xFF;
-	return (hihi << 0) | (hilo << 8) | (lohi << 16) | (lolo << 24);
-}
-void drone()
-{
-	//Q2 meresek: 480*140mm lemez feher
-	//fekut 15cm
-	//70cm: 1000-1010
-	//60cm : 1150-1160
-	//55cm : 1275-1285
-	//50cm : 1405-1415
-	//45cm : 1555-1565
-	//Kanyar miatt mokolas: ha meglatjuk kb 80cm-re a dront, akkor meg megyunk elore 10 cm-t (+fekut)
-	//Ez utan viszont pont ugy allunk, hogy nem latjuk a dront, igy elindulnank: ezert kamura varjunk 8s-t a 3 helyett
-
-	static uint32_t encoderatstop = 0;
-	static uint32_t encoderatmeasure = 0;
-	static uint32_t timestampatfly = 0;
-	static bool measure_distance = false;
-	if ((SHARP_F > 1010/*932*/) && (!measure_distance)) //1010 jo volt egyenes szakaszon, 932 volt ivesen
-	{
-		//encoderatmeasure = encoder1;
-		//measure_distance = true;
-		stop_drone=true;
-	}
-	/*if (measure_distance)
-	{
-		if((encoder1 - encoderatmeasure) > 600) //20cm (1500), kicsit sok, eleg a ~10 (600)
-		{
-			stop_drone = true;
-			measure_distance = false;
-		}
-	}*/
-	if ((stop_drone) && (encoderdiff == 0))
-	{
-		if (encoderatstop == 0)
-			encoderatstop = encoder1;
-
-		if((SHARP_F < 650) && timestampatfly == 0)
-			timestampatfly = timestamp;
-
-		if ((SHARP_F < 650) && (timestamp - timestampatfly > 300))//800)) //3(300) masodperc, legyen 8(800)
-			stop_drone = false;
-	}
-	if (((encoder1 - encoderatstop) > 3000) && (encoderatstop != 0)) // Feladat vege, allapotvaltas,40cm uthosszt figyelunk a dron elotti megallasi helytol
-		vonalobjektumtipus=SIMA_VEZETOVONAL;
-
-}
-void gyalogos()
-//Sharppal merni, megallni, ha latjuk(threshold) egyszer, majd megyunk 2s utan elengedjuk.
-{
-	static bool gyalogos_elottunk=false;
-	static uint32_t timestamp_gyalogos=0;
-
-	/*sprintf(&string,"...............\r\n");
-	sprintf(&string,".%d",SHARP_F);
-	HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);*/
-
-
-
-	if(timestamp_gyalogos == 0)
-		stop_gyalogos=true;
-	if(SHARP_F > 1000)
-	{
-		gyalogos_elottunk=true;
-	}
-	if(gyalogos_elottunk && SHARP_F < 400)
-	{
-		gyalogos_elottunk = false;
-		timestamp_gyalogos=timestamp;
-		//wait 2s + indulas
-	}
-	if(timestamp_gyalogos != 0)
-		{
-			if(timestamp - timestamp_gyalogos > 100) //1s varakozas
-			{
-				stop_gyalogos=false;
-				//gyalogos alatt innentol nem figyeljuk az oldalobjektumokat
-				//allapotvisszaallitas 40cm utan: objektum sima vezetovonal, es figyeljuk az oldalobjektumokat
-				//TODO
-
-			}
-		}
+	  //UART uzenet fogadasa a vonalszenzortol
+	  pozicio_elso = uzenetarray[0] + uzenetarray[1]*0xff;
+	  pozicio_masodik = uzenetarray[2] + uzenetarray[3]*0xff;
+	  vonaltipus=uzenetarray[4];
+	  orientacio=pozicio_elso-pozicio_masodik;
+	  allapotteres_szabalyozo(&pozicio_elso, &orientacio, &velocity, &szervoPWM);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, szervoPWM);
+	  vonalszenzor_uzenetjott=false;
 }
 
-void korforgo()
+void Motorkezeles()
 {
-	//JOBB kanyar kisebb atmero, 170cm -> 74,3*pi*d  39680
-	//BAL kanyar nagyobb atmero, 190cm -> 44350
-	static uint32_t startpozicio=0;
-	static uint32_t kanyarstartpozicio=0;
-	static uint8_t irany=0;
+	  if(((actualmotorinput < previousmotorinput) ? actualmotorinput : previousmotorinput) < 4000)
+		  stop_deadman = true;
+	  else
+		  stop_deadman = false;
+	  if (stop_deadman || stop_cel)
+		  stop = true;
+	  else
+		  stop = false;
 
-	static bool kanyarodunk = false;
-	static bool elso_iteracio = false;
-	/*sprintf(&string,"...............\r\n");
-	sprintf(&string,"%d%\t%d",SHARP_L, SHARP_R);
-	HAL_UART_Transmit(&huart4, &string, sizeof(string)*sizeof(uint8_t), 10000);*/
-	if(elso_iteracio==false)
-		startpozicio=encoder1;
-		elso_iteracio=true;
-
-	if (SHARP_L > 700 && irany==0)
-	{
-		irany=BAL;
-	}
-	else if (SHARP_R > 700 && irany==0)
-	{
-		irany = JOBB;
-	}
-
-	if(irany!=0 && kanyarodunk==false)
-	{
-		if(encoder1-startpozicio > 12300) //165 cm a vonalminta felismeresetol //4100) //55cm utan forditjuk a kanyart
-		{
-			kanyarodunk=true;
-			//vonalszenzort nem figyeljuk
-			vonalat_ignoraljuk=true;
-			oldalobjektumfigyelest_ignoraljuk=true;
-			//kanyarodunk
-			if(irany==BAL)
-			{
-				  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 5644);
-			}
-			else //jobb
-			{
-				  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 7883);
-			}
-			//elmentjuk a poziciot
-			kanyarstartpozicio=encoder1;
-		}
-	}
-	if(kanyarodunk==true)
-	{
-		//Ha az enkoder ertek eleg nagy 340 fok, kilepunk, -> normal vezetovonal, es vonalfigyeles, kanyar false
-		if(irany==BAL && (encoder1 - kanyarstartpozicio > 39000) )
-		{
-			kanyarodunk=false;
-			vonalat_ignoraljuk=false;
-			oldalobjektumfigyelest_ignoraljuk=true;
-			vonalobjektumtipus=SIMA_VEZETOVONAL;
-			kanyarodunk=false;
-			elso_iteracio=false;
-			irany=0;
-			kanyarstartpozicio=0;
-			startpozicio=0;
-
-			voltmarkorforgo=true;
-
-		}
-		else if(irany==JOBB && (encoder1-kanyarstartpozicio > 35000))
-		{
-			kanyarodunk=false;
-			oldalobjektumfigyelest_ignoraljuk=true;
-			vonalat_ignoraljuk=false;
-			vonalobjektumtipus=SIMA_VEZETOVONAL;
-			kanyarodunk=false;
-			elso_iteracio=false;
-			irany=0;
-			kanyarstartpozicio=0;
-			startpozicio=0;
-
-			voltmarkorforgo=true;
-		}
-	}
-
-	//megvarjuk, mig latjuk a korforgot
-	//elore megyunk x-et, kicspajuka kormanyt, korbemegyunk, aztan vonalkovetes
+	  if(timestamp > 500)
+	  {
+		  if (!stop)
+			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, motorpulsePWM);
+		  else if (encoder_diff > 3)
+			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 4000);
+		  else
+			  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 6932);
+	  }
 }
 
-void hordo()
+void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny)
 {
-//Ha belepunk, gyorsitunk. 1m utan nincs vonalerzekeles, es kozepallasban megy
-//Encoderrel 2m utan HA a sharpok egyike < 400 visszadjuk a kormanyzast, es lassitunk le egybol, majd pwm-et beallitjuk a normalra
-	static bool kormanyzas_elvetel=false;
-	static uint32_t fekezes_kezdete=0;
-	static uint32_t hordostart=0;
+	float arctaneredmeny;
+	arctaneredmeny=atan_lut[*orientacio+2300];
+	*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))-(-0.855-0.00063*(0.0))*arctaneredmeny/((0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))+6763.5);
+	if(*PWMeredmeny > 7883)
+		*PWMeredmeny=7883;
+	else if(*PWMeredmeny < 5644)
+		*PWMeredmeny=5644;
 
-	if(hordostart==0)
-	{
-		hordostart=encoder1;
-		motorpulsePWM=7800; //gyorsitas
-	}
-	if(encoder1-hordostart > 7430 && kormanyzas_elvetel==false) //1m
-	{
-		//kormanyzas elvetel
-		vonalat_ignoraljuk=true;
-		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 6763);
-		kormanyzas_elvetel=true;
-	}
-	if(encoder1-hordostart > 14860 && kormanyzas_elvetel==true &&/* (SHARP_L < 400 || SHARP_R < 400) &&*/ fekezes_kezdete==0)
-	{
-		//nem allitjuk a kormanyzaselvetelt, mert ujra belepunk az egyel ezelotti if-be, es beblokkolunk!!!
-		stop_hordo=true;
-		vonalat_ignoraljuk=false;
-		fekezes_kezdete=timestamp;
-	}
-	if(fekezes_kezdete!=0 && timestamp-fekezes_kezdete>50)
-	{
-		stop_hordo=false;  //ez majd kell
-		motorpulsePWM=7252;
-		vonalobjektumtipus=SIMA_VEZETOVONAL;
-
-		//reset, de elvileg nem kell
-		kormanyzas_elvetel=false;
-		fekezes_kezdete=0;
-		hordostart=0;
-	}
-
+	//*PWMeredmeny = (uint32_t) ( -3.1667*((float)*pozicio)/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+(-0.855-0.00063*((float)*sebesseg))*arctaneredmeny/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+6763.5);
 }
-
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth)
 {
 	*filteredval=0;
@@ -1278,338 +921,20 @@ void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32
 	coeffsum+=(filter_depth);
 	*filteredval=*filteredval/coeffsum;
 }
-
-void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout)
+void Encoder_beolvasas() //!!!Fix idokozonkent kell hivni, szamit ra a fuggveny (10ms)
 {
-	uint16_t data2 = *data;
-	uint16_t datacopy;
-	uint32_t decimals;
-	uint8_t txbyte;
-	uint8_t issent=0;
-	uint8_t space=32;
-	for (int i=5; i>0; i--)
-	{
-		datacopy = data2;
-		decimals=1;
-		for (int j=i-1; j>0; j--)
-		{
-			datacopy=datacopy/10;
-			decimals = decimals*10;
-		}
-		data2 -= datacopy*decimals;
-		txbyte = (uint8_t) (datacopy+48);
-
-		if(datacopy) //send spaces if zeros before the number
-			issent=1;
-		if(issent)
-			HAL_UART_Transmit(huart, &txbyte, sizeof(txbyte), Timeout);
-		else
-			HAL_UART_Transmit(huart, &space, sizeof(txbyte), Timeout);
-	}
-}
-
-void vonal_objektum_eszleles_ugyessegi (uint8_t vonaltipus, uint8_t* objektumtipus)
-{
-	static bool vonalobjektum_megfigyeles = false;
-	static uint8_t elozo_vonaltipus = EGYVONAL;
-	static uint32_t encodervalelso = 0;
-	static uint8_t nemvonalak=0;
-	static uint8_t egyvonalak=0;
-	static uint8_t ketvonalak=0;
-	static uint8_t haromvonalak=0;
-
-	if(vonalobjektum_megfigyeles==false && (vonaltipus == KETVONAL || vonaltipus == HAROMVONAL || vonaltipus == NINCSVONAL))
-	{
-		vonalobjektum_megfigyeles=true;
-		encodervalelso = actualencoderval;
-	}
-	if(vonalobjektum_megfigyeles==true)
-	{
-		//223 encoder ertek = 3cm
-		if(elozo_vonaltipus != vonaltipus)//Uj vonaltipusra erkeztunk
-		{
-
-			if ((actualencoderval-encodervalelso)> 223) //nagyobb a vonalminta, mint 3cm, vagy csak kamu?
-			{
-				if(elozo_vonaltipus==EGYVONAL)
-					egyvonalak++;
-				else if(elozo_vonaltipus==KETVONAL)
-					ketvonalak++;
-				else if(elozo_vonaltipus==HAROMVONAL)
-					haromvonalak++;
-				else
-					nemvonalak++;
-
-				//Vegen vagyunk mar az objektumnak???
-				//Milyen objektumnak?
-				if(((actualencoderval-encodervalelso)> 1485) && elozo_vonaltipus==HAROMVONAL) //Hosszu 20cm 3-vonal: dron
-				{
-					*objektumtipus=DRONE;
-				}
-				//if((elozo_vonaltipus==HAROMVONAL) && haromvonalak > 1 && egyvonalak > 0)
-				if((elozo_vonaltipus==HAROMVONAL) && haromvonalak > 3 && egyvonalak > 2)
-				{
-					*objektumtipus=GYALOGOS;
-				}
-				if((elozo_vonaltipus==KETVONAL) && ketvonalak > 2 && egyvonalak > 1)
-				{
-					*objektumtipus=HORDO;
-				}
-				//if((elozo_vonaltipus==NINCSVONAL) && nemvonalak > 1 && egyvonalak > 0)
-				if((elozo_vonaltipus==NINCSVONAL) && nemvonalak > 2 && egyvonalak > 1)
-				{
-					*objektumtipus=KORFORGO;
-				}
-				encodervalelso=actualencoderval;
-
-			}
-		}
-
-		if(vonaltipus==EGYVONAL)
-			{
-				if((actualencoderval-encodervalelso)> 1115)
-				{
-					//Ha 15 cm ota egyvonal van, akkor vege az objektumfigyelesnek
-					vonalobjektum_megfigyeles=false;
-					nemvonalak=0;
-					egyvonalak=0;
-					ketvonalak=0;
-					haromvonalak=0;
-				}
-			}
-
-		elozo_vonaltipus=vonaltipus;
-	}
-// ha semmi sem igaz, akkor nem allitjuk az sima vezetovonalra a vonaltipust, az az akadalykezelo fuggveny dolga
-}
-void oldal_objektum_eszeleles()
-//Utanfuto: 2 fal 50cm, majd egy fal, es ujra 2 fal
-//Kapu: 2 fal 60cm
-//bordasfal
-//sima fal
-{
-	static bool oldalobjektummegfigyeles = false;
-	static bool parkolosejtes=false;
-	static uint8_t oldal=0;
-	static uint8_t elozo_oldal=0; //
-	static uint32_t encoder_elso=0;
-	static uint32_t encoder_utolso=0;
-	//static int32_t oldaltavolsag_bordahoz=0;
-	static bool bordas=false;
-	static bool elsore_nem_latunk_semmit=true;
-	static bool varakozas_az_oldalobjektum_vegere=false;
-	static int32_t SHARPmax=0;
-	static int32_t SHARPmin=4096;
-	static uint32_t parkolosejtesencoder=0;
-
-	if(SHARP_L > 600 && SHARP_R > 600)
-	{
-		oldal=MINDKET_OLDAL;
-	}
-	else if(SHARP_L > 600)
-	{
-		oldal=BAL;
-	}
-	else if(SHARP_R > 600)
-	{
-		oldal=JOBB;
-	}
-	else
-		oldal=0;
-
-	if(oldalobjektummegfigyeles == false && oldal!=0)
-	{
-		oldalobjektummegfigyeles=true;
-		encoder_elso=encoder1;
-	}
-	if(varakozas_az_oldalobjektum_vegere==true)
-	{
-		//vajon parkolo volt amibol kileptunk?
-		if(parkolosejtes && oldal!=0)
-		{
-			if(encoder1-parkolosejtesencoder > 743) //ha 10cm ota latunk oldalvonalat, akkor parkolo lesz
-			{
-				if(oldal==BAL)
-				{
-					vonalobjektumtipus=PARKOLO_JOBBRA;
-				}
-				else if(oldal==JOBB)
-				{
-					vonalobjektumtipus=PARKOLO_BALRA;
-				}
-				parkolosejtes=false;
-			}
-		}
-
-		//ha mar 5cm ota nem latunk semmit, akkor kilepunk. ide akkor lepunk, ha mar fixen detektaltuk az egyik allapotot
-		if(oldal==0)
-		{
-			if(elsore_nem_latunk_semmit==true)
-			{
-				elsore_nem_latunk_semmit=false;
-				encoder_utolso=encoder1;
-				if(parkolosejtes)
-				{
-					parkolosejtes=false;
-					//Kapu, semmit sem csinalunk
-				}
-			}
-			if(encoder1-encoder_utolso > 446 && elsore_nem_latunk_semmit==false) //6cm utan semmit se latnuk, akkor exit
-			{
-				//kilepes, reset
-				elsore_nem_latunk_semmit=true;
-				oldalobjektummegfigyeles=false;
-				varakozas_az_oldalobjektum_vegere=false;
-				bordas=false;
-				SHARPmax=0;
-				SHARPmin=4096;
-			}
-		}
-	}
-	if(oldalobjektummegfigyeles==true && varakozas_az_oldalobjektum_vegere==false)
-	{
-
-		if(elozo_oldal==oldal && (oldal==JOBB || oldal==BAL) && bordas==false && encoder1-encoder_elso > 745 && encoder1-encoder_elso < 3725) //10cm utan merunk de csak 50cm-ig
-		{
-			if(oldal==JOBB)
-			{
-				if(SHARPmax < SHARP_R)
-				{
-					SHARPmax=SHARP_R;
-				}
-				if(SHARPmin > SHARP_R)
-				{
-					SHARPmin=SHARP_R;
-				}
-			}
-			else if(oldal==BAL)
-			{
-				if(SHARPmax < SHARP_L)
-				{
-					SHARPmax=SHARP_L;
-				}
-				if(SHARPmin > SHARP_L)
-				{
-					SHARPmin=SHARP_L;
-				}
-			}
-			if(SHARPmax-SHARPmin > 140)
-			{
-				bordas=true;
-				SHARPmax=0;
-				SHARPmin=4096;
-				//oldaltavolsag_bordahoz=0;
-			}
-
-			/*if(encoder1-encoder_elso > 745) //10cm utab merunk, hogy milyen messze van a fal (bordashoz kell)
-			{
-				if(oldal==JOBB && oldaltavolsag_bordahoz==0)
-					oldaltavolsag_bordahoz=SHARP_R;
-				else if (oldal==BAL && oldaltavolsag_bordahoz==0)
-					oldaltavolsag_bordahoz=SHARP_L;
-			}
-			if(oldal==JOBB && oldaltavolsag_bordahoz-SHARP_R > 110)
-			{
-				bordas=true;
-				oldaltavolsag_bordahoz=0;
-			}
-			if(oldal==BAL && oldaltavolsag_bordahoz-SHARP_L > 110)
-			{
-				bordas=true;
-				oldaltavolsag_bordahoz=0;
-			}*/
-		}
-
-		if(oldal==0)
-		{
-			if(elsore_nem_latunk_semmit==true)
-			{
-				elsore_nem_latunk_semmit=false;
-				encoder_utolso=encoder1;
-			}
-			if(encoder1-encoder_utolso > 446 && elsore_nem_latunk_semmit==false) //6cm utan semmit se latnuk, akkor exit
-			{
-				//kilepes, reset
-				elsore_nem_latunk_semmit=true;
-				oldalobjektummegfigyeles=false;
-				bordas=false;
-				SHARPmax=0;
-				SHARPmin=4096;
-			}
-		}
-		if(oldal!=0)
-			elsore_nem_latunk_semmit=true;
-
-
-		if(elozo_oldal!=oldal)
-		{
-
-			if(encoder1-encoder_elso > 2230) //30cm utan vesszuk figyelembe a targyat
-			{
-				if(bordas && elozo_oldal==JOBB)
-				{
-					vonalobjektumtipus=TELEPHELY_BALRA;
-					uartcsomagokszama_vonalszenzor=0;
-					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
-					merre_menjunk_ha_van_oldalfal=JOBB;//BAL; gany
-				}
-				if(bordas && elozo_oldal==BAL)
-				{
-					vonalobjektumtipus=TELEPHELY_JOBBRA;
-					uartcsomagokszama_vonalszenzor=0;
-					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
-					merre_menjunk_ha_van_oldalfal=BAL;//JOBB; gany
-				}
-				if(bordas==false && elozo_oldal==JOBB)
-				{
-					vonalobjektumtipus=LIBIKOKA_BALRA;
-					uartcsomagokszama_vonalszenzor=0;
-					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
-					merre_menjunk_ha_van_oldalfal=BAL; //JOBB;gany ///!!!!!
-				}
-				if(bordas==false && elozo_oldal==BAL)
-				{
-					vonalobjektumtipus=LIBIKOKA_JOBBRA;
-					uartcsomagokszama_vonalszenzor=0;
-					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
-					merre_menjunk_ha_van_oldalfal=JOBB; //BAL;gany ////!!!!!!
-				}
-
-				if(elozo_oldal==MINDKET_OLDAL && (oldal==BAL || oldal==JOBB))
-				{
-					parkolosejtes=true;
-					parkolosejtesencoder=encoder1;
-				}
-				else
-				{
-					;
-					//KAPU, ekkor nincs semmi, bar ilyen valszeg sose lesz, mert a kapu egyik oldala bezajol.
-					//erre valo a parkolosejtes, kesobb (feljebb) vizsgaljuk, hogy kajak van oldalfal, vagy csak egy par cm maradt az egyik kapuoldalbol
-				}
-				//oldaltavolsag_bordahoz=0;
-				varakozas_az_oldalobjektum_vegere=true;
-				//oldalobjektummegfigyeles=false;
-				bordas=false;
-				SHARPmax=0;
-				SHARPmin=4096;
-			}
-		}
-
-		elozo_oldal=oldal;
-	}
-}
-
-void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny)
-{
-	float arctaneredmeny;
-	arctaneredmeny=atan_lut[*orientacio+2300];
-	*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))-(-0.855-0.00063*(0.0))*arctaneredmeny/((0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))+6763.5);
-	if(*PWMeredmeny > 7883)
-		*PWMeredmeny=7883;
-	else if(*PWMeredmeny < 5644)
-		*PWMeredmeny=5644;
-
-	//*PWMeredmeny = (uint32_t) ( -3.1667*((float)*pozicio)/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+(-0.855-0.00063*((float)*sebesseg))*arctaneredmeny/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+6763.5);
+	  encoder_state = HAL_TIM_Encoder_GetState(&htim2);
+	  if(encoder_state==HAL_TIM_STATE_READY)
+	  {
+		  encoder_aktualis=actualencoderval*2;//valami rossza az enkoderrel, valszeg nem kapjuk meg az egyik channelt
+		  encoder_diff=encoder_aktualis-encoder_elozo;
+		  velocity=encoder_diff*10000/743;//velocity=((encoderdiff*10000)/743); //v[mm/s]
+		  encoder_elozo=encoder_aktualis;
+	  }
+	  else
+	  {
+		  //error handling...
+	  }
 }
 /* USER CODE END 4 */
 
