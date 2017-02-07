@@ -16,9 +16,9 @@ clear scrsz defaultFigurePosition vonalorientacio str
 
 %% Gyakran valtoztatott parameterek (valtozoneveket atirni nem szabad)
 
-p_0 = 0.01; % Kezdeti vonalpozicio [m]
-delta_0 = -5; % Kezdeti vonalorientacio [fok]
-v = 5; % Sebesseg [m/s]
+p_0 = 0.06; % Kezdeti vonalpozicio [m]
+delta_0 = 14; % Kezdeti vonalorientacio [fok]
+v = 3; % Sebesseg [m/s]
 % d_5s 5%-os beallasi ut
 % d_5s = a*v+b, ahol v sebesseg, a[s] meredekseg, b[m] konstans
 %a = 0.5; % d_5s meredeksege [s]
@@ -51,7 +51,7 @@ L_sensor = 0.13; % Ket szenzorsor tavolsaga egymastol [m]
 % k_p = -9*(L+d)/(kszi^2*d_5s^2) -> mindig negativ
 % k_delta = (L+d)/(kszi^2*d_5s^2)*(9*(L+d)-6*kszi^2*d_5s)
 % csak akkor negativ, ha 9*(L+d) < 6*kszi^2*d_5s => b > 3*(L+d)/kszi^2
-a = 3/5; %(3-3*(L+d)/kszi^2-eps)/5; % d_5s meredeksege [s]
+a = (3-3*(L+d)/kszi^2-eps)/5; % d_5s meredeksege [s]
 b = 3*(L+d)/kszi^2+eps; % d_5s 0 sebesseghez tartozo erteke [m]
 
 % Szoftver (kvantalas) parameterei

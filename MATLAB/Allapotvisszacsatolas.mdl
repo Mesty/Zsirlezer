@@ -65,11 +65,11 @@ Model {
 	$ObjectID		6
 	$ClassName		"Simulink.EditorInfo"
 	IsActive		[1]
-	ViewObjType		"SimulinkSubsys"
-	LoadSaveID		"39"
+	ViewObjType		"SimulinkTopLevel"
+	LoadSaveID		"0"
 	Extents			[1332.0, 569.0]
-	ZoomFactor		[1.7488683989941325]
-	Offset			[-8.6301763803680842, 34.82337998466258]
+	ZoomFactor		[1.808912779608115]
+	Offset			[2.0105444785276063, -14.276792561349708]
       }
     }
   }
@@ -79,7 +79,7 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "Mester Ádám"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Thu Jan 19 16:42:07 2017"
+  LastModifiedDate	  "Tue Feb 07 15:53:14 2017"
   RTWModifiedTimeStamp	  406744923
   ModelVersionFormat	  "1.%<AutoIncrement:95>"
   ConfigurationManager	  "none"
@@ -1255,7 +1255,7 @@ Model {
   System {
     Name		    "Allapotvisszacsatolas"
     Location		    [-8, -8, 1374, 736]
-    Open		    off
+    Open		    on
     ModelBrowserVisibility  off
     ModelBrowserWidth	    200
     ScreenColor		    "white"
@@ -2069,7 +2069,7 @@ Model {
       System {
 	Name			"Szenzor + feldolgozas"
 	Location		[-8, -8, 1374, 736]
-	Open			on
+	Open			off
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
 	ScreenColor		"white"

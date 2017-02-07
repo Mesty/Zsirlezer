@@ -1,0 +1,25 @@
+// inicializalo reszbe, mert csak egyszer kell lefutnia
+// meresi pontok bevitele es karakterisztika kiszamitasa
+// distance(sensor)= a * sensor + b, linearis interpolacio
+int FDS_M=19;	// M+1 meresi pont
+int FDS_sensor[M]= {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
+int FDS_distance[M]= {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
+int FDS_a[M-1];	// a es b parameterek szakaszonkent
+int FDS_b[M-1];
+int FDS_result;	// kiszamitott tavolsag
+int FDS_measurement;	// mert adc ertek
+for (int i=FDS_M; i!=0; i--) {
+	FDS_a[i-1]= (FDS_distance[i] - FDS_distance[i-1]) / (FDS_sensor[i] - FDS_sensor[i-1]);
+	FDS_b[i-1]= FDS_distance[i] - FDS_a[i-1] * FDS_sensor[i];
+}
+
+
+
+// ciklikus reszbe
+// a szenzor erteke melyik szakaszra esik, majd tavolsag kiszamitasa az adott szakasz a es b parameterevel
+for (int i=FDS_M; i!=0; i--) {
+	if ( (FDS_measurement =< FDS_sensor[i]) && (FDS_measurement > FDS_sensor[i-1]) ) {
+		FDS_result= FDS_a[i-1] * FDS_measurement + FDS_b[i-1];
+		break;
+	}
+}
