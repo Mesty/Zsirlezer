@@ -792,7 +792,6 @@ int main(void)
 	  }
   }
   /* USER CODE END 3 */
-  //bela
 
 }
 
@@ -898,13 +897,12 @@ void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* se
 {
 	float arctaneredmeny;
 	arctaneredmeny=atan_lut[*orientacio+2300];
-	*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))-(-0.855-0.00063*(0.0))*arctaneredmeny/((0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))+6763.5);
+	//*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))-(-0.855-0.00063*(0.0))*arctaneredmeny/((0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))+6763.5);
+	*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))-(-0.855-0.00063*((float)*sebesseg))*arctaneredmeny/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+6763.5);
 	if(*PWMeredmeny > 7883)
 		*PWMeredmeny=7883;
 	else if(*PWMeredmeny < 5644)
 		*PWMeredmeny=5644;
-
-	//*PWMeredmeny = (uint32_t) ( -3.1667*((float)*pozicio)/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+(-0.855-0.00063*((float)*sebesseg))*arctaneredmeny/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+6763.5);
 }
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth)
 {
@@ -927,7 +925,7 @@ void Encoder_beolvasas() //!!!Fix idokozonkent kell hivni, szamit ra a fuggveny 
 	  encoder_state = HAL_TIM_Encoder_GetState(&htim2);
 	  if(encoder_state==HAL_TIM_STATE_READY)
 	  {
-		  encoder_aktualis=actualencoderval*2;//valami rossza az enkoderrel, valszeg nem kapjuk meg az egyik channelt
+		  encoder_aktualis=actualencoderval;//*2;//valami rossza az enkoderrel, valszeg nem kapjuk meg az egyik channelt
 		  encoder_diff=encoder_aktualis-encoder_elozo;
 		  velocity=encoder_diff*10000/743;//velocity=((encoderdiff*10000)/743); //v[mm/s]
 		  encoder_elozo=encoder_aktualis;
