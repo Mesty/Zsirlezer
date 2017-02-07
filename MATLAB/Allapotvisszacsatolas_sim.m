@@ -21,8 +21,8 @@ delta_0 = 14; % Kezdeti vonalorientacio [fok]
 v = 3; % Sebesseg [m/s]
 % d_5s 5%-os beallasi ut
 % d_5s = a*v+b, ahol v sebesseg, a[s] meredekseg, b[m] konstans
-%a = 0.5; % d_5s meredeksege [s]
-%b = 0.537; % d_5s 0 sebesseghez tartozo erteke [m]
+a = 0.5; % d_5s meredeksege [s]
+b = 0.4; % d_5s 0 sebesseghez tartozo erteke [m]
 kszi = 0.9; % Csillapitasi tenyezo
 
 %% Osszes parameter (valtozoneveket atirni nem szabad, csak az ertekeket)
@@ -51,8 +51,8 @@ L_sensor = 0.13; % Ket szenzorsor tavolsaga egymastol [m]
 % k_p = -9*(L+d)/(kszi^2*d_5s^2) -> mindig negativ
 % k_delta = (L+d)/(kszi^2*d_5s^2)*(9*(L+d)-6*kszi^2*d_5s)
 % csak akkor negativ, ha 9*(L+d) < 6*kszi^2*d_5s => b > 3*(L+d)/kszi^2
-a = (3-3*(L+d)/kszi^2-eps)/5; % d_5s meredeksege [s]
-b = 3*(L+d)/kszi^2+eps; % d_5s 0 sebesseghez tartozo erteke [m]
+%a = (3-3*(L+d)/kszi^2-eps)/5; % d_5s meredeksege [s]
+%b = 3*(L+d)/kszi^2+eps; % d_5s 0 sebesseghez tartozo erteke [m]
 
 % Szoftver (kvantalas) parameterei
 T_p_a = 0.003; % Vonalpozicio alapjel mintavetelezesi ideje [s]
@@ -155,7 +155,7 @@ grid on;
 disp('A szabalyozast megvalosito C kod:');
 disp(' ');
 disp('// atan LUT inicializalasa (beszorozva k_delta konstans reszevel)');
-disp(['static float atan[',num2str(abs(p_1TCRTa-p_2TCRTb-p_1TCRTb+p_2TCRTa)),'] = {']);
+disp(['float atan_lut[',num2str(abs(p_1TCRTa-p_2TCRTb-p_1TCRTb+p_2TCRTa)),'] = {']);
 str = sprintf('');
 for vonalorientacio = min(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa):max(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa)-1
     str = strcat(str,[' ',num2str(3*(L+d)/kszi^2*L*(SERVO_BAL-SERVO_JOBB)*atan((2*p_1s*vonalorientacio/(p_1TCRTb-p_1TCRTa)-p_1s+p_2s)/L_sensor)/(2*fi_m*(L+d))),',']);
@@ -168,6 +168,6 @@ end
 disp([char(9),str,' ',num2str(3*(L+d)/kszi^2*L*(SERVO_BAL-SERVO_JOBB)*atan((2*p_1s*max(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa)/(p_1TCRTb-p_1TCRTa)-p_1s+p_2s)/L_sensor)/(2*fi_m*(L+d))),'};']);
 disp(' ');
 disp('// A szabalyozas megvalositasa');
-disp(['pulsePWM = ',num2str(-4.5*L*(SERVO_BAL-SERVO_JOBB)*p_1s/kszi^2),'*(2*vonalpozicio-',num2str(p_1TCRTb+p_1TCRTa),')/(',num2str((fi_m*(p_1TCRTb-p_1TCRTa))),'*(',num2str(a),'*v+',num2str(b),')*(',num2str(a),'*v+',num2str(b),'))+(',num2str(3*(L+d)-2*kszi^2*b),num2str(-2*kszi^2*a),'*v)*atan[vonalorientacio+',num2str(-min(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa)),']/((',num2str(a),'*v+',num2str(b),')*(',num2str(a),'*v+',num2str(b),'))+',num2str((SERVO_JOBB+SERVO_BAL)/2),';']);
+disp(['*PWMeredmeny = (uint32_t) ',num2str(-4.5*L*(SERVO_BAL-SERVO_JOBB)*p_1s/kszi^2),'*(2*((float)*pozicio)-',num2str(p_1TCRTb+p_1TCRTa),')/(',num2str((fi_m*(p_1TCRTb-p_1TCRTa))),'*(',num2str(a),'*((float)*sebesseg)+',num2str(b),')*(',num2str(a),'*((float)*sebesseg)+',num2str(b),'))+(',num2str(3*(L+d)-2*kszi^2*b),num2str(-2*kszi^2*a),'*((float)*sebesseg))*atan_lut[orientacio+',num2str(-min(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa)),']/((',num2str(a),'*((float)*sebesseg)+',num2str(b),')*(',num2str(a),'*((float)*sebesseg)+',num2str(b),'))+',num2str((SERVO_JOBB+SERVO_BAL)/2),';']);
 disp(' ');
 %%
