@@ -59,8 +59,8 @@
 #define SIMA_VEZETOVONAL 13
 
 //Sebszab
-#define MEREDEKSEG_GYORSITASNAL 5
-#define MEREDEKSEG_LASSITASNAL 5
+#define MEREDEKSEG_GYORSITASNAL 2000
+#define MEREDEKSEG_LASSITASNAL 2000
 
 /* USER CODE END Includes */
 
@@ -792,10 +792,10 @@ int main(void)
 	  {
 		  Vonalszenzorkezeles_uartfogadas();
 	  }
-	  sebessegszabalyozo(1000);
+	  //sebessegszabalyozo(1000);
 	  Motorkezeles();
 
-	  //vonalminta_felismeres();
+	  vonalminta_felismeres();
 
 	  if(tick) //10ms
 	  {
@@ -1015,7 +1015,7 @@ void Safety_car()
 void sebessegszabalyozo(int32_t mmpersec)
 {
 	//TO TEST
-	/*static float beavatkozo_jel = 0;
+	static float beavatkozo_jel = 0;
 	int32_t beavatkozojel_int=0;
 	int32_t atlagolt_beavatkozo_jel=0;
 	static float pozitiv_visszacsatolas = 0;
@@ -1023,7 +1023,7 @@ void sebessegszabalyozo(int32_t mmpersec)
 
 	static float beavatkozo_jel_elozo=0;
 	float kulonbseg=0;
-	static int32_t wma_tomb[30]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	static int32_t wma_tomb[60]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	if(stop)
 		beavatkozo_jel=0.0;
 
@@ -1055,15 +1055,16 @@ void sebessegszabalyozo(int32_t mmpersec)
 	beavatkozo_jel = beavatkozo_jel_elozo  + kulonbseg/200.0;
 
 	beavatkozojel_int = (int32_t) beavatkozo_jel;
-	WMAfilter(&atlagolt_beavatkozo_jel, &beavatkozojel_int, wma_tomb, 30);
+	WMAfilter(&atlagolt_beavatkozo_jel, &beavatkozojel_int, wma_tomb, 60);
 	motorpulsePWM = (uint32_t) (atlagolt_beavatkozo_jel+6932);
 	beavatkozo_jel = (float) atlagolt_beavatkozo_jel;
 
 	//motorpulsePWM = (uint32_t) (beavatkozo_jel+6932);
 
-	beavatkozo_jel_elozo=beavatkozo_jel;*/
+	beavatkozo_jel_elozo=beavatkozo_jel;
 
-	static float beavatkozo_jel = 0;
+
+	/*static float beavatkozo_jel = 0;
 	static float elozo_beavatkozo_jel = 0;
 	static float pozitiv_visszacsatolas = 0;
 	float FOXBORO_bemeno_jel = 0;
@@ -1095,7 +1096,7 @@ void sebessegszabalyozo(int32_t mmpersec)
 			beavatkozo_jel = 600+0.64883*(beavatkozo_jel-756.6123);
 	}
 	motorpulsePWM = (uint32_t) (beavatkozo_jel+6932);
-	elozo_beavatkozo_jel = beavatkozo_jel;
+	elozo_beavatkozo_jel = beavatkozo_jel;*/
 
 }
 void vonalminta_felismeres()
