@@ -21,8 +21,8 @@ delta_0 = 14; % Kezdeti vonalorientacio [fok]
 v = 3; % Sebesseg [m/s]
 % d_5s 5%-os beallasi ut
 % d_5s = a*v+b, ahol v sebesseg, a[s] meredekseg, b[m] konstans
-a = 0.8; % d_5s meredeksege [s]
-b = 0.0231; % d_5s 0 sebesseghez tartozo erteke [m]
+a = 0.5; % d_5s meredeksege [s]
+b = 0.3981; % d_5s 0 sebesseghez tartozo erteke [m]
 kszi = 0.9; % Csillapitasi tenyezo
 
 %% Osszes parameter (valtozoneveket atirni nem szabad, csak az ertekeket)
