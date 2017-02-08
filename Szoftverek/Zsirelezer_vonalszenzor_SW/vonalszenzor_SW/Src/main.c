@@ -59,6 +59,8 @@
 #define KETVONAL 2
 #define HAROMVONAL 3
 #define VONALHIBA 15
+#define FULLVONAL 70
+#define NORMAL_VONALKOVETES 50
 //UTVONANALVALASZTAS
 #define JOBB 30
 #define BAL 45
@@ -153,7 +155,7 @@ int main(void)
 	uint16_t szenzorertekek_masodik[3][8];
 	uint16_t szenzorertekek_thresholddal_masodik[3][8];
 
-	uint16_t threshold=1300;//900;
+	uint16_t threshold=1100;//1300;//900;
 
 	//Szenzor adatok
 	uint32_t pozicio_elso=1600;
@@ -234,7 +236,7 @@ int main(void)
 
 		  //ELSO szenzorsor -----------
 		  //FONTOS! Egyes fuggvenyek a megkapott tomboket manipulaljak, igy a sorrendjuk nem mindegy!!!
-		  koszszures(szenzorertekek_thresholddal_elso, 32);
+		 // koszszures(szenzorertekek_thresholddal_elso, 32);
 		  vonalszam(szenzorertekek_thresholddal_elso, 32, &vonaltipus);
 		  visszajelzesthresholdolttombbol(szenzorertekek_thresholddal_elso, visszajelzoLEDminta, 32);
 
@@ -272,7 +274,7 @@ int main(void)
 
 		  //MASODIK szenzorsor ---------------------
 		  //FONTOS! Egyes fuggvenyek a megkapott tomboket manipulaljak, igy a sorrendjuk nem mindegy!!!
-		  koszszures(szenzorertekek_thresholddal_masodik, 24);
+		 // koszszures(szenzorertekek_thresholddal_masodik, 24);
 
 		  //Ha kell utvonalat valasztani az ugyessegin, akkor a thresholdolt tombot manipulaljuk
 		  //Csak a megfelelo iranyban levo vonal marad meg, ebbol szamoljuk a poziciot
@@ -283,13 +285,13 @@ int main(void)
 			  else if(jobbra_menjunk)
 				  utvonalvalasztas_szenzoradatokbol(szenzorertekek_thresholddal_masodik, 24, JOBB);
 			  //Ha ujra egy vonalat latunk, akkor vege az utvonalvalaszto allapotnak
-			  if(vonaltipus==EGYVONAL && vonaltipus_elozo==KETVONAL)
+			 /* if(vonaltipus==EGYVONAL && vonaltipus_elozo==KETVONAL)
 			  {
 				  utvonalvalasztas_aktiv=false;
 				  balra_menjunk=false;
 				  jobbra_menjunk=false;
 			  }
-			  vonaltipus_elozo=vonaltipus;
+			  vonaltipus_elozo=vonaltipus;*/
 		  }
 
 		  szenzorertekatlagolas(szenzorertekek_thresholddal_masodik,24,&pozicio_masodik);
@@ -331,6 +333,13 @@ int main(void)
 				  utvonalvalasztas_aktiv=true;
 				  balra_menjunk=false;
 				  jobbra_menjunk=true;
+			  }
+			  if(uart_rx_csomag==NORMAL_VONALKOVETES)
+			  {
+				  utvonalvalasztas_aktiv=false;
+				  balra_menjunk=false;
+				  jobbra_menjunk=false;
+
 			  }
 			  uartcsomag_elkapva=true;
 			  uartcsomagerkezett=false; //Ez jo lesz, ha ez alatt veletlen nem kapunk uzenetet (az elvesz). Viszont varhatoan a nucelo ilyenkor nem kuld...---
@@ -673,12 +682,14 @@ void vonalszam(uint16_t* forrastomb, uint8_t hossz, uint8_t* vonaltipus)
 	bool vanvonal=false;
 	bool elozovanvonal=false;
 	uint8_t elekszama=0;
+	uint8_t hanyszenzorerzekel=0;
 
 	for (int i=0; i<hossz; i++)
 	{
 		if(forrastomb[i] > 0)
 		{
 			vanvonal=true;
+			hanyszenzorerzekel++;
 		}
 		else
 		{
@@ -701,6 +712,11 @@ void vonalszam(uint16_t* forrastomb, uint8_t hossz, uint8_t* vonaltipus)
 		*vonaltipus=HAROMVONAL;
 	else
 		*vonaltipus=VONALHIBA;
+
+	if(hanyszenzorerzekel>28)
+	{
+		*vonaltipus=FULLVONAL;
+	}
 }
 
 void utvonalvalasztas_szenzoradatokbol(uint16_t* forrastomb, uint8_t hossz, uint8_t irany)
