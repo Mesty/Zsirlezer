@@ -34,6 +34,7 @@ Dma.ADC1.0.PeriphInc=DMA_PINC_DISABLE
 Dma.ADC1.0.Priority=DMA_PRIORITY_LOW
 Dma.ADC1.0.RequestParameters=Instance,Direction,PeriphInc,MemInc,PeriphDataAlignment,MemDataAlignment,Mode,Priority,FIFOMode
 Dma.Request0=ADC1
+<<<<<<< HEAD
 Dma.Request1=UART5_RX
 Dma.Request2=USART1_RX
 Dma.Request3=USART1_TX
@@ -68,6 +69,31 @@ Dma.USART1_TX.3.PeriphDataAlignment=DMA_PDATAALIGN_BYTE
 Dma.USART1_TX.3.PeriphInc=DMA_PINC_DISABLE
 Dma.USART1_TX.3.Priority=DMA_PRIORITY_LOW
 Dma.USART1_TX.3.RequestParameters=Instance,Direction,PeriphInc,MemInc,PeriphDataAlignment,MemDataAlignment,Mode,Priority,FIFOMode
+=======
+Dma.Request1=USART1_RX
+Dma.Request2=USART1_TX
+Dma.RequestsNb=3
+Dma.USART1_RX.1.Direction=DMA_PERIPH_TO_MEMORY
+Dma.USART1_RX.1.FIFOMode=DMA_FIFOMODE_DISABLE
+Dma.USART1_RX.1.Instance=DMA2_Stream2
+Dma.USART1_RX.1.MemDataAlignment=DMA_MDATAALIGN_BYTE
+Dma.USART1_RX.1.MemInc=DMA_MINC_ENABLE
+Dma.USART1_RX.1.Mode=DMA_CIRCULAR
+Dma.USART1_RX.1.PeriphDataAlignment=DMA_PDATAALIGN_BYTE
+Dma.USART1_RX.1.PeriphInc=DMA_PINC_DISABLE
+Dma.USART1_RX.1.Priority=DMA_PRIORITY_HIGH
+Dma.USART1_RX.1.RequestParameters=Instance,Direction,PeriphInc,MemInc,PeriphDataAlignment,MemDataAlignment,Mode,Priority,FIFOMode
+Dma.USART1_TX.2.Direction=DMA_MEMORY_TO_PERIPH
+Dma.USART1_TX.2.FIFOMode=DMA_FIFOMODE_DISABLE
+Dma.USART1_TX.2.Instance=DMA2_Stream7
+Dma.USART1_TX.2.MemDataAlignment=DMA_MDATAALIGN_BYTE
+Dma.USART1_TX.2.MemInc=DMA_MINC_ENABLE
+Dma.USART1_TX.2.Mode=DMA_NORMAL
+Dma.USART1_TX.2.PeriphDataAlignment=DMA_PDATAALIGN_BYTE
+Dma.USART1_TX.2.PeriphInc=DMA_PINC_DISABLE
+Dma.USART1_TX.2.Priority=DMA_PRIORITY_MEDIUM
+Dma.USART1_TX.2.RequestParameters=Instance,Direction,PeriphInc,MemInc,PeriphDataAlignment,MemDataAlignment,Mode,Priority,FIFOMode
+>>>>>>> origin/master
 File.Version=6
 KeepUserPlacement=true
 Mcu.Family=STM32F4
@@ -139,12 +165,16 @@ NVIC.PendSV_IRQn=true\:0\:0\:false\:false\:false
 NVIC.PriorityGroup=NVIC_PRIORITYGROUP_0
 NVIC.SVCall_IRQn=true\:0\:0\:false\:false\:false
 NVIC.SysTick_IRQn=true\:0\:0\:false\:false\:true
-NVIC.TIM4_IRQn=true\:0\:0\:false\:false\:true
-NVIC.TIM6_DAC_IRQn=true\:0\:0\:false\:false\:true
-NVIC.TIM7_IRQn=true\:0\:0\:false\:false\:true
+NVIC.TIM4_IRQn=true\:0\:2\:true\:false\:true
+NVIC.TIM6_DAC_IRQn=true\:0\:2\:false\:false\:true
+NVIC.TIM7_IRQn=true\:0\:2\:false\:false\:true
 NVIC.UART4_IRQn=true\:0\:0\:false\:false\:true
+<<<<<<< HEAD
 NVIC.UART5_IRQn=true\:0\:0\:false\:false\:true
 NVIC.USART1_IRQn=true\:0\:0\:false\:false\:true
+=======
+NVIC.USART1_IRQn=true\:0\:0\:true\:false\:true
+>>>>>>> origin/master
 NVIC.USART2_IRQn=true\:0\:0\:false\:false\:true
 NVIC.UsageFault_IRQn=true\:0\:0\:false\:false\:false
 PA0-WKUP.Locked=true
