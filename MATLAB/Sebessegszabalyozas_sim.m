@@ -180,32 +180,35 @@ disp(' ');
 % C kod generalas
 disp('A szabalyozast megvalosito C kod:');
 disp(' ');
-disp('// Inverz statikus nemlinearitas LUT letrehozasa');
-disp(['float inv_stat_nonlinearity[',num2str(size(inv_y_stat,1)),'] = {']);
-for i = 1:size(inv_y_stat,1)
-    disp([char(9),num2str(inv_y_stat(i)),',']);
-end
-disp('};');
+%disp('// Inverz statikus nemlinearitas LUT letrehozasa');
+%disp(['float inv_stat_nonlinearity[',num2str(size(inv_y_stat,1)),'] = {']);
+%for i = 1:size(inv_y_stat,1)
+%    disp([char(9),num2str(inv_y_stat(i)),',']);
+%end
+%disp('};');
+disp('static float beavatkozo_jel = 0;');
+disp('static float pozitiv_visszacsatolas = 0;');
+disp('float FOXBORO_bemeno_jel = 0;');
 disp(' ');
 disp('// Szabalyozas');
-disp(['u_2 = ',num2str(z_d),'*u_2+',num2str(1-z_d),'*u;']);
-disp(['f = ',num2str(K_C),'*(mmpersec-velocity)+u_2;']);
-disp(['if(f > ',num2str(u_sat),')']);
-disp([sprintf('\t'),'u = ',num2str(u_sat),';']);
-disp(['else if(f < ',num2str(-u_sat),')']);
-disp([sprintf('\t'),'u = ',num2str(-u_sat),';']);
+disp(['pozitiv_visszacsatolas = ',num2str(z_d),'*pozitiv_visszacsatolas+',num2str(1-z_d),'*beavatkozo_jel;']);
+disp(['FOXBORO_bemeno_jel = ',num2str(K_C*10000/743),'*(mmpersec-velocity)+pozitiv_visszacsatolas;']);
+disp(['if(FOXBORO_bemeno_jel > ',num2str(u_sat),')']);
+disp([sprintf('\t'),'beavatkozo_jel = ',num2str(u_sat),';']);
+disp(['else if(FOXBORO_bemeno_jel < ',num2str(-u_sat),')']);
+disp([sprintf('\t'),'beavatkozo_jel = ',num2str(-u_sat),';']);
 disp('else');
-disp([sprintf('\t'),'u = f;']);
+disp([sprintf('\t'),'beavatkozo_jel = FOXBORO_bemeno_jel;']);
 disp('if(u > 0)');
 disp('{');
-disp([char(9),'if((',num2str(inv_u_stat(1)),' < u) && (u <= ',num2str(inv_u_stat(2)),'))']);
+disp([char(9),'if((',num2str(inv_u_stat(1)),' < beavatkozo_jel) && (beavatkozo_jel <= ',num2str(inv_u_stat(2)),'))']);
 disp([char(9),char(9),'u = ',num2str(inv_y_stat(1)),'+',num2str((inv_y_stat(2)-inv_y_stat(1))/(inv_u_stat(2)-inv_u_stat(1))),'*u;']);
 for i = 2:size(inv_u_stat,1)-1
-    disp([char(9),'else if((',num2str(inv_u_stat(i)),' < u) && (u <= ',num2str(inv_u_stat(i+1)),'))']);
-    disp([char(9),char(9),'u = ',num2str(inv_y_stat(i)),'+',num2str((inv_y_stat(i+1)-inv_y_stat(i))/(inv_u_stat(i+1)-inv_u_stat(i))),'*(u-',num2str(inv_u_stat(i)),');']);
+    disp([char(9),'else if((',num2str(inv_u_stat(i)),' < beavatkozo_jel) && (beavatkozo_jel <= ',num2str(inv_u_stat(i+1)),'))']);
+    disp([char(9),char(9),'beavatkozo_jel = ',num2str(inv_y_stat(i)),'+',num2str((inv_y_stat(i+1)-inv_y_stat(i))/(inv_u_stat(i+1)-inv_u_stat(i))),'*(beavatkozo_jel-',num2str(inv_u_stat(i)),');']);
 end
 disp('}');
-disp('sebessegto(u);');
+disp('motorpulsePWM = (uint32_t) (beavatkozo_jel+6932);');
 disp(' ');
 
 y_stat = y_stat*K;
