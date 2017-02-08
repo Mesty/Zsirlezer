@@ -7,7 +7,7 @@
 
 static float elozo_alapjel = 0;
 static float beavatkozo_jel = 0;
-// static float elozo_beavatkozo_jel = 0;
+static float elozo_beavatkozo_jel = 0;
 static float pozitiv_visszacsatolas = 0;
 float FOXBORO_bemeno_jel = 0;
  
