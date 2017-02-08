@@ -779,6 +779,8 @@ int main(void)
 
   /* USER CODE BEGIN 3 */
 
+	  sebessegszabalyozo(1000);
+
 	  if(vonalszenzor_uzenetjott==true) //3ms-onkent kapunk uzenetet
 	  {
 		  Vonalszenzorkezeles_uartfogadas();
