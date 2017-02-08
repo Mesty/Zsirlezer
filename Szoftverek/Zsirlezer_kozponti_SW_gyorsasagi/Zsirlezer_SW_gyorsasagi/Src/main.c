@@ -792,7 +792,7 @@ int main(void)
 	  {
 		  Vonalszenzorkezeles_uartfogadas();
 	  }
-	  //sebessegszabalyozo(1000);
+	  //sebessegszabalyozo(2200);
 	  Motorkezeles();
 
 	  vonalminta_felismeres();
@@ -1014,6 +1014,52 @@ void Safety_car()
 
 void sebessegszabalyozo(int32_t mmpersec)
 {
+	// Alapjel meredekseg korlatja
+	#define ALAPJEL_MEREDEKSEG_GYORSITASNAL 30000
+	#define ALAPJEL_MEREDEKSEG_LASSITASNAL 30000
+	// Beavatkozo jel meredekseg korlatja [100/s]
+	// #define BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL 2000
+	// #define BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL 2000
+
+	static float elozo_alapjel = 0;
+	static float beavatkozo_jel = 0;
+	static float elozo_beavatkozo_jel = 0;
+	static float pozitiv_visszacsatolas = 0;
+	float FOXBORO_bemeno_jel = 0;
+
+	// Szabalyozas
+	if(mmpersec - elozo_alapjel > ALAPJEL_MEREDEKSEG_GYORSITASNAL)
+		mmpersec = elozo_alapjel + ALAPJEL_MEREDEKSEG_GYORSITASNAL;
+	else if(elozo_alapjel - mmpersec > ALAPJEL_MEREDEKSEG_LASSITASNAL)
+		mmpersec = elozo_alapjel - ALAPJEL_MEREDEKSEG_LASSITASNAL;
+	pozitiv_visszacsatolas = 0.99288*pozitiv_visszacsatolas+0.0071168*elozo_beavatkozo_jel;
+	FOXBORO_bemeno_jel = 0.72413*(mmpersec-velocity)+pozitiv_visszacsatolas;
+	if(FOXBORO_bemeno_jel > 2891.7847)
+		beavatkozo_jel = 2891.7847;
+	else if(FOXBORO_bemeno_jel < -2891.7847)
+		beavatkozo_jel = -2891.7847;
+	else
+		beavatkozo_jel = FOXBORO_bemeno_jel;
+	// if(beavatkozo_jel - elozo_beavatkozo_jel > BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL)
+		// beavatkozo_jel = elozo_beavatkozo_jel + BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL;
+	// else if(elozo_beavatkozo_jel - beavatkozo_jel > BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL)
+		// beavatkozo_jel = elozo_beavatkozo_jel - BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL;
+	if(beavatkozo_jel > 0)
+	{
+		if((0 < beavatkozo_jel) && (beavatkozo_jel <= 112.0907))
+			beavatkozo_jel = 200+0.89213*beavatkozo_jel;
+		else if((112.0907 < beavatkozo_jel) && (beavatkozo_jel <= 350.2835))
+			beavatkozo_jel = 300+0.41983*(beavatkozo_jel-112.0907);
+		else if((350.2835 < beavatkozo_jel) && (beavatkozo_jel <= 560.4536))
+			beavatkozo_jel = 400+0.47581*(beavatkozo_jel-350.2835);
+		else if((560.4536 < beavatkozo_jel) && (beavatkozo_jel <= 756.6123))
+			beavatkozo_jel = 500+0.50979*(beavatkozo_jel-560.4536);
+		else if((756.6123 < beavatkozo_jel) && (beavatkozo_jel <= 910.737))
+			beavatkozo_jel = 600+0.64883*(beavatkozo_jel-756.6123);
+	}
+	motorpulsePWM = (uint32_t) (beavatkozo_jel+6932);
+	elozo_alapjel = mmpersec;
+	/*
 	//TO TEST
 	static float beavatkozo_jel = 0;
 	int32_t beavatkozojel_int=0;
@@ -1104,13 +1150,13 @@ void vonalminta_felismeres()
 	//TO TEST
 	static bool vonalfigyeles_aktiv=false; //
 	static int32_t startpozicio=0;
-	static int32_t vonaleszleles_helye=0;
+	//static int32_t vonaleszleles_helye=0;
 	static bool elso_belepes_lesz_egyvonalba=false;
 	static bool elso_belepes_lesz_haromvonalba=true;
 	static bool vonalfigyeles_ignoralva = false;
 	static uint8_t haromvonalak_szama=0;
 
-	if(vonalfigyeles_ignoralva==true && (encoder_aktualis-vonaleszleles_helye > 30000)) //4m utan figyeljuk csak ujra a vonalat
+	if(vonalfigyeles_ignoralva==true && (encoder_aktualis-startpozicio > 30000)) //4m utan figyeljuk csak ujra a vonalat
 	{
 		vonalfigyeles_ignoralva=false;
 	}
@@ -1145,7 +1191,7 @@ void vonalminta_felismeres()
 		lassitora_mitcsinalunk();
 	}
 
-	if(vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 2823 && (haromvonalak_szama==3 || haromvonalak_szama==4) )//38 cm mulva 3 vonal
+	else if(vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 2823 && (haromvonalak_szama==3 || haromvonalak_szama==4) )//38 cm mulva 3 vonal
 	{
 		vonalminta=GYORSITO;
 		//reste all
@@ -1156,7 +1202,7 @@ void vonalminta_felismeres()
 		elso_belepes_lesz_haromvonalba=true;
 		gyorsitora_mitcsinalunk();
 	}
-	else if(vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 2823 && haromvonalak_szama<3 )
+	/*else if(vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 2823 && haromvonalak_szama<3 ) ez az else ag erzekeny a fugakra, ki kell venni
 	{
 		vonalminta=LASSITO;
 		//reset all
@@ -1167,17 +1213,17 @@ void vonalminta_felismeres()
 		elso_belepes_lesz_haromvonalba=true;
 		lassito_szakaszok_szama++;
 		lassitora_mitcsinalunk();
-	}
+	}*/
 
 }
 
 void lassitora_mitcsinalunk()
 {
-	motorpulsePWM=6932;
+	motorpulsePWM=7330;
 }
 void gyorsitora_mitcsinalunk()
 {
-	motorpulsePWM=7500;
+	motorpulsePWM=7600;
 }
 /* USER CODE END 4 */
 
