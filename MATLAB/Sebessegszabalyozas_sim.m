@@ -199,10 +199,10 @@ disp(['else if(FOXBORO_bemeno_jel < ',num2str(-u_sat),')']);
 disp([sprintf('\t'),'beavatkozo_jel = ',num2str(-u_sat),';']);
 disp('else');
 disp([sprintf('\t'),'beavatkozo_jel = FOXBORO_bemeno_jel;']);
-disp('if(u > 0)');
+disp('if(beavatkozo_jel > 0)');
 disp('{');
 disp([char(9),'if((',num2str(inv_u_stat(1)),' < beavatkozo_jel) && (beavatkozo_jel <= ',num2str(inv_u_stat(2)),'))']);
-disp([char(9),char(9),'u = ',num2str(inv_y_stat(1)),'+',num2str((inv_y_stat(2)-inv_y_stat(1))/(inv_u_stat(2)-inv_u_stat(1))),'*u;']);
+disp([char(9),char(9),'beavatkozo_jel = ',num2str(inv_y_stat(1)),'+',num2str((inv_y_stat(2)-inv_y_stat(1))/(inv_u_stat(2)-inv_u_stat(1))),'*beavatkozo_jel;']);
 for i = 2:size(inv_u_stat,1)-1
     disp([char(9),'else if((',num2str(inv_u_stat(i)),' < beavatkozo_jel) && (beavatkozo_jel <= ',num2str(inv_u_stat(i+1)),'))']);
     disp([char(9),char(9),'beavatkozo_jel = ',num2str(inv_y_stat(i)),'+',num2str((inv_y_stat(i+1)-inv_y_stat(i))/(inv_u_stat(i+1)-inv_u_stat(i))),'*(beavatkozo_jel-',num2str(inv_u_stat(i)),');']);

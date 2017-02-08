@@ -11,10 +11,10 @@ else if(FOXBORO_bemeno_jel < -2889.8387)
 	beavatkozo_jel = -2889.8387;
 else
 	beavatkozo_jel = FOXBORO_bemeno_jel;
-if(u > 0)
+if(beavatkozo_jel > 0)
 {
 	if((0 < beavatkozo_jel) && (beavatkozo_jel <= 112.0907))
-		u = 200+0.89213*u;
+		beavatkozo_jel = 200+0.89213*beavatkozo_jel;
 	else if((112.0907 < beavatkozo_jel) && (beavatkozo_jel <= 350.2835))
 		beavatkozo_jel = 300+0.41983*(beavatkozo_jel-112.0907);
 	else if((350.2835 < beavatkozo_jel) && (beavatkozo_jel <= 560.4536))
