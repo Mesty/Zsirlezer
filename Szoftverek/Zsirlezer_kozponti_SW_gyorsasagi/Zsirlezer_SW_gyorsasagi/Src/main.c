@@ -660,7 +660,9 @@ char string[20];
 bool stop_safetycar=false;
 
 int32_t mmpersec_sebesseg=0;
-
+bool fekeztunk_mar=false;
+bool eltolt_gyorsulas=false;
+uint32_t start_tick=0;
 
 /* USER CODE END PV */
 
@@ -672,11 +674,13 @@ void Error_Handler(void);
 /* Private function prototypes -----------------------------------------------*/
 void Motorkezeles();
 void Vonalszenzorkezeles_uartfogadas();
-void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny);
+void allapotteres_szabalyozo_kanyar_kijarat(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny);
+void allapotteres_szabalyozo_default(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny);
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth);
 void Encoder_beolvasas();
 void Safety_car();
 void sebessegszabalyozo(int32_t mmpersec);
+void fekezo_sebessegszabalyozo(int32_t mmpersec);
 void vonalminta_felismeres();
 void lassitora_mitcsinalunk();
 void gyorsitora_mitcsinalunk();
@@ -735,6 +739,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 /* USER CODE END 0 */
 
 int main(void)
+
 {
 
   /* USER CODE BEGIN 1 */
@@ -778,7 +783,8 @@ int main(void)
   HAL_UART_Receive_DMA(&huart1, uzenetarray, 5);
 
   //Alap sebesseg megadasa
-  motorpulsePWM = 7300;
+ // motorpulsePWM = 7300;
+  mmpersec_sebesseg=1200;
 
   /* USER CODE END 2 */
 
@@ -796,7 +802,6 @@ int main(void)
 	  {
 		  Vonalszenzorkezeles_uartfogadas();
 	  }
-	  //sebessegszabalyozo(2200);
 	  Motorkezeles();
 
 	  vonalminta_felismeres();
@@ -813,7 +818,36 @@ int main(void)
 		  {
 			 // Safety_car();
 		  }
-		  //sebessegszabalyozo(1600);
+
+		  if(eltolt_gyorsulas)
+		  {
+				if(start_tick==0)
+					start_tick=timestamp;
+
+				if(timestamp-start_tick > 100)
+				{
+					mmpersec_sebesseg=3000;
+					start_tick=0;
+					eltolt_gyorsulas=false;
+				}
+		  }
+
+		  if(vonaltipus==LASSITO && fekeztunk_mar==false)
+		  {
+			  fekezo_sebessegszabalyozo(mmpersec_sebesseg);
+
+			  if(velocity < 1550)
+				  fekeztunk_mar=true;
+		  }
+		  else
+		  {
+			  sebessegszabalyozo(mmpersec_sebesseg);
+		  }
+
+		  if(vonaltipus!=LASSITO)
+			  fekeztunk_mar=false;
+
+
 		  tick=false;
 	  }
   }
@@ -892,7 +926,7 @@ void Vonalszenzorkezeles_uartfogadas()
 	  pozicio_masodik = uzenetarray[2] + uzenetarray[3]*0xff;
 	  vonaltipus=uzenetarray[4];
 	  orientacio=pozicio_elso-pozicio_masodik;
-	  allapotteres_szabalyozo(&pozicio_elso, &orientacio, &velocity, &szervoPWM);
+	  allapotteres_szabalyozo_kanyar_kijarat(&pozicio_elso, &orientacio, &velocity, &szervoPWM);
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, szervoPWM);
 	  vonalszenzor_uzenetjott=false;
 }
@@ -919,32 +953,35 @@ void Motorkezeles()
 	  }
 }
 
-void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny)
+void allapotteres_szabalyozo_kanyar_kijarat(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny)
 {
 	float sebesseg_a_szabalyozonak = 0.0;
-	//if(*sebesseg>1250)
 	sebesseg_a_szabalyozonak=((float)*sebesseg)/1000.0; //[m/s]
-//TO TEST
+
 	if(*sebesseg < 1250)
-		//lassu
+		//lassu, kanyarkijarat
 		*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.3889*sebesseg_a_szabalyozonak+0.537)*(0.3889*sebesseg_a_szabalyozonak+0.537))+(-0.01494-0.63002*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.3889*sebesseg_a_szabalyozonak+0.537)*(0.3889*sebesseg_a_szabalyozonak+0.537))+6763.5);
 	else
 		//gyors
 		*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+(0.81758-1.296*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+6763.5);
 
+	if(*PWMeredmeny > 7883)
+		*PWMeredmeny=7883;
+	else if(*PWMeredmeny < 5644)
+		*PWMeredmeny=5644;
+}
+void allapotteres_szabalyozo_default(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny)
+{
+	float sebesseg_a_szabalyozonak = 0.0;
+	sebesseg_a_szabalyozonak=((float)*sebesseg)/1000.0; //[m/s]
 
-	//arctaneredmeny=atan_lut[*orientacio+2300];
-	//*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.38889*((float)*sebesseg)+1.0556)*(0.38889*((float)*sebesseg)+1.0556))+(-0.855-0.63*((float)*sebesseg))*arctaneredmeny/((0.38889*((float)*sebesseg)+1.0556)*(0.38889*((float)*sebesseg)+1.0556))+6763.5);
-	//*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.5*((float)*sebesseg)+0.4)*(0.5*((float)*sebesseg)+0.4))+(0.207-0.81*((float)*sebesseg))*atan_lut[*orientacio+2300]/((0.5*((float)*sebesseg)+0.4)*(0.5*((float)*sebesseg)+0.4))+6763.5);
-	//*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.5*((float)*sebesseg)+0.5)*(0.5*((float)*sebesseg)+0.5))+(0.045-0.81*((float)*sebesseg))*atan_lut[*orientacio+2300]/((0.5*((float)*sebesseg)+0.5)*(0.5*((float)*sebesseg)+0.5))+6763.5);
-	//meredekebb a D uthossz
-	//*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.8*sebesseg_a_szabalyozonak+0.537)*(0.8*sebesseg_a_szabalyozonak+0.537))+(-0.01494-1.296*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.8*sebesseg_a_szabalyozonak+0.537)*(0.8*sebesseg_a_szabalyozonak+0.537))+6763.5);
+	if(*sebesseg < 1250)
+		//lassu, kanyar alatt
+		*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.5*sebesseg_a_szabalyozonak+0.3981)*(0.5*sebesseg_a_szabalyozonak+0.3981))+(0.21008-0.81*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.5*sebesseg_a_szabalyozonak+0.3981)*(0.5*sebesseg_a_szabalyozonak+0.3981))+6763.5);
+	else
+		//gyors
+		*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+(0.81758-1.296*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+6763.5);
 
-	//0.53 a D, 1250 mm/s utan megyunk at seb.fuggesbe
-	//*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.5*sebesseg_a_szabalyozonak+0.537)*(0.5*sebesseg_a_szabalyozonak+0.537))+(-0.01494-0.81*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.5*sebesseg_a_szabalyozonak+0.537)*(0.5*sebesseg_a_szabalyozonak+0.537))+6763.5);
-
-	//*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))-(-0.855-0.00063*(0.0))*arctaneredmeny/((0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))+6763.5);
-	//*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))-(-0.855-0.00063*((float)*sebesseg))*arctaneredmeny/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+6763.5);
 	if(*PWMeredmeny > 7883)
 		*PWMeredmeny=7883;
 	else if(*PWMeredmeny < 5644)
@@ -1034,8 +1071,8 @@ void sebessegszabalyozo(int32_t mmpersec)
 	// Beavatkozo szerv telites kezelese
 	if(FOXBORO_bemeno_jel > 1500)
 		beavatkozo_jel = 1500;
-	else if(FOXBORO_bemeno_jel < -1500)
-		beavatkozo_jel = -1500;
+	else if(FOXBORO_bemeno_jel < -4000)
+		beavatkozo_jel = -4000;
 	else
 		beavatkozo_jel = FOXBORO_bemeno_jel;
 	// Inverz statikus nemlinearitas
@@ -1057,13 +1094,53 @@ void sebessegszabalyozo(int32_t mmpersec)
 	// Integratorok feltoltese
 	elozo_alapjel = alapjel;
 	elozo_beavatkozo_jel = beavatkozo_jel;
-
-
-
 }
+
+void fekezo_sebessegszabalyozo(int32_t mmpersec)
+{
+
+	// Belso valtozok
+	int32_t alapjel = mmpersec;
+	static int32_t elozo_alapjel = 0;
+	static float beavatkozo_jel = 0;
+	static float elozo_beavatkozo_jel = 0;
+	static float pozitiv_visszacsatolas = 0;
+	float FOXBORO_bemeno_jel = 0;
+
+	// Szabalyozas
+	// Szabalyozasi algoritmus
+	pozitiv_visszacsatolas = 0.99288*pozitiv_visszacsatolas+0.0071168*beavatkozo_jel;
+	FOXBORO_bemeno_jel = 12.0*(mmpersec-velocity)+pozitiv_visszacsatolas;
+	// Beavatkozo szerv telites kezelese
+	if(FOXBORO_bemeno_jel > 1500)
+		beavatkozo_jel = 1500;
+	else if(FOXBORO_bemeno_jel < -4000)
+		beavatkozo_jel = -4000;
+	else
+		beavatkozo_jel = FOXBORO_bemeno_jel;
+	// Inverz statikus nemlinearitas
+	if(beavatkozo_jel > 0)
+	{
+		if((0 < beavatkozo_jel) && (beavatkozo_jel <= 112.0907))
+			beavatkozo_jel = 200+0.89213*beavatkozo_jel;
+		else if((112.0907 < beavatkozo_jel) && (beavatkozo_jel <= 350.2835))
+			beavatkozo_jel = 300+0.41983*(beavatkozo_jel-112.0907);
+		else if((350.2835 < beavatkozo_jel) && (beavatkozo_jel <= 560.4536))
+			beavatkozo_jel = 400+0.47581*(beavatkozo_jel-350.2835);
+		else if((560.4536 < beavatkozo_jel) && (beavatkozo_jel <= 756.6123))
+			beavatkozo_jel = 500+0.50979*(beavatkozo_jel-560.4536);
+		else if((756.6123 < beavatkozo_jel) && (beavatkozo_jel <= 910.737))
+			beavatkozo_jel = 600+0.64883*(beavatkozo_jel-756.6123);
+	}
+	// Beavatkozo jel kiadasa
+	motorpulsePWM = (uint32_t) (beavatkozo_jel+6932);
+	// Integratorok feltoltese
+	elozo_alapjel = alapjel;
+	elozo_beavatkozo_jel = beavatkozo_jel;
+}
+
 void vonalminta_felismeres()
 {
-	//TO TEST
 	static bool vonalfigyeles_aktiv=false; //
 	static int32_t startpozicio=0;
 	static bool voltmaregyvonal=false;
@@ -1155,7 +1232,7 @@ void vonalminta_felismeres()
 	}
 	else if (vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 2823) //30cm mulva ha nincs semmi akkor exit
 	{
-		vonalminta=SIMA_VEZETOVONAL;
+		//vonalminta=SIMA_VEZETOVONAL;
 		vonalfigyeles_aktiv=false;
 		haromvonalak_szama=0;
 		elso_belepes_lesz_egyvonalba=false;
@@ -1180,11 +1257,13 @@ void vonalminta_felismeres()
 
 void lassitora_mitcsinalunk()
 {
-	motorpulsePWM=7330;
+	mmpersec_sebesseg=1550;
 }
 void gyorsitora_mitcsinalunk()
 {
-	motorpulsePWM=7600;
+	mmpersec_sebesseg=1350;
+	eltolt_gyorsulas=true;
+
 }
 /* USER CODE END 4 */
 
