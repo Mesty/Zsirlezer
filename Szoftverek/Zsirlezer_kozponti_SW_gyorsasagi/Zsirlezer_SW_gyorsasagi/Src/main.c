@@ -911,9 +911,11 @@ void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* se
 	//if(*sebesseg>1250)
 	sebesseg_a_szabalyozonak=((float)*sebesseg)/1000.0; //[m/s]
 //TO TEST
-	if(*sebesseg > 1250)
+	if(*sebesseg < 1250)
+		//lassu
 		*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.3889*sebesseg_a_szabalyozonak+0.537)*(0.3889*sebesseg_a_szabalyozonak+0.537))+(-0.01494-0.63002*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.3889*sebesseg_a_szabalyozonak+0.537)*(0.3889*sebesseg_a_szabalyozonak+0.537))+6763.5);
 	else
+		//gyors
 		*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+(0.81758-1.296*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+6763.5);
 
 
