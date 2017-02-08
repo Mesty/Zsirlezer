@@ -22,11 +22,18 @@ clear y_sim0 u_sat u_I y_sim1
 clear K T
 clear i sys
 clear siminput T_sim
+clear ALAPJEL_MEREDEKSEG_GYORSITASNAL ALAPJEL_MEREDEKSEG_LASSITASNAL BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL
 
 %% Parameterek (valtozoneveket atirni nem szabad, csak az ertekeket)
 
 Ts = 0.01; % Mintavetelezesi ido [s]
 T_cl = 0.5; % Zart kor eloirt idoallandoja [s]
+
+%% Meredekseg korlatozasok
+ALAPJEL_MEREDEKSEG_GYORSITASNAL = 0;
+ALAPJEL_MEREDEKSEG_LASSITASNAL = 0;
+BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL = 0;
+BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL = 0;
 
 %% Egyeb parameterek
 
@@ -179,26 +186,76 @@ disp(' ');
 
 % C kod generalas
 disp('A szabalyozast megvalosito C kod:');
+if(ALAPJEL_MEREDEKSEG_GYORSITASNAL || ALAPJEL_MEREDEKSEG_LASSITASNAL || BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL || BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL)
+    disp(' ');
+end
+if(ALAPJEL_MEREDEKSEG_GYORSITASNAL || ALAPJEL_MEREDEKSEG_LASSITASNAL)
+    disp('// Alapjel meredekseg korlatja [m/s^2]');
+end
+if(ALAPJEL_MEREDEKSEG_GYORSITASNAL)
+    disp(['#define ALAPJEL_MEREDEKSEG_GYORSITASNAL ',num2str(ALAPJEL_MEREDEKSEG_GYORSITASNAL)]);
+end
+if(ALAPJEL_MEREDEKSEG_LASSITASNAL)
+    disp(['#define ALAPJEL_MEREDEKSEG_LASSITASNAL ',num2str(ALAPJEL_MEREDEKSEG_LASSITASNAL)]);
+end
+if(BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL || BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL)
+    disp('// Beavatkozo jel meredekseg korlatja [100/s]');
+end
+if(BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL)
+    disp(['#define BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL ',num2str(BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL)]);
+end
+if(BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL)
+    disp(['#define BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL ',num2str(BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL)]);
+end
 disp(' ');
+disp('// Belso valtozok');
 %disp('// Inverz statikus nemlinearitas LUT letrehozasa');
 %disp(['float inv_stat_nonlinearity[',num2str(size(inv_y_stat,1)),'] = {']);
 %for i = 1:size(inv_y_stat,1)
 %    disp([char(9),num2str(inv_y_stat(i)),',']);
 %end
 %disp('};');
+disp('int32_t alapjel = mmpersec;');
+disp('static int32_t elozo_alapjel = 0;');
 disp('static float beavatkozo_jel = 0;');
+disp('static float elozo_beavatkozo_jel = 0;');
 disp('static float pozitiv_visszacsatolas = 0;');
 disp('float FOXBORO_bemeno_jel = 0;');
 disp(' ');
 disp('// Szabalyozas');
+if(ALAPJEL_MEREDEKSEG_GYORSITASNAL || ALAPJEL_MEREDEKSEG_LASSITASNAL)
+    disp('// Alapjel meredekseg korlatozas');
+end
+if(ALAPJEL_MEREDEKSEG_GYORSITASNAL)
+    disp('if(alapjel - elozo_alapjel > ALAPJEL_MEREDEKSEG_GYORSITASNAL)');
+    disp([char(9),'alapjel = elozo_alapjel + ALAPJEL_MEREDEKSEG_GYORSITASNAL;']);
+end
+if(ALAPJEL_MEREDEKSEG_LASSITASNAL)
+    disp('if(elozo_alapjel - alapjel > ALAPJEL_MEREDEKSEG_LASSITASNAL)');
+    disp([char(9),'alapjel = elozo_alapjel - ALAPJEL_MEREDEKSEG_LASSITASNAL;']);
+end
+disp('// Szabalyozasi algoritmus');
 disp(['pozitiv_visszacsatolas = ',num2str(z_d),'*pozitiv_visszacsatolas+',num2str(1-z_d),'*beavatkozo_jel;']);
 disp(['FOXBORO_bemeno_jel = ',num2str(K_C*743/10000),'*(mmpersec-velocity)+pozitiv_visszacsatolas;']);
+disp('// Beavatkozo szerv telites kezelese');
 disp(['if(FOXBORO_bemeno_jel > ',num2str(u_sat),')']);
 disp([sprintf('\t'),'beavatkozo_jel = ',num2str(u_sat),';']);
 disp(['else if(FOXBORO_bemeno_jel < ',num2str(-u_sat),')']);
 disp([sprintf('\t'),'beavatkozo_jel = ',num2str(-u_sat),';']);
 disp('else');
 disp([sprintf('\t'),'beavatkozo_jel = FOXBORO_bemeno_jel;']);
+if(BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL || BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL)
+    disp('// Beavatkozo jel meredekseg korlatozas');
+end
+if(BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL)
+    disp('if(beavatkozo_jel - elozo_beavatkozo_jel > BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL)');
+    disp([char(9),'beavatkozo_jel = elozo_beavatkozo_jel + BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL;']);
+end
+if(BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL)
+    disp('if(elozo_beavatkozo_jel - beavatkozo_jel > BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL)');
+    disp([char(9),'beavatkozo_jel = elozo_beavatkozo_jel - BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL;']);
+end
+disp('// Inverz statikus nemlinearitas');
 disp('if(beavatkozo_jel > 0)');
 disp('{');
 disp([char(9),'if((',num2str(inv_u_stat(1)),' < beavatkozo_jel) && (beavatkozo_jel <= ',num2str(inv_u_stat(2)),'))']);
@@ -208,7 +265,11 @@ for i = 2:size(inv_u_stat,1)-1
     disp([char(9),char(9),'beavatkozo_jel = ',num2str(inv_y_stat(i)),'+',num2str((inv_y_stat(i+1)-inv_y_stat(i))/(inv_u_stat(i+1)-inv_u_stat(i))),'*(beavatkozo_jel-',num2str(inv_u_stat(i)),');']);
 end
 disp('}');
+disp('// Beavatkozo jel kiadasa');
 disp('motorpulsePWM = (uint32_t) (beavatkozo_jel+6932);');
+disp('// Integratorok feltoltese');
+disp('elozo_alapjel = alapjel;');
+disp('elozo_beavatkozo_jel = beavatkozo_jel;');
 disp(' ');
 
 y_stat = y_stat*K;
