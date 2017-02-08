@@ -235,7 +235,7 @@ if(ALAPJEL_MEREDEKSEG_LASSITASNAL)
     disp([char(9),'alapjel = elozo_alapjel - ALAPJEL_MEREDEKSEG_LASSITASNAL;']);
 end
 disp('// Szabalyozasi algoritmus');
-disp(['pozitiv_visszacsatolas = ',num2str(z_d),'*pozitiv_visszacsatolas+',num2str(1-z_d),'*beavatkozo_jel;']);
+disp(['pozitiv_visszacsatolas = ',num2str(z_d),'*pozitiv_visszacsatolas+',num2str(1-z_d),'*elozo_beavatkozo_jel;']);
 disp(['FOXBORO_bemeno_jel = ',num2str(K_C*743/10000),'*(mmpersec-velocity)+pozitiv_visszacsatolas;']);
 disp('// Beavatkozo szerv telites kezelese');
 disp(['if(FOXBORO_bemeno_jel > ',num2str(u_sat),')']);
