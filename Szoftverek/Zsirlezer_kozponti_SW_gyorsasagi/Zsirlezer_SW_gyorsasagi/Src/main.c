@@ -646,6 +646,7 @@ uint8_t vonaltipus=EGYVONAL;
 int16_t orientacio=0;
 uint32_t szervoPWM;
 uint8_t vonalminta=SIMA_VEZETOVONAL;
+uint8_t lassito_szakaszok_szama=0;
 
 //Safety car
 bool safetycar_aktiv=true;
@@ -669,6 +670,8 @@ void Encoder_beolvasas();
 void Safety_car();
 void sebessegszabalyozo(int32_t mmpersec);
 void vonalminta_felismeres();
+void lassitora_mitcsinalunk();
+void gyorsitora_mitcsinalunk();
 
 /* USER CODE END PFP */
 
@@ -767,7 +770,7 @@ int main(void)
   HAL_UART_Receive_DMA(&huart1, uzenetarray, 5);
 
   //Alap sebesseg megadasa
-  motorpulsePWM = 7360;
+  motorpulsePWM = 7300;
 
   /* USER CODE END 2 */
 
@@ -787,6 +790,7 @@ int main(void)
 	  }
 	  Motorkezeles();
 
+	  //vonalminta_felismeres();
 
 	  if(tick) //10ms
 	  {
@@ -1013,11 +1017,11 @@ void sebessegszabalyozo(int32_t mmpersec)
 
 	// Szabalyozas
 	pozitiv_visszacsatolas = 0.99288*pozitiv_visszacsatolas+0.0071168*beavatkozo_jel;
-	FOXBORO_bemeno_jel = 131.1713*(mmpersec-velocity)+pozitiv_visszacsatolas;
-	if(FOXBORO_bemeno_jel > 2889.8387)
-		beavatkozo_jel = 2889.8387;
-	else if(FOXBORO_bemeno_jel < -2889.8387)
-		beavatkozo_jel = -2889.8387;
+	FOXBORO_bemeno_jel = 0.72413*(mmpersec-velocity)+pozitiv_visszacsatolas;
+	if(FOXBORO_bemeno_jel > 2891.7847)
+		beavatkozo_jel = 2891.7847;
+	else if(FOXBORO_bemeno_jel < -2891.7847)
+		beavatkozo_jel = -2891.7847;
 	else
 		beavatkozo_jel = FOXBORO_bemeno_jel;
 	if(beavatkozo_jel > 0)
@@ -1038,53 +1042,82 @@ void sebessegszabalyozo(int32_t mmpersec)
 void vonalminta_felismeres()
 {
 	//TO TEST
-	static bool vonalfigyeles_aktiv=false;
-	static bool vonalfigyeles_ignoralas=false;
-	static bool haromvonalszamot_mar_noveltunk=false;
-	static bool egyvonalszamot_mar_noveltunk=false;
+	static bool vonalfigyeles_aktiv=false; //
+	static int32_t startpozicio=0;
+	static int32_t vonaleszleles_helye=0;
+	static bool elso_belepes_lesz_egyvonalba=false;
+	static bool elso_belepes_lesz_haromvonalba=true;
+	static bool vonalfigyeles_ignoralva = false;
 	static uint8_t haromvonalak_szama=0;
-	static uint8_t egyvonalak_szama=0;
-	static int32_t vonaleszleles_helye=0; //innentol 4m-ig ignoraljuk a tovabbi vonalfigyelest
-	static int32_t reszvonalfigyeles_kezdete=0;
 
-
-	if(vonalfigyeles_ignoralas==true && (encoder_aktualis-vonaleszleles_helye > 30000)) //4m utan figyeljuk csak ujra a vonalat
+	if(vonalfigyeles_ignoralva==true && (encoder_aktualis-vonaleszleles_helye > 30000)) //4m utan figyeljuk csak ujra a vonalat
 	{
-		vonalfigyeles_ignoralas=false;
+		vonalfigyeles_ignoralva=false;
 	}
 
-	if (vonaltipus==HAROMVONAL && vonalfigyeles_ignoralas==false && haromvonalak_szama==1)
+	if(vonaltipus==HAROMVONAL && vonalfigyeles_aktiv==false && vonalfigyeles_ignoralva==false)
 	{
-
+		vonalfigyeles_aktiv=true;
+		startpozicio=encoder_aktualis;
 	}
 
-	else if (vonaltipus==HAROMVONAL && vonalfigyeles_ignoralas==false)
+	if(vonaltipus==HAROMVONAL && vonalfigyeles_aktiv==true && elso_belepes_lesz_haromvonalba==true)
 	{
-		if(vonalfigyeles_aktiv==false)
-		{
-			vonalfigyeles_aktiv=true;
-			reszvonalfigyeles_kezdete=encoder_aktualis;
-		}
-		if(vonalfigyeles_aktiv==true)
-		{
-			if(encoder_aktualis-reszvonalfigyeles_kezdete > 1115)  //15cm-en 3-vonal, akkor lassito
-			{
-				vonalminta=LASSITO;
-				vonalfigyeles_aktiv=false;
-				vonalfigyeles_ignoralas=true;
-				vonaleszleles_helye=encoder_aktualis;
-				//4m-ig most nem szabad figyelni a vonalat
-			}
-		}
+		elso_belepes_lesz_egyvonalba=true;
+		elso_belepes_lesz_haromvonalba=false;
+		haromvonalak_szama++;
+	}
+	if(vonaltipus==EGYVONAL && vonalfigyeles_aktiv==true && elso_belepes_lesz_egyvonalba==true)
+	{
+		elso_belepes_lesz_egyvonalba=false;
+		elso_belepes_lesz_haromvonalba=true;
+	}
+	if(vonaltipus==HAROMVONAL && vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 817 && haromvonalak_szama==1) //11cm utan csak egy osszefuggo 3 vonal: lassito
+	{
+		vonalminta=LASSITO;
+		//reset all
+		vonalfigyeles_ignoralva=true;
+		vonalfigyeles_aktiv=false;
+		haromvonalak_szama=0;
+		elso_belepes_lesz_egyvonalba=false;
+		elso_belepes_lesz_haromvonalba=true;
+		lassito_szakaszok_szama++;
+		lassitora_mitcsinalunk();
 	}
 
-	if(vonaltipus==EGYVONAL && vonalfigyeles_aktiv==true)
+	if(vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 2823 && (haromvonalak_szama==3 || haromvonalak_szama==4) )//38 cm mulva 3 vonal
 	{
-		//kllene figyelni, hogy milyen hosszan lattunk 3vonalat es hanyszor
-
+		vonalminta=GYORSITO;
+		//reste all
+		vonalfigyeles_ignoralva=true;
+		vonalfigyeles_aktiv=false;
+		haromvonalak_szama=0;
+		elso_belepes_lesz_egyvonalba=false;
+		elso_belepes_lesz_haromvonalba=true;
+		gyorsitora_mitcsinalunk();
+	}
+	else if(vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 2823 && haromvonalak_szama<3 )
+	{
+		vonalminta=LASSITO;
+		//reset all
+		vonalfigyeles_ignoralva=true;
+		vonalfigyeles_aktiv=false;
+		haromvonalak_szama=0;
+		elso_belepes_lesz_egyvonalba=false;
+		elso_belepes_lesz_haromvonalba=true;
+		lassito_szakaszok_szama++;
+		lassitora_mitcsinalunk();
 	}
 
+}
 
+void lassitora_mitcsinalunk()
+{
+	motorpulsePWM=6932;
+}
+void gyorsitora_mitcsinalunk()
+{
+	motorpulsePWM=7500;
 }
 /* USER CODE END 4 */
 
