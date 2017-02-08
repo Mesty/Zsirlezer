@@ -181,7 +181,7 @@ disp(' ');
 disp('A szabalyozast megvalosito C kod:');
 disp(' ');
 disp('// Inverz statikus nemlinearitas LUT letrehozasa');
-disp(['static float inv_stat_nonlinearity[',num2str(size(inv_y_stat,1)),'] = {']);
+disp(['float inv_stat_nonlinearity[',num2str(size(inv_y_stat,1)),'] = {']);
 for i = 1:size(inv_y_stat,1)
     disp([char(9),num2str(inv_y_stat(i)),',']);
 end
