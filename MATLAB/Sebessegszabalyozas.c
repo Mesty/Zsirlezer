@@ -4,7 +4,7 @@ float FOXBORO_bemeno_jel = 0;
  
 // Szabalyozas
 pozitiv_visszacsatolas = 0.99288*pozitiv_visszacsatolas+0.0071168*beavatkozo_jel;
-FOXBORO_bemeno_jel = 131.1713*(mmpersec-velocity)+pozitiv_visszacsatolas;
+FOXBORO_bemeno_jel = 65.9136*(mmpersec-velocity)+pozitiv_visszacsatolas;
 if(FOXBORO_bemeno_jel > 2889.8387)
 	beavatkozo_jel = 2889.8387;
 else if(FOXBORO_bemeno_jel < -2889.8387)
@@ -25,4 +25,3 @@ if(beavatkozo_jel > 0)
 		beavatkozo_jel = 600+0.64883*(beavatkozo_jel-756.6123);
 }
 motorpulsePWM = (uint32_t) (beavatkozo_jel+6932);
- 

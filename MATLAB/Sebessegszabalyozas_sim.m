@@ -26,7 +26,7 @@ clear siminput T_sim
 %% Parameterek (valtozoneveket atirni nem szabad, csak az ertekeket)
 
 Ts = 0.01; % Mintavetelezesi ido [s]
-T_cl = 0.5; % Zart kor eloirt idoallandoja [s]
+T_cl = 1; % Zart kor eloirt idoallandoja [s]
 
 %% Egyeb parameterek
 
