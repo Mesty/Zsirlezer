@@ -782,12 +782,13 @@ int main(void)
 
   /* USER CODE BEGIN 3 */
 
-	  sebessegszabalyozo(1000);
+
 
 	  if(vonalszenzor_uzenetjott==true) //3ms-onkent kapunk uzenetet
 	  {
 		  Vonalszenzorkezeles_uartfogadas();
 	  }
+	  sebessegszabalyozo(1000);
 	  Motorkezeles();
 
 	  //vonalminta_felismeres();
@@ -797,7 +798,6 @@ int main(void)
 		  HAL_ADC_Start_DMA(&hadc1, (uint32_t*) &SHARP_FRONT_raw, 1); //SHARP front adc elinditasa
 
 		  Encoder_beolvasas();
-
 
 		  while(!SHARP_FRONT_valid);//Ha mar letelt az ad konverzio ideje, akkor szurjuk a kapott AD erteket
 		  WMAfilter(&SHARP_FRONT_filtered,(int32_t*)&(SHARP_FRONT_raw),SHARP_FRONT_array,20);
@@ -1012,8 +1012,17 @@ void sebessegszabalyozo(int32_t mmpersec)
 {
 	//TO TEST
 	static float beavatkozo_jel = 0;
+	int32_t beavatkozojel_int=0;
+	int32_t atlagolt_beavatkozo_jel=0;
 	static float pozitiv_visszacsatolas = 0;
 	float FOXBORO_bemeno_jel = 0;
+
+	static float beavatkozo_jel_elozo=0;
+	float kulonbseg=0;
+	static int32_t wma_tomb[30]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	if(stop)
+		beavatkozo_jel=0.0;
+
 
 	// Szabalyozas
 	pozitiv_visszacsatolas = 0.99288*pozitiv_visszacsatolas+0.0071168*beavatkozo_jel;
@@ -1037,7 +1046,18 @@ void sebessegszabalyozo(int32_t mmpersec)
 		else if((756.6123 < beavatkozo_jel) && (beavatkozo_jel <= 910.737))
 			beavatkozo_jel = 600+0.64883*(beavatkozo_jel-756.6123);
 	}
-	motorpulsePWM = (uint32_t) (beavatkozo_jel+6932);
+
+	kulonbseg=beavatkozo_jel - beavatkozo_jel_elozo;
+	beavatkozo_jel = beavatkozo_jel_elozo  + kulonbseg/200.0;
+
+	beavatkozojel_int = (int32_t) beavatkozo_jel;
+	WMAfilter(&atlagolt_beavatkozo_jel, &beavatkozojel_int, wma_tomb, 30);
+	motorpulsePWM = (uint32_t) (atlagolt_beavatkozo_jel+6932);
+	beavatkozo_jel = (float) atlagolt_beavatkozo_jel;
+
+	//motorpulsePWM = (uint32_t) (beavatkozo_jel+6932);
+
+	beavatkozo_jel_elozo=beavatkozo_jel;
 }
 void vonalminta_felismeres()
 {
