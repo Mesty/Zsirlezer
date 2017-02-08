@@ -26,7 +26,7 @@ clear siminput T_sim
 %% Parameterek (valtozoneveket atirni nem szabad, csak az ertekeket)
 
 Ts = 0.01; % Mintavetelezesi ido [s]
-T_cl = 1; % Zart kor eloirt idoallandoja [s]
+T_cl = 0.5; % Zart kor eloirt idoallandoja [s]
 
 %% Egyeb parameterek
 
@@ -192,7 +192,7 @@ disp('float FOXBORO_bemeno_jel = 0;');
 disp(' ');
 disp('// Szabalyozas');
 disp(['pozitiv_visszacsatolas = ',num2str(z_d),'*pozitiv_visszacsatolas+',num2str(1-z_d),'*beavatkozo_jel;']);
-disp(['FOXBORO_bemeno_jel = ',num2str(K_C*10000/743),'*(mmpersec-velocity)+pozitiv_visszacsatolas;']);
+disp(['FOXBORO_bemeno_jel = ',num2str(K_C*743/10000),'*(mmpersec-velocity)+pozitiv_visszacsatolas;']);
 disp(['if(FOXBORO_bemeno_jel > ',num2str(u_sat),')']);
 disp([sprintf('\t'),'beavatkozo_jel = ',num2str(u_sat),';']);
 disp(['else if(FOXBORO_bemeno_jel < ',num2str(-u_sat),')']);
