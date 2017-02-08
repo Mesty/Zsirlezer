@@ -824,9 +824,9 @@ int main(void)
 				if(start_tick==0)
 					start_tick=timestamp;
 
-				if(timestamp-start_tick > 100)
+				if(timestamp-start_tick > 60)
 				{
-					mmpersec_sebesseg=3000;
+					mmpersec_sebesseg=4300;
 					start_tick=0;
 					eltolt_gyorsulas=false;
 				}
@@ -1110,7 +1110,7 @@ void fekezo_sebessegszabalyozo(int32_t mmpersec)
 	// Szabalyozas
 	// Szabalyozasi algoritmus
 	pozitiv_visszacsatolas = 0.99288*pozitiv_visszacsatolas+0.0071168*beavatkozo_jel;
-	FOXBORO_bemeno_jel = 12.0*(mmpersec-velocity)+pozitiv_visszacsatolas;
+	FOXBORO_bemeno_jel = 40.0*(mmpersec-velocity)+pozitiv_visszacsatolas;
 	// Beavatkozo szerv telites kezelese
 	if(FOXBORO_bemeno_jel > 1500)
 		beavatkozo_jel = 1500;
