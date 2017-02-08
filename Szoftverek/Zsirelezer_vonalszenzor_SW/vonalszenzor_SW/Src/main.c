@@ -43,6 +43,7 @@
 /* USER CODE BEGIN Includes */
 
 #include "stdbool.h"
+#include "math.h"
 
 /* USER CODE END Includes */
 
@@ -96,6 +97,8 @@ void koszszures(uint16_t* forrastomb, uint8_t hossz);
 void visszajelzesthresholdolttombbol(uint16_t* forrastomb, uint8_t* visszajelzotomb, uint8_t hossz);
 void vonalszam(uint16_t* forrastomb, uint8_t hossz, uint8_t* vonaltipus);
 void utvonalvalasztas_szenzoradatokbol(uint16_t* forrastomb, uint8_t hossz, uint8_t irany);
+uint16_t min(uint16_t elso, uint16_t masodik, uint16_t harmadik, uint16_t negyedik, uint16_t otodik);
+void Minimumszuro_5(uint16_t* forrastomb, uint8_t hossz, uint16_t* szurt_ertekek_atlaga);
 
 //UART
 void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout);
@@ -155,7 +158,9 @@ int main(void)
 	uint16_t szenzorertekek_masodik[3][8];
 	uint16_t szenzorertekek_thresholddal_masodik[3][8];
 
-	uint16_t threshold=1100;//1300;//900;
+	uint16_t threshold_elso=1200;//1300;//900;
+	uint16_t threshold_masodik=1200;
+	uint16_t threshold=1200;
 
 	//Szenzor adatok
 	uint32_t pozicio_elso=1600;
@@ -181,6 +186,7 @@ int main(void)
 	 uint8_t elkuldendo[5]={0,0,0,0,0};
 	 uint8_t uart_rx_csomag;
 	 bool uartcsomag_elkapva=false;
+	 char string[20];
 
   /* USER CODE END 1 */
 
@@ -236,7 +242,7 @@ int main(void)
 
 		  //ELSO szenzorsor -----------
 		  //FONTOS! Egyes fuggvenyek a megkapott tomboket manipulaljak, igy a sorrendjuk nem mindegy!!!
-		 // koszszures(szenzorertekek_thresholddal_elso, 32);
+		  koszszures(szenzorertekek_thresholddal_elso, 32);
 		  vonalszam(szenzorertekek_thresholddal_elso, 32, &vonaltipus);
 		  visszajelzesthresholdolttombbol(szenzorertekek_thresholddal_elso, visszajelzoLEDminta, 32);
 
@@ -274,7 +280,7 @@ int main(void)
 
 		  //MASODIK szenzorsor ---------------------
 		  //FONTOS! Egyes fuggvenyek a megkapott tomboket manipulaljak, igy a sorrendjuk nem mindegy!!!
-		 // koszszures(szenzorertekek_thresholddal_masodik, 24);
+		  koszszures(szenzorertekek_thresholddal_masodik, 24);
 
 		  //Ha kell utvonalat valasztani az ugyessegin, akkor a thresholdolt tombot manipulaljuk
 		  //Csak a megfelelo iranyban levo vonal marad meg, ebbol szamoljuk a poziciot
@@ -316,7 +322,22 @@ int main(void)
 
 		  //ADC adatok elkuldese ----------------------
 
-		  //sendadcvals_to_uart(&huart1, szenzorertekek_elso[0], szenzorertekek_elso[1], szenzorertekek_elso[2], szenzorertekek_elso[3], 1000);
+		 /* HAL_UART_Transmit(&huart1, &endline, 1 , 10000 );
+		  HAL_UART_Transmit(&huart1, &CR, 1, 1000);
+		  sendadcvals_to_uart(&huart1, szenzorertekek_elso[0], szenzorertekek_elso[1], szenzorertekek_elso[2], szenzorertekek_elso[3], 1000);
+		  HAL_UART_Transmit(&huart1, &endline, 1 , 10000 );
+		  HAL_UART_Transmit(&huart1, &CR, 1, 1000);
+		  send16bitdecimal_to_uart(&huart1, &threshold_elso, 1000);*/
+
+		 // HAL_UART_Transmit(&huart1, &tab, 1, 1000);
+		  //sendadcvals_to_uart(&huart1, szenzorertekek_masodik[0], szenzorertekek_masodik[1], szenzorertekek_masodik[2],szenzorertekek_masodik[3] ,1000);
+		 // HAL_UART_Transmit(&huart1, &endline, 1 , 10000 );
+		 // HAL_UART_Transmit(&huart1, &CR, 1, 1000);
+		  //send16bitdecimal_to_uart(&huart1, &threshold_masodik, 1000);
+		  /*sprintf(&string,"..................\r\n");
+		  sprintf(&string,"%d\t%d",threshold_masodik, threshold_elso);
+		  HAL_UART_Transmit(&huart1, &string, sizeof(string)*sizeof(uint8_t), 10000);*/
+
 
 		  if(uartcsomagerkezett)
 		  {
@@ -388,10 +409,11 @@ int main(void)
 	  for (int q=0; q<3; q++)
 		szenzorertekek_masodik[q][SPIIteracio-1]=adceredmenymasodik[q];
 	  }
+	  Minimumszuro_5(szenzorertekek_masodik, 24, &threshold_masodik);
 	  //Thresholdozas
 	  for (int q=0; q<3; q++)
 	  {
-		  if (adceredmenymasodik[q] > threshold)
+		  if (adceredmenymasodik[q] > threshold/*_masodik*/)
 		  {
 			  szenzorertekek_thresholddal_masodik[q][SPIIteracio-1] = adceredmenymasodik[q];
 		  }
@@ -419,10 +441,11 @@ int main(void)
 	  {
 		szenzorertekek_elso[q][SPIIteracio-1]=adceredmenyelso[q];
 	  }
+	  Minimumszuro_5(szenzorertekek_elso, 32, &threshold_elso);
 	  //Thresholdozas
 	  for (int q=0; q<4; q++)
 	  {
-		  if (adceredmenyelso[q] > threshold)
+		  if (adceredmenyelso[q] > threshold/*_elso*/)
 		  {
 			  szenzorertekek_thresholddal_elso[q][SPIIteracio-1] = adceredmenyelso[q];
 		  }
@@ -537,6 +560,33 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void Minimumszuro_5(uint16_t* forrastomb, uint8_t hossz, uint16_t* szurt_ertekek_atlaga)
+{
+//5-os minimumszuro ablak, majd atlagolas -> thresholdot megkapjuk
+//Teszt, fuga,
+//Cel miatt a thresholdnak van maximuma
+uint32_t sum=0;
+
+	for(int i=2; i<(hossz-2);i++)
+	{
+		if(i==2 || i==(hossz-3))
+		{
+			sum+=(min(forrastomb[i-2], forrastomb[i-1], forrastomb[i], forrastomb[i+1], forrastomb[i+2]))*3; //szeleken nem csuszik az atlag
+
+		}
+		else
+		{
+			sum+=min(forrastomb[i-2], forrastomb[i-1], forrastomb[i], forrastomb[i+1], forrastomb[i+2]);
+		}
+
+		*szurt_ertekek_atlaga = sum/hossz;
+	}
+}
+uint16_t min(uint16_t elso, uint16_t masodik, uint16_t harmadik, uint16_t negyedik, uint16_t otodik)
+{
+	return fmin(fmin((fmin(elso,masodik)),(fmin(harmadik, negyedik))), otodik);
+}
 
 void MUXselectkuldes(uint8_t* infraLEDminta)
 {
