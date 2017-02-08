@@ -659,6 +659,8 @@ bool safetycar_aktiv=true;
 char string[20];
 bool stop_safetycar=false;
 
+int32_t mmpersec_sebesseg=0;
+
 
 /* USER CODE END PV */
 
@@ -797,7 +799,7 @@ int main(void)
 	  //sebessegszabalyozo(2200);
 	  Motorkezeles();
 
-	  //vonalminta_felismeres();
+	  vonalminta_felismeres();
 
 	  if(tick) //10ms
 	  {
@@ -811,7 +813,7 @@ int main(void)
 		  {
 			 // Safety_car();
 		  }
-		  sebessegszabalyozo(1600);
+		  //sebessegszabalyozo(1600);
 		  tick=false;
 	  }
   }
@@ -1064,6 +1066,7 @@ void vonalminta_felismeres()
 	//TO TEST
 	static bool vonalfigyeles_aktiv=false; //
 	static int32_t startpozicio=0;
+	static bool voltmaregyvonal=false;
 	//static int32_t vonaleszleles_helye=0;
 	static bool elso_belepes_lesz_egyvonalba=false;
 	static bool elso_belepes_lesz_haromvonalba=true;
@@ -1072,7 +1075,7 @@ void vonalminta_felismeres()
 	static int32_t haromvonal_kezdete=0;
 	static int32_t egyvonal_kezdete=0;
 
-	//Valahogy a rovid koszt is beveszi ha arra eltriggerel a vonalfigyeles, aztan pont a komparalaskor van rendes vonal
+	//Legyen "volt egyvonal" valtozo -> akkor nem lehet lassito
 
 	//bizonyos tavolsag utan mindenkepp kilepni, ha van eredmeny, ha nincs- done
 
@@ -1084,9 +1087,17 @@ void vonalminta_felismeres()
 
 	if(vonaltipus==HAROMVONAL && vonalfigyeles_aktiv==false && vonalfigyeles_ignoralva==false)
 	{
-		vonalfigyeles_aktiv=true;
-		startpozicio=encoder_aktualis;
+		//csak akkor figyelunk vonalat, ha az elso 3 vonal legalabb 3cm
+		if(startpozicio==0) //elso eset
+		{
+			startpozicio=encoder_aktualis;
+		}
+		if(encoder_aktualis-startpozicio > 150) //2cm utan elhisszuk hogy van jel
+			vonalfigyeles_aktiv=true;
 	}
+	//startpoz-t nullazni kell ha nincs jel,
+	if(vonaltipus==EGYVONAL && vonalfigyeles_aktiv==false && vonalfigyeles_ignoralva==false && startpozicio!=0 && encoder_aktualis-startpozicio > 150)  //2cm
+		startpozicio=0;
 
 
 	if(vonaltipus==HAROMVONAL && vonalfigyeles_aktiv==true && elso_belepes_lesz_haromvonalba==true)
@@ -1095,7 +1106,7 @@ void vonalminta_felismeres()
 		elso_belepes_lesz_haromvonalba=false;
 		haromvonal_kezdete=encoder_aktualis;
 	}
-	if(vonaltipus==HAROMVONAL && vonalfigyeles_aktiv==true && elso_belepes_lesz_haromvonalba==false && encoder_aktualis-haromvonal_kezdete > 300 && haromvonal_kezdete!=0)
+	if(vonaltipus==HAROMVONAL && vonalfigyeles_aktiv==true && elso_belepes_lesz_haromvonalba==false && encoder_aktualis-haromvonal_kezdete > 150 && haromvonal_kezdete!=0)//2cm
 	{
 		haromvonalak_szama++;
 		elso_belepes_lesz_egyvonalba=true;
@@ -1107,15 +1118,16 @@ void vonalminta_felismeres()
 	{
 		elso_belepes_lesz_egyvonalba=false;
 		egyvonal_kezdete=encoder_aktualis;
+		voltmaregyvonal=true;
 	}
-	if(vonaltipus==EGYVONAL && vonalfigyeles_aktiv==true && elso_belepes_lesz_egyvonalba==false && encoder_aktualis-egyvonal_kezdete > 300 && egyvonal_kezdete!=0)
+	if(vonaltipus==EGYVONAL && vonalfigyeles_aktiv==true && elso_belepes_lesz_egyvonalba==false && encoder_aktualis-egyvonal_kezdete > 150 && egyvonal_kezdete!=0) //2cm
 	{
 		elso_belepes_lesz_haromvonalba=true;
 		egyvonal_kezdete=0;
 	}
 
 
-	if(vonaltipus==HAROMVONAL && vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 2220 && haromvonalak_szama==1) //30cm utan csak egy osszefuggo 3 vonal: lassito
+	if(vonaltipus==HAROMVONAL && vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 2220 && haromvonalak_szama==1 && voltmaregyvonal==false) //30cm utan csak egy osszefuggo 3 vonal: lassito
 	{
 		vonalminta=LASSITO;
 		//reset all
@@ -1125,6 +1137,7 @@ void vonalminta_felismeres()
 		elso_belepes_lesz_egyvonalba=false;
 		elso_belepes_lesz_haromvonalba=true;
 		lassito_szakaszok_szama++;
+		voltmaregyvonal=false;
 		lassitora_mitcsinalunk();
 	}
 
@@ -1137,6 +1150,7 @@ void vonalminta_felismeres()
 		haromvonalak_szama=0;
 		elso_belepes_lesz_egyvonalba=false;
 		elso_belepes_lesz_haromvonalba=true;
+		voltmaregyvonal=false;
 		gyorsitora_mitcsinalunk();
 	}
 	else if (vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 2823) //30cm mulva ha nincs semmi akkor exit
@@ -1146,6 +1160,7 @@ void vonalminta_felismeres()
 		haromvonalak_szama=0;
 		elso_belepes_lesz_egyvonalba=false;
 		elso_belepes_lesz_haromvonalba=true;
+		voltmaregyvonal=false;
 
 	}
 	/*else if(vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 2823 && haromvonalak_szama<3 ) ez az else ag erzekeny a fugakra, ki kell venni
