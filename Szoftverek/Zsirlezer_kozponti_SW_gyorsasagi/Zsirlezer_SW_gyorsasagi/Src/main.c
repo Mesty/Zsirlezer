@@ -61,6 +61,8 @@
 //Sebszab
 #define MEREDEKSEG_GYORSITASNAL 2000
 #define MEREDEKSEG_LASSITASNAL 2000
+#define ALAPJEL_MEREDEKSEG_GYORSITASNAL 3000
+#define ALAPJEL_MEREDEKSEG_LASSITASNAL 3000
 
 /* USER CODE END Includes */
 
@@ -795,7 +797,7 @@ int main(void)
 	  //sebessegszabalyozo(2200);
 	  Motorkezeles();
 
-	  vonalminta_felismeres();
+	  //vonalminta_felismeres();
 
 	  if(tick) //10ms
 	  {
@@ -809,7 +811,7 @@ int main(void)
 		  {
 			 // Safety_car();
 		  }
-
+		  sebessegszabalyozo(1600);
 		  tick=false;
 	  }
   }
@@ -1014,75 +1016,27 @@ void Safety_car()
 
 void sebessegszabalyozo(int32_t mmpersec)
 {
-	// Alapjel meredekseg korlatja
-	#define ALAPJEL_MEREDEKSEG_GYORSITASNAL 30000
-	#define ALAPJEL_MEREDEKSEG_LASSITASNAL 30000
-	// Beavatkozo jel meredekseg korlatja [100/s]
-	// #define BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL 2000
-	// #define BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL 2000
 
-	static float elozo_alapjel = 0;
+	// Belso valtozok
+	int32_t alapjel = mmpersec;
+	static int32_t elozo_alapjel = 0;
 	static float beavatkozo_jel = 0;
 	static float elozo_beavatkozo_jel = 0;
 	static float pozitiv_visszacsatolas = 0;
 	float FOXBORO_bemeno_jel = 0;
 
 	// Szabalyozas
-	if(mmpersec - elozo_alapjel > ALAPJEL_MEREDEKSEG_GYORSITASNAL)
-		mmpersec = elozo_alapjel + ALAPJEL_MEREDEKSEG_GYORSITASNAL;
-	else if(elozo_alapjel - mmpersec > ALAPJEL_MEREDEKSEG_LASSITASNAL)
-		mmpersec = elozo_alapjel - ALAPJEL_MEREDEKSEG_LASSITASNAL;
-	pozitiv_visszacsatolas = 0.99288*pozitiv_visszacsatolas+0.0071168*elozo_beavatkozo_jel;
-	FOXBORO_bemeno_jel = 0.72413*(mmpersec-velocity)+pozitiv_visszacsatolas;
-	if(FOXBORO_bemeno_jel > 2891.7847)
-		beavatkozo_jel = 2891.7847;
-	else if(FOXBORO_bemeno_jel < -2891.7847)
-		beavatkozo_jel = -2891.7847;
-	else
-		beavatkozo_jel = FOXBORO_bemeno_jel;
-	// if(beavatkozo_jel - elozo_beavatkozo_jel > BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL)
-		// beavatkozo_jel = elozo_beavatkozo_jel + BEAVATKOZO_JEL_MEREDEKSEG_GYORSITASNAL;
-	// else if(elozo_beavatkozo_jel - beavatkozo_jel > BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL)
-		// beavatkozo_jel = elozo_beavatkozo_jel - BEAVATKOZO_JEL_MEREDEKSEG_LASSITASNAL;
-	if(beavatkozo_jel > 0)
-	{
-		if((0 < beavatkozo_jel) && (beavatkozo_jel <= 112.0907))
-			beavatkozo_jel = 200+0.89213*beavatkozo_jel;
-		else if((112.0907 < beavatkozo_jel) && (beavatkozo_jel <= 350.2835))
-			beavatkozo_jel = 300+0.41983*(beavatkozo_jel-112.0907);
-		else if((350.2835 < beavatkozo_jel) && (beavatkozo_jel <= 560.4536))
-			beavatkozo_jel = 400+0.47581*(beavatkozo_jel-350.2835);
-		else if((560.4536 < beavatkozo_jel) && (beavatkozo_jel <= 756.6123))
-			beavatkozo_jel = 500+0.50979*(beavatkozo_jel-560.4536);
-		else if((756.6123 < beavatkozo_jel) && (beavatkozo_jel <= 910.737))
-			beavatkozo_jel = 600+0.64883*(beavatkozo_jel-756.6123);
-	}
-	motorpulsePWM = (uint32_t) (beavatkozo_jel+6932);
-	elozo_alapjel = mmpersec;
-	/*
-	//TO TEST
-	static float beavatkozo_jel = 0;
-	int32_t beavatkozojel_int=0;
-	int32_t atlagolt_beavatkozo_jel=0;
-	static float pozitiv_visszacsatolas = 0;
-	float FOXBORO_bemeno_jel = 0;
-
-	static float beavatkozo_jel_elozo=0;
-	float kulonbseg=0;
-	static int32_t wma_tomb[60]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-	if(stop)
-		beavatkozo_jel=0.0;
-
-
-	// Szabalyozas
+	// Szabalyozasi algoritmus
 	pozitiv_visszacsatolas = 0.99288*pozitiv_visszacsatolas+0.0071168*beavatkozo_jel;
-	FOXBORO_bemeno_jel = 0.72413*(mmpersec-velocity)+pozitiv_visszacsatolas;
-	if(FOXBORO_bemeno_jel > 2891.7847)
-		beavatkozo_jel = 2891.7847;
-	else if(FOXBORO_bemeno_jel < -2891.7847)
-		beavatkozo_jel = -2891.7847;
+	FOXBORO_bemeno_jel = 0.9029*(mmpersec-velocity)+pozitiv_visszacsatolas;
+	// Beavatkozo szerv telites kezelese
+	if(FOXBORO_bemeno_jel > 1500)
+		beavatkozo_jel = 1500;
+	else if(FOXBORO_bemeno_jel < -1500)
+		beavatkozo_jel = -1500;
 	else
 		beavatkozo_jel = FOXBORO_bemeno_jel;
+	// Inverz statikus nemlinearitas
 	if(beavatkozo_jel > 0)
 	{
 		if((0 < beavatkozo_jel) && (beavatkozo_jel <= 112.0907))
@@ -1096,53 +1050,13 @@ void sebessegszabalyozo(int32_t mmpersec)
 		else if((756.6123 < beavatkozo_jel) && (beavatkozo_jel <= 910.737))
 			beavatkozo_jel = 600+0.64883*(beavatkozo_jel-756.6123);
 	}
-
-	kulonbseg=beavatkozo_jel - beavatkozo_jel_elozo;
-	beavatkozo_jel = beavatkozo_jel_elozo  + kulonbseg/200.0;
-
-	beavatkozojel_int = (int32_t) beavatkozo_jel;
-	WMAfilter(&atlagolt_beavatkozo_jel, &beavatkozojel_int, wma_tomb, 60);
-	motorpulsePWM = (uint32_t) (atlagolt_beavatkozo_jel+6932);
-	beavatkozo_jel = (float) atlagolt_beavatkozo_jel;
-
-	//motorpulsePWM = (uint32_t) (beavatkozo_jel+6932);
-
-	beavatkozo_jel_elozo=beavatkozo_jel;
-
-
-	/*static float beavatkozo_jel = 0;
-	static float elozo_beavatkozo_jel = 0;
-	static float pozitiv_visszacsatolas = 0;
-	float FOXBORO_bemeno_jel = 0;
-
-	// Szabalyozas
-	pozitiv_visszacsatolas = 0.99288*pozitiv_visszacsatolas+0.0071168*elozo_beavatkozo_jel;
-	FOXBORO_bemeno_jel = 0.72413*(mmpersec-velocity)+pozitiv_visszacsatolas;
-	if(FOXBORO_bemeno_jel > 2891.7847)
-		beavatkozo_jel = 2891.7847;
-	else if(FOXBORO_bemeno_jel < -2891.7847)
-		beavatkozo_jel = -2891.7847;
-	else
-		beavatkozo_jel = FOXBORO_bemeno_jel;
-	if(beavatkozo_jel - elozo_beavatkozo_jel > MEREDEKSEG_GYORSITASNAL)
-		beavatkozo_jel = elozo_beavatkozo_jel + MEREDEKSEG_GYORSITASNAL;
-	else if(elozo_beavatkozo_jel - beavatkozo_jel > MEREDEKSEG_LASSITASNAL)
-		beavatkozo_jel = elozo_beavatkozo_jel - MEREDEKSEG_LASSITASNAL;
-	if(beavatkozo_jel > 0)
-	{
-		if((0 < beavatkozo_jel) && (beavatkozo_jel <= 112.0907))
-			beavatkozo_jel = 200+0.89213*beavatkozo_jel;
-		else if((112.0907 < beavatkozo_jel) && (beavatkozo_jel <= 350.2835))
-			beavatkozo_jel = 300+0.41983*(beavatkozo_jel-112.0907);
-		else if((350.2835 < beavatkozo_jel) && (beavatkozo_jel <= 560.4536))
-			beavatkozo_jel = 400+0.47581*(beavatkozo_jel-350.2835);
-		else if((560.4536 < beavatkozo_jel) && (beavatkozo_jel <= 756.6123))
-			beavatkozo_jel = 500+0.50979*(beavatkozo_jel-560.4536);
-		else if((756.6123 < beavatkozo_jel) && (beavatkozo_jel <= 910.737))
-			beavatkozo_jel = 600+0.64883*(beavatkozo_jel-756.6123);
-	}
+	// Beavatkozo jel kiadasa
 	motorpulsePWM = (uint32_t) (beavatkozo_jel+6932);
-	elozo_beavatkozo_jel = beavatkozo_jel;*/
+	// Integratorok feltoltese
+	elozo_alapjel = alapjel;
+	elozo_beavatkozo_jel = beavatkozo_jel;
+
+
 
 }
 void vonalminta_felismeres()
@@ -1155,6 +1069,13 @@ void vonalminta_felismeres()
 	static bool elso_belepes_lesz_haromvonalba=true;
 	static bool vonalfigyeles_ignoralva = false;
 	static uint8_t haromvonalak_szama=0;
+	static int32_t haromvonal_kezdete=0;
+	static int32_t egyvonal_kezdete=0;
+
+	//Valahogy a rovid koszt is beveszi ha arra eltriggerel a vonalfigyeles, aztan pont a komparalaskor van rendes vonal
+
+	//bizonyos tavolsag utan mindenkepp kilepni, ha van eredmeny, ha nincs- done
+
 
 	if(vonalfigyeles_ignoralva==true && (encoder_aktualis-startpozicio > 30000)) //4m utan figyeljuk csak ujra a vonalat
 	{
@@ -1167,18 +1088,34 @@ void vonalminta_felismeres()
 		startpozicio=encoder_aktualis;
 	}
 
+
 	if(vonaltipus==HAROMVONAL && vonalfigyeles_aktiv==true && elso_belepes_lesz_haromvonalba==true)
+		//Kell meg hosszfigyeles: csak 3cm utan fogadunk el objektumot
 	{
-		elso_belepes_lesz_egyvonalba=true;
 		elso_belepes_lesz_haromvonalba=false;
-		haromvonalak_szama++;
+		haromvonal_kezdete=encoder_aktualis;
 	}
+	if(vonaltipus==HAROMVONAL && vonalfigyeles_aktiv==true && elso_belepes_lesz_haromvonalba==false && encoder_aktualis-haromvonal_kezdete > 300 && haromvonal_kezdete!=0)
+	{
+		haromvonalak_szama++;
+		elso_belepes_lesz_egyvonalba=true;
+		haromvonal_kezdete=0;
+	}
+
 	if(vonaltipus==EGYVONAL && vonalfigyeles_aktiv==true && elso_belepes_lesz_egyvonalba==true)
+		//Kell meg hosszfigyeles: csak 4cm utan fogadunk el objektumot
 	{
 		elso_belepes_lesz_egyvonalba=false;
-		elso_belepes_lesz_haromvonalba=true;
+		egyvonal_kezdete=encoder_aktualis;
 	}
-	if(vonaltipus==HAROMVONAL && vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 817 && haromvonalak_szama==1) //11cm utan csak egy osszefuggo 3 vonal: lassito
+	if(vonaltipus==EGYVONAL && vonalfigyeles_aktiv==true && elso_belepes_lesz_egyvonalba==false && encoder_aktualis-egyvonal_kezdete > 300 && egyvonal_kezdete!=0)
+	{
+		elso_belepes_lesz_haromvonalba=true;
+		egyvonal_kezdete=0;
+	}
+
+
+	if(vonaltipus==HAROMVONAL && vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 2220 && haromvonalak_szama==1) //30cm utan csak egy osszefuggo 3 vonal: lassito
 	{
 		vonalminta=LASSITO;
 		//reset all
@@ -1201,6 +1138,15 @@ void vonalminta_felismeres()
 		elso_belepes_lesz_egyvonalba=false;
 		elso_belepes_lesz_haromvonalba=true;
 		gyorsitora_mitcsinalunk();
+	}
+	else if (vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 2823) //30cm mulva ha nincs semmi akkor exit
+	{
+		vonalminta=SIMA_VEZETOVONAL;
+		vonalfigyeles_aktiv=false;
+		haromvonalak_szama=0;
+		elso_belepes_lesz_egyvonalba=false;
+		elso_belepes_lesz_haromvonalba=true;
+
 	}
 	/*else if(vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 2823 && haromvonalak_szama<3 ) ez az else ag erzekeny a fugakra, ki kell venni
 	{
