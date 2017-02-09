@@ -32,7 +32,7 @@ kszi = 0.9; % Csillapitasi tenyezo
 T_H = 0.03; % Holtido [s]
 T_M = 0.01; % Motor idoallandoja [s]
 fi_m = 14; % Kormanyszervo mechanikai korlatja az egyeneshez kepest [fok]
-m = 260; % Kormanyszervo szogsebesseg korlatja [fok/s]
+m = 60/0.09; % Kormanyszervo szogsebesseg korlatja [fok/s]
 s_s = 52/3; % Maximalis szaturacio nelkuli szogsebesseg szoghibaja [fok]
 
 % Jarmu parameterezese
