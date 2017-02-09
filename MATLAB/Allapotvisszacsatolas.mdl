@@ -7,7 +7,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.95"
+    ComputedModelVersion    "1.96"
     NumModelReferences	    0
     NumTestPointedSignals   0
     NumProvidedFunctions    0
@@ -65,11 +65,11 @@ Model {
 	$ObjectID		6
 	$ClassName		"Simulink.EditorInfo"
 	IsActive		[1]
-	ViewObjType		"SimulinkTopLevel"
-	LoadSaveID		"0"
+	ViewObjType		"SimulinkSubsys"
+	LoadSaveID		"39"
 	Extents			[1332.0, 569.0]
-	ZoomFactor		[1.808912779608115]
-	Offset			[2.0105444785276063, -14.276792561349708]
+	ZoomFactor		[1.7488683989941325]
+	Offset			[-8.6301763803680842, 34.82337998466258]
       }
     }
   }
@@ -79,9 +79,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "Mester Ádám"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Tue Feb 07 15:53:14 2017"
-  RTWModifiedTimeStamp	  406744923
-  ModelVersionFormat	  "1.%<AutoIncrement:95>"
+  LastModifiedDate	  "Fri Feb 10 00:58:03 2017"
+  RTWModifiedTimeStamp	  408588085
+  ModelVersionFormat	  "1.%<AutoIncrement:96>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -1255,7 +1255,7 @@ Model {
   System {
     Name		    "Allapotvisszacsatolas"
     Location		    [-8, -8, 1374, 736]
-    Open		    on
+    Open		    off
     ModelBrowserVisibility  off
     ModelBrowserWidth	    200
     ScreenColor		    "white"
@@ -2069,7 +2069,7 @@ Model {
       System {
 	Name			"Szenzor + feldolgozas"
 	Location		[-8, -8, 1374, 736]
-	Open			off
+	Open			on
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
 	ScreenColor		"white"
@@ -2223,9 +2223,9 @@ Model {
 	  ZOrder		  37
 	  BlockMirror		  on
 	  NumberOfTableDimensions "1"
-	  BreakpointsForDimension1 "[p_1TCRTa-p_2TCRTb:p_1TCRTb-p_2TCRTa]"
-	  Table			  "L*(SERVO_BAL-SERVO_JOBB)*atan((2*p_1s*[p_1TCRTa-p_2TCRTb:p_1TCRTb-p_2TCRTa]/(p_1TCRTb-p_1TCRTa)-p_1s+p_2"
-	  "s)/L_sensor)/(2*fi_m*(L+d))"
+	  BreakpointsForDimension1 "[min(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa):max(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa)]"
+	  Table			  "L*(SERVO_BAL-SERVO_JOBB)*atan((2*p_1s*[min(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa):max(p_1TCRTa-p_2TCRTb,p_"
+	  "1TCRTb-p_2TCRTa)]/(p_1TCRTb-p_1TCRTa)-p_1s+p_2s)/L_sensor)/(2*fi_m*(L+d))"
 	  InterpMethod		  "Nearest"
 	  InternalRulePriority	  "Speed"
 	  RndMeth		  "Simplest"
@@ -2239,9 +2239,9 @@ Model {
 	  ZOrder		  38
 	  BlockMirror		  on
 	  NumberOfTableDimensions "1"
-	  BreakpointsForDimension1 "[p_1TCRTa:p_1TCRTb]"
-	  Table			  "L*(SERVO_BAL-SERVO_JOBB)*p_1s*(2*[p_1TCRTa:p_1TCRTb]-p_1TCRTb-p_1TCRTa)/(2*fi_m*(L+d)*(p_1TCRTb-p_1TCRTa"
-	  "))"
+	  BreakpointsForDimension1 "[min(p_1TCRTa,p_1TCRTb):max(p_1TCRTa,p_1TCRTb)]"
+	  Table			  "L*(SERVO_BAL-SERVO_JOBB)*p_1s*(2*[min(p_1TCRTa,p_1TCRTb):max(p_1TCRTa,p_1TCRTb)]-p_1TCRTb-p_1TCRTa)/(2*f"
+	  "i_m*(L+d)*(p_1TCRTb-p_1TCRTa))"
 	  InterpMethod		  "Nearest"
 	  InternalRulePriority	  "Speed"
 	  RndMeth		  "Simplest"
@@ -2255,8 +2255,9 @@ Model {
 	  ZOrder		  52
 	  BlockMirror		  on
 	  NumberOfTableDimensions "1"
-	  BreakpointsForDimension1 "[p_1TCRTa-p_2TCRTb:p_1TCRTb-p_2TCRTa]"
-	  Table			  "atan((2*p_1s*[p_1TCRTa-p_2TCRTb:p_1TCRTb-p_2TCRTa]/(p_1TCRTb-p_1TCRTa)-p_1s+p_2s)/L_sensor)"
+	  BreakpointsForDimension1 "[min(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa):max(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa)]"
+	  Table			  "atan((2*p_1s*[min(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa):max(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa)]/(p_1TCR"
+	  "Tb-p_1TCRTa)-p_1s+p_2s)/L_sensor)"
 	  InterpMethod		  "Nearest"
 	  InternalRulePriority	  "Speed"
 	  RndMeth		  "Simplest"
@@ -2270,8 +2271,8 @@ Model {
 	  ZOrder		  53
 	  BlockMirror		  on
 	  NumberOfTableDimensions "1"
-	  BreakpointsForDimension1 "[p_1TCRTa:p_1TCRTb]"
-	  Table			  "p_1s*(2*[p_1TCRTa:p_1TCRTb]-p_1TCRTb-p_1TCRTa)/(p_1TCRTb-p_1TCRTa)"
+	  BreakpointsForDimension1 "[min(p_1TCRTa,p_1TCRTb):max(p_1TCRTa,p_1TCRTb)]"
+	  Table			  "p_1s*(2*[min(p_1TCRTa,p_1TCRTb):max(p_1TCRTa,p_1TCRTb)]-p_1TCRTb-p_1TCRTa)/(p_1TCRTb-p_1TCRTa)"
 	  InterpMethod		  "Nearest"
 	  InternalRulePriority	  "Speed"
 	  RndMeth		  "Simplest"
@@ -2285,8 +2286,8 @@ Model {
 	  ZOrder		  40
 	  BlockMirror		  on
 	  NumberOfTableDimensions "1"
-	  BreakpointsForDimension1 "[-p_1s:2*p_1s/(p_1TCRTb-p_1TCRTa):p_1s]"
-	  Table			  "round([-p_1s:2*p_1s/(p_1TCRTb-p_1TCRTa):p_1s]*(p_1TCRTb-p_1TCRTa)/(2*p_1s)+(p_1TCRTb+p_1TCRTa)/2)"
+	  BreakpointsForDimension1 "[-p_1s:2*p_1s/abs(p_1TCRTb-p_1TCRTa):p_1s]"
+	  Table			  "round([-p_1s:2*p_1s/abs(p_1TCRTb-p_1TCRTa):p_1s]*(p_1TCRTb-p_1TCRTa)/(2*p_1s)+(p_1TCRTb+p_1TCRTa)/2)"
 	  InterpMethod		  "Nearest"
 	  InternalRulePriority	  "Speed"
 	  RndMeth		  "Simplest"

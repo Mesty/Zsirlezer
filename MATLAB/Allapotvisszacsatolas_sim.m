@@ -21,8 +21,8 @@ delta_0 = 14; % Kezdeti vonalorientacio [fok]
 v = 3; % Sebesseg [m/s]
 % d_5s 5%-os beallasi ut
 % d_5s = a*v+b, ahol v sebesseg, a[s] meredekseg, b[m] konstans
-a = 0.5; % d_5s meredeksege [s]
-b = 0.3981; % d_5s 0 sebesseghez tartozo erteke [m]
+a = 0.3889; % d_5s meredeksege [s]
+b = 0.537; % d_5s 0 sebesseghez tartozo erteke [m]
 kszi = 0.9; % Csillapitasi tenyezo
 
 %% Osszes parameter (valtozoneveket atirni nem szabad, csak az ertekeket)
@@ -31,7 +31,7 @@ kszi = 0.9; % Csillapitasi tenyezo
 % Kormanyszervo parameterezese (jelenleg tanszeki modell alapjan)
 T_H = 0.02; % Holtido [s]
 T_M = 0.005; % Motor idoallandoja [s]
-fi_m = 20; % Kormanyszervo mechanikai korlatja az egyeneshez kepest [fok]
+fi_m = 24.5; % Kormanyszervo mechanikai korlatja az egyeneshez kepest [fok]
 m = 20/0.03; % Kormanyszervo szogsebesseg korlatja [fok/s]
 s_s = 100/9.806/9; % Maximalis szaturacio nelkuli szogsebesseg szoghibaja [fok]
 
@@ -64,8 +64,8 @@ p_1TCRTa = 100; % Elso szenzorsor minimalis erteke
 p_1TCRTb = 3200; % Elso szenzorsor maximalis erteke
 p_2TCRTa = 100; % Hatso szenzorsor minimalis erteke
 p_2TCRTb = 2400; % Hatso szenzorsor maximalis erteke
-SERVO_JOBB = 5644; % Legkisebb szoghoz tartozo PWM pulse
-SERVO_BAL = 7883; % Legnagyobb szoghoz tartozo PWM pulse
+SERVO_JOBB = 5860; % Legkisebb szoghoz tartozo PWM pulse
+SERVO_BAL = 8260; % Legnagyobb szoghoz tartozo PWM pulse
 
 % Kezdeti feltetelek
 %p_0 = p_0; % Kezdeti vonalpozicio [m]
