@@ -29,11 +29,11 @@ kszi = 0.9; % Csillapitasi tenyezo
 %  A gyakran valtoztatottak itt is megvannak, csak ki vannak kommentezve
 
 % Kormanyszervo parameterezese (jelenleg tanszeki modell alapjan)
-T_H = 0.03; % Holtido [s]
-T_M = 0.01; % Motor idoallandoja [s]
-fi_m = 14; % Kormanyszervo mechanikai korlatja az egyeneshez kepest [fok]
-m = 60/0.09; % Kormanyszervo szogsebesseg korlatja [fok/s]
-s_s = 52/3; % Maximalis szaturacio nelkuli szogsebesseg szoghibaja [fok]
+T_H = 0.02; % Holtido [s]
+T_M = 0.005; % Motor idoallandoja [s]
+fi_m = 20; % Kormanyszervo mechanikai korlatja az egyeneshez kepest [fok]
+m = 20/0.03; % Kormanyszervo szogsebesseg korlatja [fok/s]
+s_s = 100/9.806/9; % Maximalis szaturacio nelkuli szogsebesseg szoghibaja [fok]
 
 % Jarmu parameterezese
 L = 0.22; % Tengelytavolsag [m]
