@@ -660,9 +660,10 @@ char string[20];
 bool stop_safetycar=false;
 
 int32_t mmpersec_sebesseg=0;
-bool fekeztunk_mar=false;
+bool fekeztunk_mar=true;
 bool eltolt_gyorsulas=false;
 uint32_t start_tick=0;
+uint32_t start_tick_lassito=0;
 
 /* USER CODE END PV */
 
@@ -832,20 +833,29 @@ int main(void)
 				}
 		  }
 
-		  if(vonaltipus==LASSITO && fekeztunk_mar==false)
+		  if(fekeztunk_mar==false )
 		  {
-			  //fekezo_sebessegszabalyozo(mmpersec_sebesseg);
-			  motorpulsePWM=4000;
-			  if(velocity < 1250)
-				  fekeztunk_mar=true;
+				if(start_tick_lassito==0)
+					start_tick_lassito=timestamp;
+
+				if(timestamp-start_tick_lassito > 150)
+				{
+					mmpersec_sebesseg=1550;
+					start_tick_lassito=0;
+					fekeztunk_mar=true;
+				}
+				else
+				{
+					  if (encoder_diff > 3)
+						  motorpulsePWM=4000;
+					  else
+						  motorpulsePWM=6932;
+				}
 		  }
 		  else
 		  {
 			  sebessegszabalyozo(mmpersec_sebesseg);
 		  }
-
-		  if(vonaltipus!=LASSITO)
-			  fekeztunk_mar=false;
 
 
 		  tick=false;
@@ -1257,7 +1267,8 @@ void vonalminta_felismeres()
 
 void lassitora_mitcsinalunk()
 {
-	mmpersec_sebesseg=1550;
+	//mmpersec_sebesseg=1550;
+	fekeztunk_mar=false;
 }
 void gyorsitora_mitcsinalunk()
 {
