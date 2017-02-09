@@ -826,7 +826,7 @@ int main(void)
 
 				if(timestamp-start_tick > 60)
 				{
-					mmpersec_sebesseg=4300;
+					mmpersec_sebesseg=3800;
 					start_tick=0;
 					eltolt_gyorsulas=false;
 				}
@@ -834,9 +834,9 @@ int main(void)
 
 		  if(vonaltipus==LASSITO && fekeztunk_mar==false)
 		  {
-			  fekezo_sebessegszabalyozo(mmpersec_sebesseg);
-
-			  if(velocity < 1550)
+			  //fekezo_sebessegszabalyozo(mmpersec_sebesseg);
+			  motorpulsePWM=4000;
+			  if(velocity < 1250)
 				  fekeztunk_mar=true;
 		  }
 		  else
