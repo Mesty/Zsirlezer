@@ -694,6 +694,7 @@ void drone();
 void gyalogos();
 void korforgo();
 void hordo();
+void libikoka();
 void oldal_objektum_eszeleles();
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth);
 void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout);
@@ -969,6 +970,8 @@ int main(void)
 	  {
 		  hordo();
 	  }
+	  if((vonalobjektumtipus==LIBIKOKA_BALRA) || (vonalobjektumtipus==LIBIKOKA_JOBBRA))
+		  libikoka();
 
 	  //HORDONAL KAPCSOLJUK KI AZ OLDALOBJEKTUM ES VONALFIGYELEST
 	  //TOLATASNAL kapcsoljuk ki az oldalobjektum es voalfigyelest
@@ -1262,7 +1265,14 @@ void hordo()
 	}
 
 }
-
+void libikoka()
+{
+	// Elso SHARP-pal megnezzuk, hogy hol van a libikoka, majd felmegyunk ra pont annyira, hogy atbillenjen (encoderrel merjuk).
+	// Ha nagyon kemenyek vagyunk, akkor egy kicsit vissza is tolatunk, hogy visszabillenjen (szinten encoder).
+	// Aztan elindulunk lassan elore, megint addig, hogy visszabillenjen (encoder).
+	// Ezutan visszatesszuk az allapotot SIMA_VEZETOVONAL-ba, aztan mehet minden tovabb.
+	// A libikoka atbilleneset idozitovel varjuk meg. Tolataskor vonalszabalyozas ne legyen!
+}
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth)
 {
 	*filteredval=0;
