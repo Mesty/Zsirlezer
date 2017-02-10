@@ -99,6 +99,8 @@ void vonalszam(uint16_t* forrastomb, uint8_t hossz, uint8_t* vonaltipus);
 void utvonalvalasztas_szenzoradatokbol(uint16_t* forrastomb, uint8_t hossz, uint8_t irany);
 uint16_t min(uint16_t elso, uint16_t masodik, uint16_t harmadik, uint16_t negyedik, uint16_t otodik);
 void Minimumszuro_5(uint16_t* forrastomb, uint8_t hossz, uint16_t* szurt_ertekek_atlaga);
+uint16_t kozepso_elem_5(uint16_t elso, uint16_t masodik, uint16_t harmadik, uint16_t negyedik, uint16_t otodik);
+void Medianszuro5_es_atlag(uint16_t* forrastomb, uint8_t hossz, uint16_t* szurt_ertekek_atlaga);
 
 //UART
 void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout);
@@ -322,21 +324,20 @@ int main(void)
 
 		  //ADC adatok elkuldese ----------------------
 
-		 /* HAL_UART_Transmit(&huart1, &endline, 1 , 10000 );
-		  HAL_UART_Transmit(&huart1, &CR, 1, 1000);
 		  sendadcvals_to_uart(&huart1, szenzorertekek_elso[0], szenzorertekek_elso[1], szenzorertekek_elso[2], szenzorertekek_elso[3], 1000);
 		  HAL_UART_Transmit(&huart1, &endline, 1 , 10000 );
 		  HAL_UART_Transmit(&huart1, &CR, 1, 1000);
-		  send16bitdecimal_to_uart(&huart1, &threshold_elso, 1000);*/
+		  send16bitdecimal_to_uart(&huart1, &threshold_elso, 1000);
+		  HAL_UART_Transmit(&huart1, &endline, 1 , 10000 );
+		  HAL_UART_Transmit(&huart1, &CR, 1, 1000);
+		  sendadcvals_to_uart(&huart1, szenzorertekek_masodik[0], szenzorertekek_masodik[1], szenzorertekek_masodik[2],szenzorertekek_masodik[3] ,1000);
+		  HAL_UART_Transmit(&huart1, &endline, 1 , 10000 );
+		  HAL_UART_Transmit(&huart1, &CR, 1, 1000);
+		  send16bitdecimal_to_uart(&huart1, &threshold_masodik, 1000);
+		  HAL_UART_Transmit(&huart1, &endline, 1 , 10000 );
+		  HAL_UART_Transmit(&huart1, &CR, 1, 1000);
 
-		 // HAL_UART_Transmit(&huart1, &tab, 1, 1000);
-		  //sendadcvals_to_uart(&huart1, szenzorertekek_masodik[0], szenzorertekek_masodik[1], szenzorertekek_masodik[2],szenzorertekek_masodik[3] ,1000);
-		 // HAL_UART_Transmit(&huart1, &endline, 1 , 10000 );
-		 // HAL_UART_Transmit(&huart1, &CR, 1, 1000);
-		  //send16bitdecimal_to_uart(&huart1, &threshold_masodik, 1000);
-		  /*sprintf(&string,"..................\r\n");
-		  sprintf(&string,"%d\t%d",threshold_masodik, threshold_elso);
-		  HAL_UART_Transmit(&huart1, &string, sizeof(string)*sizeof(uint8_t), 10000);*/
+
 
 
 		  if(uartcsomagerkezett)
@@ -398,7 +399,10 @@ int main(void)
 		  {
 			  elkuldendo[2]= vonaltipus;
 		  }*/
-		  HAL_UART_Transmit_DMA(&huart1, elkuldendo, 5);
+
+
+		  /////FONTOS
+		  //HAL_UART_Transmit_DMA(&huart1, elkuldendo, 5);
 
 	  }
 
@@ -409,11 +413,15 @@ int main(void)
 	  for (int q=0; q<3; q++)
 		szenzorertekek_masodik[q][SPIIteracio-1]=adceredmenymasodik[q];
 	  }
-	  Minimumszuro_5(szenzorertekek_masodik, 24, &threshold_masodik);
+	  Medianszuro5_es_atlag(szenzorertekek_masodik, 24, &threshold_masodik);
+	  threshold_masodik+=300;
+	  if(threshold_masodik > 1000)
+		  threshold_masodik=1000;
+	  //Minimumszuro_5(szenzorertekek_masodik, 24, &threshold_masodik);
 	  //Thresholdozas
 	  for (int q=0; q<3; q++)
 	  {
-		  if (adceredmenymasodik[q] > threshold/*_masodik*/)
+		  if (adceredmenymasodik[q] > threshold_masodik)
 		  {
 			  szenzorertekek_thresholddal_masodik[q][SPIIteracio-1] = adceredmenymasodik[q];
 		  }
@@ -441,11 +449,15 @@ int main(void)
 	  {
 		szenzorertekek_elso[q][SPIIteracio-1]=adceredmenyelso[q];
 	  }
-	  Minimumszuro_5(szenzorertekek_elso, 32, &threshold_elso);
+	  Medianszuro5_es_atlag(szenzorertekek_elso, 32, &threshold_elso);
+	  threshold_elso+=300;
+	  if(threshold_elso > 1000)
+		  threshold_elso=1000;
+	  //Minimumszuro_5(szenzorertekek_elso, 32, &threshold_elso);
 	  //Thresholdozas
 	  for (int q=0; q<4; q++)
 	  {
-		  if (adceredmenyelso[q] > threshold/*_elso*/)
+		  if (adceredmenyelso[q] > threshold_elso)
 		  {
 			  szenzorertekek_thresholddal_elso[q][SPIIteracio-1] = adceredmenyelso[q];
 		  }
@@ -560,6 +572,23 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void Medianszuro5_es_atlag(uint16_t* forrastomb, uint8_t hossz, uint16_t* szurt_ertekek_atlaga)
+{
+	//OTOS MEDIAN
+	//A szeleken nem csinalunk semmit
+	//Visszaadjuk a szurt array atlagat
+	uint32_t sum=0;
+
+		for(int i=2; i<(hossz-2);i++)
+		{
+			sum+=kozepso_elem_5(forrastomb[i-2], forrastomb[i-1], forrastomb[i], forrastomb[i+1], forrastomb[i+2]);
+		}
+		sum+=forrastomb[0]+forrastomb[1]+forrastomb[hossz-1]+forrastomb[hossz-2];
+
+		*szurt_ertekek_atlaga = sum/hossz;
+
+
+}
 
 void Minimumszuro_5(uint16_t* forrastomb, uint8_t hossz, uint16_t* szurt_ertekek_atlaga)
 {
@@ -580,13 +609,58 @@ uint32_t sum=0;
 			sum+=min(forrastomb[i-2], forrastomb[i-1], forrastomb[i], forrastomb[i+1], forrastomb[i+2]);
 		}
 
-		*szurt_ertekek_atlaga = sum/hossz;
+		//*szurt_ertekek_atlaga = sum/hossz; // rossz helyen van !!!! egyel lejjebb kellene
 	}
+	*szurt_ertekek_atlaga = sum/hossz;//ide
 }
 uint16_t min(uint16_t elso, uint16_t masodik, uint16_t harmadik, uint16_t negyedik, uint16_t otodik)
 {
 	return fmin(fmin((fmin(elso,masodik)),(fmin(harmadik, negyedik))), otodik);
 }
+uint16_t kozepso_elem_5(uint16_t elso, uint16_t masodik, uint16_t harmadik, uint16_t negyedik, uint16_t otodik)
+{
+	//Selection sort: serach the minimum, then the second minimum, and the third is the median. The first min goes to elso, the second to masodik
+	uint16_t minimum=0;
+	uint16_t minimum2=0;
+	minimum=min(elso,masodik, harmadik, negyedik, otodik);
+	//csere: elso min
+	if(minimum==masodik)
+	{
+		masodik=elso;
+	}
+	else if(minimum==harmadik)
+	{
+		harmadik=elso;
+	}
+	else if(minimum==negyedik)
+	{
+		negyedik=elso;
+	}
+	else if(minimum==otodik)
+	{
+		otodik=elso; //nem kell
+	}
+	//elso=minimum;
+
+	minimum2=min(masodik, harmadik, negyedik, otodik, 4096);
+
+	if(minimum2==harmadik)
+	{
+		harmadik=masodik;
+	}
+	else if(minimum2==negyedik)
+	{
+		negyedik=masodik;
+	}
+	else if(minimum2==otodik)
+	{
+		otodik=masodik;
+	}
+	//masodik=minimum; // nem kell
+
+	return min(harmadik, negyedik, otodik, 4096, 4096);
+}
+
 
 void MUXselectkuldes(uint8_t* infraLEDminta)
 {
