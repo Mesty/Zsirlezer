@@ -18,11 +18,11 @@ clear scrsz defaultFigurePosition vonalorientacio str
 
 p_0 = 0.06; % Kezdeti vonalpozicio [m]
 delta_0 = 14; % Kezdeti vonalorientacio [fok]
-v = 3; % Sebesseg [m/s]
+v = 1.75; % Sebesseg [m/s]
 % d_5s 5%-os beallasi ut
 % d_5s = a*v+b, ahol v sebesseg, a[s] meredekseg, b[m] konstans
-a = 0.3889; % d_5s meredeksege [s]
-b = 0.537; % d_5s 0 sebesseghez tartozo erteke [m]
+a = 0.0857; % d_5s meredeksege [s]
+b = 0.6; % d_5s 0 sebesseghez tartozo erteke [m]
 kszi = 0.9; % Csillapitasi tenyezo
 
 %% Osszes parameter (valtozoneveket atirni nem szabad, csak az ertekeket)

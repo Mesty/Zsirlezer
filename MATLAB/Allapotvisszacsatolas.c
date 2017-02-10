@@ -543,8 +543,8 @@ float atan_lut[5400] = {
 	 2229.4085, 2229.8662, 2230.3238, 2230.7812, 2231.2384, 2231.6953, 2232.1521, 2232.6086, 2233.065, 2233.5247};
  
 // A szabalyozas megvalositasa < 1.25 m/s sebessegeknel
-*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.5*sebesseg_a_szabalyozonak+0.3981)*(0.5*sebesseg_a_szabalyozonak+0.3981))+(0.21008-0.81*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.5*sebesseg_a_szabalyozonak+0.3981)*(0.5*sebesseg_a_szabalyozonak+0.3981))+5930);
+*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.0857*sebesseg_a_szabalyozonak+0.6)*(0.0857*sebesseg_a_szabalyozonak+0.6))+(-0.117-0.13883*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.0857*sebesseg_a_szabalyozonak+0.6)*(0.0857*sebesseg_a_szabalyozonak+0.6))+5930);
 // A szabalyozas megvalositasa > 1.25 m/s sebessegeknel
-*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+(0.81758-1.296*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+5930);
+*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.6923*sebesseg_a_szabalyozonak-0.4615)*(0.6923*sebesseg_a_szabalyozonak-0.4615))+(1.6026-1.1215*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.6923*sebesseg_a_szabalyozonak-0.4615)*(0.6923*sebesseg_a_szabalyozonak-0.4615))+5930);
 // A szabalyozas megvalositasa a gyorsito szakaszon
 *PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.3889*sebesseg_a_szabalyozonak+0.537)*(0.3889*sebesseg_a_szabalyozonak+0.537))+(-0.01494-0.63002*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.3889*sebesseg_a_szabalyozonak+0.537)*(0.3889*sebesseg_a_szabalyozonak+0.537))+5930);
