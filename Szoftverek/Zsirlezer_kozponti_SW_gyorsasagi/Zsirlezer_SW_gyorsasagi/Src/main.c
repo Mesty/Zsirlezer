@@ -974,7 +974,7 @@ void allapotteres_szabalyozo_kanyar_kijarat(uint16_t* pozicio, int16_t* orientac
 
 	if(*sebesseg < 1250)
 		//lassu, kanyarkijarat
-		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.5*sebesseg_a_szabalyozonak+0.5)*(0.5*sebesseg_a_szabalyozonak+0.5))+(0.045-0.81*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.5*sebesseg_a_szabalyozonak+0.5)*(0.5*sebesseg_a_szabalyozonak+0.5))+5930);
+		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.0*sebesseg_a_szabalyozonak+0.537)*(0.0*sebesseg_a_szabalyozonak+0.537))+(-0.014940*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.0*sebesseg_a_szabalyozonak+0.537)*(0.0*sebesseg_a_szabalyozonak+0.537))+5930);
 	else
 		//gyors
 		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.5*sebesseg_a_szabalyozonak+0.5)*(0.5*sebesseg_a_szabalyozonak+0.5))+(0.045-0.81*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.5*sebesseg_a_szabalyozonak+0.5)*(0.5*sebesseg_a_szabalyozonak+0.5))+5930);
@@ -991,7 +991,7 @@ void allapotteres_szabalyozo_default(uint16_t* pozicio, int16_t* orientacio, int
 
 	if(*sebesseg < 1250)
 		//lassu, kanyar alatt
-		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.5*sebesseg_a_szabalyozonak+0.5)*(0.5*sebesseg_a_szabalyozonak+0.5))+(0.045-0.81*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.5*sebesseg_a_szabalyozonak+0.5)*(0.5*sebesseg_a_szabalyozonak+0.5))+5930);
+		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.0*sebesseg_a_szabalyozonak+0.537)*(0.0*sebesseg_a_szabalyozonak+0.537))+(-0.014940*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.0*sebesseg_a_szabalyozonak+0.537)*(0.0*sebesseg_a_szabalyozonak+0.537))+5930);
 	else
 		//gyors
 		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.5*sebesseg_a_szabalyozonak+0.5)*(0.5*sebesseg_a_szabalyozonak+0.5))+(0.045-0.81*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.5*sebesseg_a_szabalyozonak+0.5)*(0.5*sebesseg_a_szabalyozonak+0.5))+5930);
