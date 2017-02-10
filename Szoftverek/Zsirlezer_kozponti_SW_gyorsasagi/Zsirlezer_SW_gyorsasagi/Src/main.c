@@ -785,7 +785,7 @@ int main(void)
   //Vonalszenzortol uzenetek fogadasa
   HAL_UART_Receive_DMA(&huart1, uzenetarray, 5);
 
-  //Alap sebesseg megadasa
+  //Alap sebesseg megadasa  D
  // motorpulsePWM = 7300;
   mmpersec_sebesseg=1200;
 
