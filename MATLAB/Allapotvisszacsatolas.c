@@ -543,8 +543,8 @@ float atan_lut[5400] = {
 	 2026.7383, 2027.1544, 2027.5704, 2027.9862, 2028.4018, 2028.8172, 2029.2324, 2029.6475, 2030.0623, 2030.477};
  
 // A szabalyozas megvalositasa < 1.25 m/s sebessegeknel
-*PWMeredmeny = (uint32_t) (-269.1641*(2*((float)*pozicio)-3300)/(-1325.5776*(0.5*sebesseg_a_szabalyozonak+0.3981)*(0.5*sebesseg_a_szabalyozonak+0.3981))-(0.21008-0.81*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.5*sebesseg_a_szabalyozonak+0.3981)*(0.5*sebesseg_a_szabalyozonak+0.3981))+7060);
+*PWMeredmeny = (uint32_t) (296.0805*(2*((float)*pozicio)-3300)/(-1325.5776*(0.5*sebesseg_a_szabalyozonak+0.3981)*(0.5*sebesseg_a_szabalyozonak+0.3981))-(0.21008-0.81*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.5*sebesseg_a_szabalyozonak+0.3981)*(0.5*sebesseg_a_szabalyozonak+0.3981))+5930);
 // A szabalyozas megvalositasa > 1.25 m/s sebessegeknel
-*PWMeredmeny = (uint32_t) (-269.1641*(2*((float)*pozicio)-3300)/(-1325.5776*(0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))-(0.81758-1.296*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+7060);
+*PWMeredmeny = (uint32_t) (296.0805*(2*((float)*pozicio)-3300)/(-1325.5776*(0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))-(0.81758-1.296*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+5930);
 // A szabalyozas megvalositasa a gyorsito szakaszon
-*PWMeredmeny = (uint32_t) (-269.1641*(2*((float)*pozicio)-3300)/(-1325.5776*(0.3889*sebesseg_a_szabalyozonak+0.537)*(0.3889*sebesseg_a_szabalyozonak+0.537))-(-0.01494-0.63002*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.3889*sebesseg_a_szabalyozonak+0.537)*(0.3889*sebesseg_a_szabalyozonak+0.537))+7060);
+*PWMeredmeny = (uint32_t) (296.0805*(2*((float)*pozicio)-3300)/(-1325.5776*(0.3889*sebesseg_a_szabalyozonak+0.537)*(0.3889*sebesseg_a_szabalyozonak+0.537))-(-0.01494-0.63002*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.3889*sebesseg_a_szabalyozonak+0.537)*(0.3889*sebesseg_a_szabalyozonak+0.537))+5930);
