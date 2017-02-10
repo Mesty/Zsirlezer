@@ -1298,22 +1298,32 @@ void libikoka()
 			encoder_libikoka_lejto=encoder1;
 	}
 
-	if(encoder1 - encoder_libikoka_lejto > 8025 && encoder_libikoka_lejto!=0)
+	if(encoder1 - encoder_libikoka_lejto > 1500 && encoder_libikoka_lejto!=0 && vonalat_ignoraljuk==false)
+	{
+		vonalat_ignoraljuk=true;
+		oldalobjektumfigyelest_ignoraljuk=true;
+	}
+
+	if(encoder1 - encoder_libikoka_lejto > 8000 && encoder_libikoka_lejto!=0 && stop_libikoka==false)
 	{
 		stop_libikoka=true;
-		motorpulsePWM=7000;
+		//motorpulsePWM=7000;
 		libikoka_stop_kezdete=timestamp;
-		stop_drone=true;//
+		stop_drone=true;///
 
 	}
 
-	if(stop_libikoka==true && timestamp-libikoka_stop_kezdete > 300 && libikoka_stop_kezdete!=0)
+	if(timestamp-libikoka_stop_kezdete > 300 && libikoka_stop_kezdete!=0)
 	{
 		stop_libikoka=false;
-		stop_drone=true;
+		stop_drone=false;
+		motorpulsePWM=7252;
+		vonalat_ignoraljuk=false;
+		oldalobjektumfigyelest_ignoraljuk=false;
+
 	}
 
-	if(stop_libikoka==false && timestamp-libikoka_stop_kezdete > 450 && libikoka_stop_kezdete!=0)
+	/*if(stop_libikoka==false && timestamp-libikoka_stop_kezdete > 450 && libikoka_stop_kezdete!=0)
 	{
 		motorpulsePWM=7252;
 		stop_drone=false;
@@ -1322,7 +1332,7 @@ void libikoka()
 		encoder_libikoka_lejto=0;
 		encoder_libikoka_start=0;
 		libikoka_stop_kezdete=0;
-	}
+	}*/
 
 
 
@@ -1632,14 +1642,14 @@ void oldal_objektum_eszeleles()
 					vonalobjektumtipus=LIBIKOKA_BALRA;
 					uartcsomagokszama_vonalszenzor=0;
 					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
-					merre_menjunk_ha_van_oldalfal=BAL; //JOBB;gany ///!!!!!
+					merre_menjunk_ha_van_oldalfal=JOBB; //JOBB;gany ///!!!!!
 				}
 				if(bordas==false && elozo_oldal==BAL)
 				{
 					vonalobjektumtipus=LIBIKOKA_JOBBRA;
 					uartcsomagokszama_vonalszenzor=0;
 					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
-					merre_menjunk_ha_van_oldalfal=JOBB; //BAL;gany ////!!!!!!
+					merre_menjunk_ha_van_oldalfal=BAL; //BAL;gany ////!!!!!!
 				}
 
 				if(elozo_oldal==MINDKET_OLDAL && (oldal==BAL || oldal==JOBB))
