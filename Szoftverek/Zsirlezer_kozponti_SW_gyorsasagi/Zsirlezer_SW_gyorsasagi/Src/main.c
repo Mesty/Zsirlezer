@@ -1214,7 +1214,7 @@ void vonalminta_felismeres()
 	}
 
 
-	if(vonaltipus==HAROMVONAL && vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 2220 && haromvonalak_szama==1 && voltmaregyvonal==false) //30cm utan csak egy osszefuggo 3 vonal: lassito
+	if(vonaltipus==HAROMVONAL && vonalfigyeles_aktiv==true && encoder_aktualis-startpozicio > 1000 && haromvonalak_szama==1 && voltmaregyvonal==false) //legyen inkabb 13 cm //30cm - 2220 utan csak egy osszefuggo 3 vonal: lassito
 	{
 		vonalminta=LASSITO;
 		//reset all
