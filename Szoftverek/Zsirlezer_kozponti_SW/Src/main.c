@@ -638,7 +638,7 @@ bool stop_deadman = false;
 bool stop_drone = false;
 bool stop_gyalogos = false;
 bool stop_cel = false;
-volatile bool stop_radios_modulra_var = true;
+volatile bool stop_radios_modulra_var = false; ////
 volatile uint8_t radios_uart_vevo = 0;
 int32_t motorpulsePWM;
 volatile uint32_t timestamp = 0;
@@ -648,6 +648,7 @@ volatile bool dovelocitymeasurement=false;
 uint8_t uartcsomagokszama_vonalszenzor=10;
 uint8_t merre_menjunk_ha_van_oldalfal=0;
 uint32_t utvalaszto_encoder_start=0;
+bool stop_libikoka=false;
 
 bool stop_hordo=false;
 
@@ -875,7 +876,7 @@ int main(void)
 		  stop_deadman = true;
 	  else
 		  stop_deadman = false;
-	  if (stop_deadman || stop_drone || stop_gyalogos || stop_radios_modulra_var || stop_hordo || stop_cel)
+	  if (stop_deadman || stop_drone || stop_gyalogos || stop_radios_modulra_var || stop_hordo || stop_cel )
 		  stop = true;
 	  else
 		  stop = false;
@@ -901,9 +902,9 @@ int main(void)
 		  WMAfilter(&SHARP_R,SHARPData2+1,SHARP_R_ARRAY,20);
 		  WMAfilter(&SHARP_L,SHARPData2+2,SHARP_L_ARRAY,20);
 
-		  sprintf(&string,"..................\r\n");
+		/*  sprintf(&string,"..................\r\n");
 		  sprintf(&string,"%d\t%d\t%d",SHARP_L,SHARP_R, SHARP_F);
-		  HAL_UART_Transmit(&huart2, &string, sizeof(string)*sizeof(uint8_t), 10000);
+		  HAL_UART_Transmit(&huart2, &string, sizeof(string)*sizeof(uint8_t), 10000);*/
 		 /* SHARP_F=SHARPData[0];
 		  SHARP_R=SHARPData[1];
 		  SHARP_L=SHARPData[2];*/
@@ -921,14 +922,7 @@ int main(void)
 			  encoder1=actualencoderval*2;//valami rossza az enkoderrel, valszeg nem kapjuk meg az egyik channelt
 			  encoderdiff=encoder1-encoderprev;
 			  velocity=encoderdiff*10000/743;//velocity=((encoderdiff*10000)/743); //v[mm/s]
-			  //filteredvelocitydiff=-filteredvelocity;
-			  //WMAfilter(&filteredvelocity, &velocity, velocityarray, 4);
-			  /*if(filteredvelocity>=0)
-				  velocityabs = filteredvelocity;
-			  else
-				  velocityabs = -filteredvelocity;*/
 			  encoderprev=encoder1;
-			  //filteredvelocitydiff+=filteredvelocity;
 		  }
 		  else
 		  {
@@ -1272,6 +1266,68 @@ void libikoka()
 	// Aztan elindulunk lassan elore, megint addig, hogy visszabillenjen (encoder).
 	// Ezutan visszatesszuk az allapotot SIMA_VEZETOVONAL-ba, aztan mehet minden tovabb.
 	// A libikoka atbilleneset idozitovel varjuk meg. Tolataskor vonalszabalyozas ne legyen!
+	/*static int32_t encoder_libikoka_start = 0;
+	static uint32_t timestamp_elso_atbillentes_kezdetekor = 0;
+	if((encoder_libikoka_start == 0) && (SHARP_F > 1000))// random kamu szam, ekkora ADC erteknel vesszuk eszre a libikokat
+	{
+		encoder_libikoka_start = encoder1;
+		motorpulsePWM = 7332; // random szam, lenyeg, hogy ne repesszunk a libikokan, hanem szepen lassan menjunk fel
+	}
+	if((timestamp_elso_atbillentes_kezdetekor) && (encoder1 - encoder_libikoka_start > 3000)) // random kamu szam, ennyit kell menni a libikoka eszrevetele utan
+		timestamp_elso_atbillentes_kezdetekor = timestamp;
+	if(timestamp - timestamp_elso_atbillentes_kezdetekor > 500) // random szam, TFH 5 s alatt billen at a libikoka
+	{
+
+	}*/
+	static int32_t velocity_start=0;
+	static int32_t encoder_libikoka_start=0;
+	static int32_t encoder_libikoka_lejto=0;
+	static uint32_t libikoka_stop_kezdete=0;
+
+	motorpulsePWM=7500;
+	if(encoder_libikoka_start==0)
+	{
+		velocity_start=velocity;
+		encoder_libikoka_start=encoder1;
+	}
+	//if(encoder_libikoka_start > 1100 && encoder_libikoka_start != 0) //15cm
+
+	if(velocity_start!=0 && velocity < (velocity_start-200))
+	{
+		if(encoder_libikoka_lejto==0)
+			encoder_libikoka_lejto=encoder1;
+	}
+
+	if(encoder1 - encoder_libikoka_lejto > 8025 && encoder_libikoka_lejto!=0)
+	{
+		stop_libikoka=true;
+		motorpulsePWM=7000;
+		libikoka_stop_kezdete=timestamp;
+		stop_drone=true;//
+
+	}
+
+	if(stop_libikoka==true && timestamp-libikoka_stop_kezdete > 300 && libikoka_stop_kezdete!=0)
+	{
+		stop_libikoka=false;
+		stop_drone=true;
+	}
+
+	if(stop_libikoka==false && timestamp-libikoka_stop_kezdete > 450 && libikoka_stop_kezdete!=0)
+	{
+		motorpulsePWM=7252;
+		stop_drone=false;
+		vonalobjektumtipus=SIMA_VEZETOVONAL;
+		velocity_start=0;
+		encoder_libikoka_lejto=0;
+		encoder_libikoka_start=0;
+		libikoka_stop_kezdete=0;
+	}
+
+
+
+
+
 }
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth)
 {
@@ -1614,11 +1670,11 @@ void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* se
 {
 	float arctaneredmeny;
 	arctaneredmeny=atan_lut[*orientacio+2300];
-	*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))-(-0.855-0.00063*(0.0))*arctaneredmeny/((0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))+6763.5);
-	if(*PWMeredmeny > 7883)
-		*PWMeredmeny=7883;
-	else if(*PWMeredmeny < 5644)
-		*PWMeredmeny=5644;
+	*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(1082.1041*(0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))-(-0.855-0.00063*(0.0))*arctaneredmeny/((0.00038889*(0.0)+1.0556)*(0.00038889*(0.0)+1.0556))+5930.0);
+	if(*PWMeredmeny > 7250)
+		*PWMeredmeny=7250;
+	else if(*PWMeredmeny < 4610)
+		*PWMeredmeny=4610;
 
 	//*PWMeredmeny = (uint32_t) ( -3.1667*((float)*pozicio)/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+(-0.855-0.00063*((float)*sebesseg))*arctaneredmeny/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+6763.5);
 }
