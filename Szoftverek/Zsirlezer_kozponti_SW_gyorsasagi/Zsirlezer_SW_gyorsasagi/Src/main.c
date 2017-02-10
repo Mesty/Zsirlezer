@@ -972,12 +972,18 @@ void allapotteres_szabalyozo_kanyar_kijarat(uint16_t* pozicio, int16_t* orientac
 	float sebesseg_a_szabalyozonak = 0.0;
 	sebesseg_a_szabalyozonak=((float)*sebesseg)/1000.0; //[m/s]
 
-	if(*sebesseg < 1250)
+	if(*sebesseg < 1750)
+		//uj
+		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.0857*sebesseg_a_szabalyozonak+0.6)*(0.0857*sebesseg_a_szabalyozonak+0.6))+(-0.117-0.13883*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.0857*sebesseg_a_szabalyozonak+0.6)*(0.0857*sebesseg_a_szabalyozonak+0.6))+5930);
+
 		//lassu, kanyarkijarat
-		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.11112*sebesseg_a_szabalyozonak+0.3981)*(0.11112*sebesseg_a_szabalyozonak+0.3981))+(0.21008-0.18001*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.11112*sebesseg_a_szabalyozonak+0.3981)*(0.11112*sebesseg_a_szabalyozonak+0.3981))+5930);
+		//*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.11112*sebesseg_a_szabalyozonak+0.3981)*(0.11112*sebesseg_a_szabalyozonak+0.3981))+(0.21008-0.18001*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.11112*sebesseg_a_szabalyozonak+0.3981)*(0.11112*sebesseg_a_szabalyozonak+0.3981))+5930);
 	else
+		//uj
+		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.6923*sebesseg_a_szabalyozonak-0.4615)*(0.6923*sebesseg_a_szabalyozonak-0.4615))+(1.6026-1.1215*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.6923*sebesseg_a_szabalyozonak-0.4615)*(0.6923*sebesseg_a_szabalyozonak-0.4615))+5930);
+
 		//gyors
-		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.6568*sebesseg_a_szabalyozonak-0.284)*(0.6568*sebesseg_a_szabalyozonak-0.284))+(1.3151-1.064*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((00.6568*sebesseg_a_szabalyozonak-0.284)*(0.6568*sebesseg_a_szabalyozonak-0.284))+5930);
+		//*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.6568*sebesseg_a_szabalyozonak-0.284)*(0.6568*sebesseg_a_szabalyozonak-0.284))+(1.3151-1.064*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((00.6568*sebesseg_a_szabalyozonak-0.284)*(0.6568*sebesseg_a_szabalyozonak-0.284))+5930);
 
 	if(*PWMeredmeny > 7250)
 		*PWMeredmeny=7250;
