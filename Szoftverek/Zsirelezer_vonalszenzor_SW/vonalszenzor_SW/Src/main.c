@@ -190,6 +190,8 @@ int main(void)
 	 bool uartcsomag_elkapva=false;
 	 char string[20];
 
+	 uint8_t ciklusszamlalo=0;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -241,6 +243,13 @@ int main(void)
 	  //szenzorertekek teljes feldolgozasa a 8. iteracioban + UART kuldes
 	  if(infraLEDminta==0b00000010)
 	  {
+		  /*ciklusszamlalo++;
+		  if(ciklusszamlalo > 100)
+		  {
+			  ciklusszamlalo=0;
+			  Medianszuro5_es_atlag(szenzorertekek_masodik, 24, &threshold_masodik);
+			  Medianszuro5_es_atlag(szenzorertekek_elso, 32, &threshold_elso);
+		  }*/
 
 		  //ELSO szenzorsor -----------
 		  //FONTOS! Egyes fuggvenyek a megkapott tomboket manipulaljak, igy a sorrendjuk nem mindegy!!!
@@ -413,7 +422,6 @@ int main(void)
 	  for (int q=0; q<3; q++)
 		szenzorertekek_masodik[q][SPIIteracio-1]=adceredmenymasodik[q];
 	  }
-	  Medianszuro5_es_atlag(szenzorertekek_masodik, 24, &threshold_masodik);
 	  threshold_masodik+=200;
 	  if(threshold_masodik > 1000)
 		  threshold_masodik=1000;
@@ -449,7 +457,6 @@ int main(void)
 	  {
 		szenzorertekek_elso[q][SPIIteracio-1]=adceredmenyelso[q];
 	  }
-	  Medianszuro5_es_atlag(szenzorertekek_elso, 32, &threshold_elso);
 	  threshold_elso+=200;
 	  if(threshold_elso > 1000)
 		  threshold_elso=1000;
@@ -615,7 +622,22 @@ uint32_t sum=0;
 }
 uint16_t min(uint16_t elso, uint16_t masodik, uint16_t harmadik, uint16_t negyedik, uint16_t otodik)
 {
-	return fmin(fmin((fmin(elso,masodik)),(fmin(harmadik, negyedik))), otodik);
+	uint16_t minimum;
+
+	if(elso < masodik)
+		minimum=elso;
+	else
+		minimum=masodik;
+
+	if(minimum > harmadik)
+		minimum=harmadik;
+	if(minimum > negyedik)
+		minimum=negyedik;
+	if(minimum > otodik)
+		minimum=otodik;
+
+	return minimum;
+
 }
 uint16_t kozepso_elem_5(uint16_t elso, uint16_t masodik, uint16_t harmadik, uint16_t negyedik, uint16_t otodik)
 {
