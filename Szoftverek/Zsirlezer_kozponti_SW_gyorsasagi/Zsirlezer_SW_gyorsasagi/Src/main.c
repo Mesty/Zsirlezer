@@ -642,6 +642,8 @@ int32_t encoder_elozo=0;
 int32_t encoder_diff=0;
 int32_t velocity;
 HAL_TIM_StateTypeDef encoder_state;
+int32_t encoder_diff_WMA=0;
+int32_t encoder_diff_array[4]={0,0,0,0};
 
 //Vonalszenzor UART
 volatile bool vonalszenzor_uzenetjott=false;
@@ -820,6 +822,8 @@ int main(void)
 			 // Safety_car();
 		  }
 
+
+
 		  if(eltolt_gyorsulas)
 		  {
 				if(start_tick==0)
@@ -827,7 +831,7 @@ int main(void)
 
 				if(timestamp-start_tick > 60)
 				{
-					mmpersec_sebesseg=3800;
+					mmpersec_sebesseg=3500;
 					start_tick=0;
 					eltolt_gyorsulas=false;
 				}
@@ -1022,6 +1026,7 @@ void Encoder_beolvasas() //!!!Fix idokozonkent kell hivni, szamit ra a fuggveny 
 		  encoder_diff=encoder_aktualis-encoder_elozo;
 		  velocity=encoder_diff*10000/743;//velocity=((encoderdiff*10000)/743); //v[mm/s]
 		  encoder_elozo=encoder_aktualis;
+		  WMAfilter(&encoder_diff_WMA, &encoder_diff, encoder_diff_array, 4);
 	  }
 	  else
 	  {
