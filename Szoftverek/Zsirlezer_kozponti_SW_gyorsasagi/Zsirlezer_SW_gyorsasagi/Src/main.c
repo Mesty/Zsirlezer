@@ -974,15 +974,15 @@ void allapotteres_szabalyozo_kanyar_kijarat(uint16_t* pozicio, int16_t* orientac
 
 	if(*sebesseg < 1250)
 		//lassu, kanyarkijarat
-		*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.3889*sebesseg_a_szabalyozonak+0.537)*(0.3889*sebesseg_a_szabalyozonak+0.537))+(-0.01494-0.63002*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.3889*sebesseg_a_szabalyozonak+0.537)*(0.3889*sebesseg_a_szabalyozonak+0.537))+6763.5);
+		*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.3889*sebesseg_a_szabalyozonak+0.537)*(0.3889*sebesseg_a_szabalyozonak+0.537))+(-0.01494-0.63002*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.3889*sebesseg_a_szabalyozonak+0.537)*(0.3889*sebesseg_a_szabalyozonak+0.537))+5930);
 	else
 		//gyors
-		*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+(0.81758-1.296*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+6763.5);
+		*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+(0.81758-1.296*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+5930);
 
-	if(*PWMeredmeny > 7883)
-		*PWMeredmeny=7883;
-	else if(*PWMeredmeny < 5644)
-		*PWMeredmeny=5644;
+	if(*PWMeredmeny > 7250)
+		*PWMeredmeny=7250;
+	else if(*PWMeredmeny < 4610)
+		*PWMeredmeny=4610;
 }
 void allapotteres_szabalyozo_default(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny)
 {
@@ -994,7 +994,7 @@ void allapotteres_szabalyozo_default(uint16_t* pozicio, int16_t* orientacio, int
 		*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.5*sebesseg_a_szabalyozonak+0.3981)*(0.5*sebesseg_a_szabalyozonak+0.3981))+(0.21008-0.81*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.5*sebesseg_a_szabalyozonak+0.3981)*(0.5*sebesseg_a_szabalyozonak+0.3981))+6763.5);
 	else
 		//gyors
-		*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+(0.81758-1.296*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.8*sebesseg_a_szabalyozonak+0.0231)*(0.8*sebesseg_a_szabalyozonak+0.0231))+6763.5);
+		*PWMeredmeny = (uint32_t) (-251.1077*(2*((float)*pozicio)-3300)/(757.4729*(0.5*sebesseg_a_szabalyozonak+0.3981)*(0.5*sebesseg_a_szabalyozonak+0.3981))+(0.21008-0.81*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.5*sebesseg_a_szabalyozonak+0.3981)*(0.5*sebesseg_a_szabalyozonak+0.3981))+6763.5);
 
 	if(*PWMeredmeny > 7883)
 		*PWMeredmeny=7883;
