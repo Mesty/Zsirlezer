@@ -244,7 +244,7 @@ int main(void)
 
 		  //ELSO szenzorsor -----------
 		  //FONTOS! Egyes fuggvenyek a megkapott tomboket manipulaljak, igy a sorrendjuk nem mindegy!!!
-		  koszszures(szenzorertekek_thresholddal_elso, 32);
+		 // koszszures(szenzorertekek_thresholddal_elso, 32);
 		  vonalszam(szenzorertekek_thresholddal_elso, 32, &vonaltipus);
 		  visszajelzesthresholdolttombbol(szenzorertekek_thresholddal_elso, visszajelzoLEDminta, 32);
 
@@ -282,7 +282,7 @@ int main(void)
 
 		  //MASODIK szenzorsor ---------------------
 		  //FONTOS! Egyes fuggvenyek a megkapott tomboket manipulaljak, igy a sorrendjuk nem mindegy!!!
-		  koszszures(szenzorertekek_thresholddal_masodik, 24);
+		 // koszszures(szenzorertekek_thresholddal_masodik, 24);
 
 		  //Ha kell utvonalat valasztani az ugyessegin, akkor a thresholdolt tombot manipulaljuk
 		  //Csak a megfelelo iranyban levo vonal marad meg, ebbol szamoljuk a poziciot
@@ -324,7 +324,7 @@ int main(void)
 
 		  //ADC adatok elkuldese ----------------------
 
-		  sendadcvals_to_uart(&huart1, szenzorertekek_elso[0], szenzorertekek_elso[1], szenzorertekek_elso[2], szenzorertekek_elso[3], 1000);
+		/*  sendadcvals_to_uart(&huart1, szenzorertekek_elso[0], szenzorertekek_elso[1], szenzorertekek_elso[2], szenzorertekek_elso[3], 1000);
 		  HAL_UART_Transmit(&huart1, &endline, 1 , 10000 );
 		  HAL_UART_Transmit(&huart1, &CR, 1, 1000);
 		  send16bitdecimal_to_uart(&huart1, &threshold_elso, 1000);
@@ -336,7 +336,7 @@ int main(void)
 		  send16bitdecimal_to_uart(&huart1, &threshold_masodik, 1000);
 		  HAL_UART_Transmit(&huart1, &endline, 1 , 10000 );
 		  HAL_UART_Transmit(&huart1, &CR, 1, 1000);
-
+*/
 
 
 
@@ -402,7 +402,7 @@ int main(void)
 
 
 		  /////FONTOS
-		  //HAL_UART_Transmit_DMA(&huart1, elkuldendo, 5);
+		  HAL_UART_Transmit_DMA(&huart1, elkuldendo, 5);
 
 	  }
 
@@ -414,7 +414,7 @@ int main(void)
 		szenzorertekek_masodik[q][SPIIteracio-1]=adceredmenymasodik[q];
 	  }
 	  Medianszuro5_es_atlag(szenzorertekek_masodik, 24, &threshold_masodik);
-	  threshold_masodik+=300;
+	  threshold_masodik+=200;
 	  if(threshold_masodik > 1000)
 		  threshold_masodik=1000;
 	  //Minimumszuro_5(szenzorertekek_masodik, 24, &threshold_masodik);
@@ -450,7 +450,7 @@ int main(void)
 		szenzorertekek_elso[q][SPIIteracio-1]=adceredmenyelso[q];
 	  }
 	  Medianszuro5_es_atlag(szenzorertekek_elso, 32, &threshold_elso);
-	  threshold_elso+=300;
+	  threshold_elso+=200;
 	  if(threshold_elso > 1000)
 		  threshold_elso=1000;
 	  //Minimumszuro_5(szenzorertekek_elso, 32, &threshold_elso);
