@@ -701,6 +701,8 @@ void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32
 void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout);
 void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny);
 void vonal_objektum_eszleles_ugyessegi (uint8_t vonaltipus, uint8_t* objektumtipus);
+void celfigyeles(uint8_t vonaltipus);
+
 
 
 /* USER CODE END PFP */
@@ -848,8 +850,7 @@ int main(void)
   while (1)
   {
 
-	  if(voltmarkorforgo==true && vonaltipus==FULLVONAL)
-		  stop_cel=true;
+	  celfigyeles(vonaltipus);
 	 /* vonalobjektumtipus+=48;
 	  HAL_UART_Transmit(&huart2, &vonalobjektumtipus, sizeof(uint8_t), 1000);
 	  vonalobjektumtipus-=48;
@@ -964,8 +965,8 @@ int main(void)
 	  {
 		  hordo();
 	  }
-	  if((vonalobjektumtipus==LIBIKOKA_BALRA) || (vonalobjektumtipus==LIBIKOKA_JOBBRA))
-		  libikoka();
+	/*  if((vonalobjektumtipus==LIBIKOKA_BALRA) || (vonalobjektumtipus==LIBIKOKA_JOBBRA))
+		  libikoka();*/
 
 	  //HORDONAL KAPCSOLJUK KI AZ OLDALOBJEKTUM ES VONALFIGYELEST
 	  //TOLATASNAL kapcsoljuk ki az oldalobjektum es voalfigyelest
@@ -1151,18 +1152,18 @@ void korforgo()
 		startpozicio=encoder1;
 		elso_iteracio=true;
 
-	if (SHARP_L > 700 && irany==0)
+	if (SHARP_L > 600 && irany==0)
 	{
 		irany=BAL;
 	}
-	else if (SHARP_R > 700 && irany==0)
+	else if (SHARP_R > 550 && irany==0)
 	{
 		irany = JOBB;
 	}
 
 	if(irany!=0 && kanyarodunk==false)
 	{
-		if(encoder1-startpozicio > 12300) //165 cm a vonalminta felismeresetol //4100) //55cm utan forditjuk a kanyart
+		if(encoder1-startpozicio > 10500) //165 cm a vonalminta felismeresetol //4100) //55cm utan forditjuk a kanyart
 		{
 			kanyarodunk=true;
 			//vonalszenzort nem figyeljuk
@@ -1171,11 +1172,11 @@ void korforgo()
 			//kanyarodunk
 			if(irany==BAL)
 			{
-				  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 5644);
+				  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 5150); //5176
 			}
 			else //jobb
 			{
-				  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 7883);
+				  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 7000); //6684
 			}
 			//elmentjuk a poziciot
 			kanyarstartpozicio=encoder1;
@@ -1184,7 +1185,7 @@ void korforgo()
 	if(kanyarodunk==true)
 	{
 		//Ha az enkoder ertek eleg nagy 340 fok, kilepunk, -> normal vezetovonal, es vonalfigyeles, kanyar false
-		if(irany==BAL && (encoder1 - kanyarstartpozicio > 39000) )
+		if(irany==BAL && (encoder1 - kanyarstartpozicio > 41500) )
 		{
 			kanyarodunk=false;
 			vonalat_ignoraljuk=false;
@@ -1199,7 +1200,7 @@ void korforgo()
 			voltmarkorforgo=true;
 
 		}
-		else if(irany==JOBB && (encoder1-kanyarstartpozicio > 35000))
+		else if(irany==JOBB && (encoder1-kanyarstartpozicio > 39000))
 		{
 			kanyarodunk=false;
 			oldalobjektumfigyelest_ignoraljuk=true;
@@ -1383,6 +1384,45 @@ void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t
 		else
 			HAL_UART_Transmit(huart, &space, sizeof(txbyte), Timeout);
 	}
+}
+
+void celfigyeles(uint8_t vonaltipus)
+{
+	static int32_t encoder_start=0;
+	static int32_t encoder_veg=0;
+	static uint8_t vonaltipus_elozo=EGYVONAL;
+
+	if(vonaltipus==FULLVONAL)
+	{
+		if(encoder_start==0)
+			encoder_start=encoder1;
+
+		if(encoder1-encoder_start > 7500 && encoder1-encoder_start < 11250) //100 es 150cm kozott
+		{
+			if(encoder_veg==0)
+			{
+				encoder_veg=encoder1;
+			}
+			if(encoder_veg != 0 && encoder1-encoder_veg > 180 ) //(2,5cm)
+			{
+				stop_cel=true;
+			}
+		}
+	}
+
+	if(vonaltipus!=FULLVONAL)
+	{
+		if(encoder_start != 0 && encoder1-encoder_start > 11250)
+		{
+			encoder_start=0;
+			encoder_veg=0;
+		}
+		if(encoder_veg != 0 && encoder1-encoder_veg > 700) //10cm
+			encoder_start=0;
+			encoder_veg=0;
+	}
+
+
 }
 
 void vonal_objektum_eszleles_ugyessegi (uint8_t vonaltipus, uint8_t* objektumtipus)
@@ -1642,14 +1682,14 @@ void oldal_objektum_eszeleles()
 					vonalobjektumtipus=LIBIKOKA_BALRA;
 					uartcsomagokszama_vonalszenzor=0;
 					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
-					merre_menjunk_ha_van_oldalfal=JOBB; //JOBB;gany ///!!!!!
+					merre_menjunk_ha_van_oldalfal=BAL; //JOBB;gany ///!!!!!
 				}
 				if(bordas==false && elozo_oldal==BAL)
 				{
 					vonalobjektumtipus=LIBIKOKA_JOBBRA;
 					uartcsomagokszama_vonalszenzor=0;
 					utvalaszto_encoder_start=encoder1; //150 cm utan kuldunk egy uzenetet, hogy alljon vissza normal allapotra
-					merre_menjunk_ha_van_oldalfal=BAL; //BAL;gany ////!!!!!!
+					merre_menjunk_ha_van_oldalfal=JOBB; //BAL;gany ////!!!!!!
 				}
 
 				if(elozo_oldal==MINDKET_OLDAL && (oldal==BAL || oldal==JOBB))
