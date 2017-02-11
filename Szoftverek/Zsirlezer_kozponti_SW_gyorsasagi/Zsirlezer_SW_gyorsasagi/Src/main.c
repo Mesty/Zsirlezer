@@ -847,9 +847,9 @@ int main(void)
 				if(start_tick_lassito==0)
 					start_tick_lassito=timestamp;
 
-				if(timestamp-start_tick_lassito > 80) //50
+				if(timestamp-start_tick_lassito > 90) //50
 				{
-					mmpersec_sebesseg=1100;
+					mmpersec_sebesseg=900; //muszaj hogy levegyuk, hogy bevegye a kanyart
 					start_tick_lassito=0;
 					fekeztunk_mar=true;
 				}
