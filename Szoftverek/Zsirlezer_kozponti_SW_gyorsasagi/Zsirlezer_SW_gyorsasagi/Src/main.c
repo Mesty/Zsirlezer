@@ -64,6 +64,10 @@
 #define ALAPJEL_MEREDEKSEG_GYORSITASNAL 3000
 #define ALAPJEL_MEREDEKSEG_LASSITASNAL 3000
 
+//Allapotteres szabalyozok
+#define NORMAL 1
+#define GYORSITO 2
+
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -666,6 +670,7 @@ bool fekeztunk_mar=true;
 bool eltolt_gyorsulas=false;
 uint32_t start_tick=0;
 uint32_t start_tick_lassito=0;
+uint8_t allapotteres_szabalyozo=NORMAL;
 
 /* USER CODE END PV */
 
@@ -831,7 +836,7 @@ int main(void)
 
 				if(timestamp-start_tick > 60)
 				{
-					mmpersec_sebesseg=3500;
+					mmpersec_sebesseg=3800;
 					start_tick=0;
 					eltolt_gyorsulas=false;
 				}
@@ -842,9 +847,9 @@ int main(void)
 				if(start_tick_lassito==0)
 					start_tick_lassito=timestamp;
 
-				if(timestamp-start_tick_lassito > 150)
+				if(timestamp-start_tick_lassito > 50)
 				{
-					mmpersec_sebesseg=1550;
+					mmpersec_sebesseg=1400;
 					start_tick_lassito=0;
 					fekeztunk_mar=true;
 				}
@@ -940,7 +945,10 @@ void Vonalszenzorkezeles_uartfogadas()
 	  pozicio_masodik = uzenetarray[2] + uzenetarray[3]*0xff;
 	  vonaltipus=uzenetarray[4];
 	  orientacio=pozicio_elso-pozicio_masodik;
-	  allapotteres_szabalyozo_kanyar_kijarat(&pozicio_elso, &orientacio, &velocity, &szervoPWM);
+	  //if(allapotteres_szabalyozo==NORMAL)
+		//  allapotteres_szabalyozo_default(&pozicio_elso, &orientacio, &velocity, &szervoPWM);
+	 // else if (allapotteres_szabalyozo==GYORSITO)
+		  allapotteres_szabalyozo_kanyar_kijarat(&pozicio_elso, &orientacio, &velocity, &szervoPWM);
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, szervoPWM);
 	  vonalszenzor_uzenetjott=false;
 }
@@ -974,7 +982,9 @@ void allapotteres_szabalyozo_kanyar_kijarat(uint16_t* pozicio, int16_t* orientac
 
 	if(*sebesseg < 1750)
 		//uj
-		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.0857*sebesseg_a_szabalyozonak+0.85)*(0.0857*sebesseg_a_szabalyozonak+0.85))+(-0.522-0.13883*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.0857*sebesseg_a_szabalyozonak+0.85)*(0.0857*sebesseg_a_szabalyozonak+0.85))+5930);
+		//*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.1143*sebesseg_a_szabalyozonak+0.8)*(0.1143*sebesseg_a_szabalyozonak+0.8))+(-0.441-0.18517*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.1143*sebesseg_a_szabalyozonak+0.8)*(0.1143*sebesseg_a_szabalyozonak+0.8))+5930);
+		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.1*sebesseg_a_szabalyozonak+0.95)*(0.1*sebesseg_a_szabalyozonak+0.95))+(-0.684-0.162*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.1*sebesseg_a_szabalyozonak+0.95)*(0.1*sebesseg_a_szabalyozonak+0.95))+5930);
+
 
 		//lassu, kanyarkijarat
 		//*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.11112*sebesseg_a_szabalyozonak+0.3981)*(0.11112*sebesseg_a_szabalyozonak+0.3981))+(0.21008-0.18001*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.11112*sebesseg_a_szabalyozonak+0.3981)*(0.11112*sebesseg_a_szabalyozonak+0.3981))+5930);
@@ -997,10 +1007,11 @@ void allapotteres_szabalyozo_default(uint16_t* pozicio, int16_t* orientacio, int
 
 	if(*sebesseg < 1250)
 		//lassu, kanyar alatt
-		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.11112*sebesseg_a_szabalyozonak+0.3981)*(0.11112*sebesseg_a_szabalyozonak+0.3981))+(0.21008-0.18001*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.11112*sebesseg_a_szabalyozonak+0.3981)*(0.11112*sebesseg_a_szabalyozonak+0.3981))+5930);
+		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.0857*sebesseg_a_szabalyozonak+0.85)*(0.0857*sebesseg_a_szabalyozonak+0.85))+(-0.522-0.13883*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.0857*sebesseg_a_szabalyozonak+0.85)*(0.0857*sebesseg_a_szabalyozonak+0.85))+5930);
+
 	else
 		//gyors
-		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.6568*sebesseg_a_szabalyozonak-0.284)*(0.6568*sebesseg_a_szabalyozonak-0.284))+(1.3151-1.064*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((00.6568*sebesseg_a_szabalyozonak-0.284)*(0.6568*sebesseg_a_szabalyozonak-0.284))+5930);
+		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(1.2308*sebesseg_a_szabalyozonak-1.1538)*(1.2308*sebesseg_a_szabalyozonak-1.1538))+(2.7242-1.9939*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((1.2308*sebesseg_a_szabalyozonak-1.1538)*(1.2308*sebesseg_a_szabalyozonak-1.1538))+5930);
 	if(*PWMeredmeny > 7250)
 		*PWMeredmeny=7250;
 	else if(*PWMeredmeny < 4610)
@@ -1279,11 +1290,14 @@ void lassitora_mitcsinalunk()
 {
 	//mmpersec_sebesseg=1550;
 	fekeztunk_mar=false;
+	allapotteres_szabalyozo=NORMAL;
 }
 void gyorsitora_mitcsinalunk()
 {
+	allapotteres_szabalyozo=GYORSITO;
 	mmpersec_sebesseg=1350;
 	eltolt_gyorsulas=true;
+
 
 }
 /* USER CODE END 4 */
