@@ -66,7 +66,12 @@
 
 //Allapotteres szabalyozok
 #define NORMAL 1
-#define GYORSITO 2
+#define GYORSITO_SZAB 2
+
+#define ELSOKOR 1
+#define MASODIKKOR 2
+#define HARMADIKKOR 3
+
 
 /* USER CODE END Includes */
 
@@ -664,6 +669,8 @@ uint8_t lassito_szakaszok_szama=0;
 bool safetycar_aktiv=true;
 char string[20];
 bool stop_safetycar=false;
+bool elso_gyorsito=true;
+uint8_t kor=ELSOKOR;
 
 int32_t mmpersec_sebesseg=0;
 bool fekeztunk_mar=true;
@@ -686,7 +693,8 @@ void allapotteres_szabalyozo_kanyar_kijarat(uint16_t* pozicio, int16_t* orientac
 void allapotteres_szabalyozo_default(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny);
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth);
 void Encoder_beolvasas();
-void Safety_car();
+void Safety_car_old();
+void Safety_car_P();
 void sebessegszabalyozo(int32_t mmpersec);
 void fekezo_sebessegszabalyozo(int32_t mmpersec);
 void vonalminta_felismeres();
@@ -792,7 +800,7 @@ int main(void)
 
   //Alap sebesseg megadasa  D
  // motorpulsePWM = 7300;
-  mmpersec_sebesseg=1200;
+  mmpersec_sebesseg=700;
 
   /* USER CODE END 2 */
 
@@ -805,6 +813,12 @@ int main(void)
   /* USER CODE BEGIN 3 */
 
 
+	  if(lassito_szakaszok_szama==18)
+		  stop_cel=true;
+	  if(lassito_szakaszok_szama > 5 && lassito_szakaszok_szama < 10)
+		  kor=MASODIKKOR;
+	  if(lassito_szakaszok_szama > 9 )
+		  kor=HARMADIKKOR;
 
 	  if(vonalszenzor_uzenetjott==true) //3ms-onkent kapunk uzenetet
 	  {
@@ -824,19 +838,24 @@ int main(void)
 		  WMAfilter(&SHARP_FRONT_filtered,(int32_t*)&(SHARP_FRONT_raw),SHARP_FRONT_array,20);
 		  if(safetycar_aktiv)
 		  {
-			 // Safety_car();
+			  Safety_car_P();
 		  }
 
 
 
 		  if(eltolt_gyorsulas)
 		  {
+			  	safetycar_aktiv=false;
 				if(start_tick==0)
 					start_tick=timestamp;
 
 				if(timestamp-start_tick > 60)
 				{
 					mmpersec_sebesseg=3050;
+					if(MASODIKKOR)
+						mmpersec_sebesseg=3750;
+					if(HARMADIKKOR)
+						mmpersec_sebesseg=3900;
 					start_tick=0;
 					eltolt_gyorsulas=false;
 				}
@@ -847,9 +866,13 @@ int main(void)
 				if(start_tick_lassito==0)
 					start_tick_lassito=timestamp;
 
-				if(timestamp-start_tick_lassito > 80) //50
+				if(timestamp-start_tick_lassito > 85) //50
 				{
 					mmpersec_sebesseg=820; //muszaj hogy levegyuk, hogy bevegye a kanyart
+					if(MASODIKKOR)
+						mmpersec_sebesseg=950;
+					if(HARMADIKKOR)
+						mmpersec_sebesseg=1100;
 					start_tick_lassito=0;
 					fekeztunk_mar=true;
 				}
@@ -947,7 +970,7 @@ void Vonalszenzorkezeles_uartfogadas()
 	  orientacio=pozicio_elso-pozicio_masodik;
 	  //if(allapotteres_szabalyozo==NORMAL)
 		//  allapotteres_szabalyozo_default(&pozicio_elso, &orientacio, &velocity, &szervoPWM);
-	 // else if (allapotteres_szabalyozo==GYORSITO)
+	 // else if (allapotteres_szabalyozo==GYORSITO_SZAB)
 		  allapotteres_szabalyozo_kanyar_kijarat(&pozicio_elso, &orientacio, &velocity, &szervoPWM);
 	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, szervoPWM);
 	  vonalszenzor_uzenetjott=false;
@@ -959,7 +982,7 @@ void Motorkezeles()
 		  stop_deadman = true;
 	  else
 		  stop_deadman = false;
-	  if (stop_deadman || stop_cel || stop_safetycar)
+	  if (stop_cel || stop_safetycar)
 		  stop = true;
 	  else
 		  stop = false;
@@ -1049,7 +1072,7 @@ void Encoder_beolvasas() //!!!Fix idokozonkent kell hivni, szamit ra a fuggveny 
 		  //error handling...
 	  }
 }
-void Safety_car()
+void Safety_car_old()
 {
 	static uint32_t stop_kezdete=0;
 	if(SHARP_FRONT_filtered > 2000) //35cm
@@ -1082,6 +1105,17 @@ void Safety_car()
 		sprintf(&string,"%d\t%d",SHARP_FRONT_filtered, velocity);
 		HAL_UART_Transmit_DMA(&huart2, &string, sizeof(string)*sizeof(uint8_t));*/
 	}
+}
+
+void Safety_car_P()
+{
+	mmpersec_sebesseg= (1400-((SHARP_FRONT_raw-600)*9)/7);
+	if(mmpersec_sebesseg > 1400)
+		mmpersec_sebesseg=1400;
+	if(mmpersec_sebesseg < -100)
+		mmpersec_sebesseg = -100;
+	if(pozicio_elso > 1900 || pozicio_elso < 1300) //Kanyari max sebesseg
+		mmpersec_sebesseg=600;
 }
 
 void sebessegszabalyozo(int32_t mmpersec)
@@ -1289,15 +1323,22 @@ void vonalminta_felismeres()
 void lassitora_mitcsinalunk()
 {
 	//mmpersec_sebesseg=1550;
-	fekeztunk_mar=false;
-	allapotteres_szabalyozo=NORMAL;
+	if(lassito_szakaszok_szama > 2)
+		fekeztunk_mar=false;
+	//allapotteres_szabalyozo=NORMAL;
 }
 void gyorsitora_mitcsinalunk()
 {
-	allapotteres_szabalyozo=GYORSITO;
-	mmpersec_sebesseg=1350;
-	eltolt_gyorsulas=true;
-
+	//allapotteres_szabalyozo=GYORSITO_SZAB;
+	if(elso_gyorsito)
+	{
+		elso_gyorsito=false;
+	}
+	else
+	{
+		mmpersec_sebesseg=850;
+		eltolt_gyorsulas=true;
+	}
 
 }
 /* USER CODE END 4 */
