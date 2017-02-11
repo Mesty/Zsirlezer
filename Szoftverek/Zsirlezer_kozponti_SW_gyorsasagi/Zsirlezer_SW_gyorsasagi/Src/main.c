@@ -836,7 +836,7 @@ int main(void)
 
 				if(timestamp-start_tick > 60)
 				{
-					mmpersec_sebesseg=3800;
+					mmpersec_sebesseg=4000;
 					start_tick=0;
 					eltolt_gyorsulas=false;
 				}
@@ -847,9 +847,9 @@ int main(void)
 				if(start_tick_lassito==0)
 					start_tick_lassito=timestamp;
 
-				if(timestamp-start_tick_lassito > 50)
+				if(timestamp-start_tick_lassito > 80) //50
 				{
-					mmpersec_sebesseg=1400;
+					mmpersec_sebesseg=1100;
 					start_tick_lassito=0;
 					fekeztunk_mar=true;
 				}
@@ -980,7 +980,7 @@ void allapotteres_szabalyozo_kanyar_kijarat(uint16_t* pozicio, int16_t* orientac
 	float sebesseg_a_szabalyozonak = 0.0;
 	sebesseg_a_szabalyozonak=((float)*sebesseg)/1000.0; //[m/s]
 
-	if(*sebesseg < 1750)
+	if(*sebesseg < 2000)
 		//uj
 		//*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.1143*sebesseg_a_szabalyozonak+0.8)*(0.1143*sebesseg_a_szabalyozonak+0.8))+(-0.441-0.18517*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.1143*sebesseg_a_szabalyozonak+0.8)*(0.1143*sebesseg_a_szabalyozonak+0.8))+5930);
 		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.1*sebesseg_a_szabalyozonak+0.95)*(0.1*sebesseg_a_szabalyozonak+0.95))+(-0.684-0.162*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.1*sebesseg_a_szabalyozonak+0.95)*(0.1*sebesseg_a_szabalyozonak+0.95))+5930);
@@ -990,7 +990,7 @@ void allapotteres_szabalyozo_kanyar_kijarat(uint16_t* pozicio, int16_t* orientac
 		//*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.11112*sebesseg_a_szabalyozonak+0.3981)*(0.11112*sebesseg_a_szabalyozonak+0.3981))+(0.21008-0.18001*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.11112*sebesseg_a_szabalyozonak+0.3981)*(0.11112*sebesseg_a_szabalyozonak+0.3981))+5930);
 	else
 		//uj
-		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(1.2308*sebesseg_a_szabalyozonak-1.1538)*(1.2308*sebesseg_a_szabalyozonak-1.1538))+(2.7242-1.9939*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((1.2308*sebesseg_a_szabalyozonak-1.1538)*(1.2308*sebesseg_a_szabalyozonak-1.1538))+5930);
+		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.573*sebesseg_a_szabalyozonak+0.004)*(0.573*sebesseg_a_szabalyozonak+0.004))+(0.84852-0.92826*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.573*sebesseg_a_szabalyozonak+0.004)*(0.573*sebesseg_a_szabalyozonak+0.004))+5930);
 
 		//gyors
 		//*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.6568*sebesseg_a_szabalyozonak-0.284)*(0.6568*sebesseg_a_szabalyozonak-0.284))+(1.3151-1.064*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((00.6568*sebesseg_a_szabalyozonak-0.284)*(0.6568*sebesseg_a_szabalyozonak-0.284))+5930);
@@ -1005,13 +1005,13 @@ void allapotteres_szabalyozo_default(uint16_t* pozicio, int16_t* orientacio, int
 	float sebesseg_a_szabalyozonak = 0.0;
 	sebesseg_a_szabalyozonak=((float)*sebesseg)/1000.0; //[m/s]
 
-	if(*sebesseg < 1250)
+	if(*sebesseg < 2000)
 		//lassu, kanyar alatt
 		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.0857*sebesseg_a_szabalyozonak+0.85)*(0.0857*sebesseg_a_szabalyozonak+0.85))+(-0.522-0.13883*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.0857*sebesseg_a_szabalyozonak+0.85)*(0.0857*sebesseg_a_szabalyozonak+0.85))+5930);
 
 	else
 		//gyors
-		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(1.2308*sebesseg_a_szabalyozonak-1.1538)*(1.2308*sebesseg_a_szabalyozonak-1.1538))+(2.7242-1.9939*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((1.2308*sebesseg_a_szabalyozonak-1.1538)*(1.2308*sebesseg_a_szabalyozonak-1.1538))+5930);
+		*PWMeredmeny = (uint32_t) (-296.0805*(2*((float)*pozicio)-3300)/(1325.5776*(0.6167*sebesseg_a_szabalyozonak-0.0833)*(0.6167*sebesseg_a_szabalyozonak-0.0833))+(0.98995-0.99905*sebesseg_a_szabalyozonak)*atan_lut[*orientacio+2300]/((0.6167*sebesseg_a_szabalyozonak-0.0833)*(0.6167*sebesseg_a_szabalyozonak-0.0833))+5930);
 	if(*PWMeredmeny > 7250)
 		*PWMeredmeny=7250;
 	else if(*PWMeredmeny < 4610)
