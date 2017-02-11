@@ -836,7 +836,7 @@ int main(void)
 
 				if(timestamp-start_tick > 60)
 				{
-					mmpersec_sebesseg=3750;
+					mmpersec_sebesseg=3050;
 					start_tick=0;
 					eltolt_gyorsulas=false;
 				}
@@ -847,9 +847,9 @@ int main(void)
 				if(start_tick_lassito==0)
 					start_tick_lassito=timestamp;
 
-				if(timestamp-start_tick_lassito > 85) //50
+				if(timestamp-start_tick_lassito > 80) //50
 				{
-					mmpersec_sebesseg=950; //muszaj hogy levegyuk, hogy bevegye a kanyart
+					mmpersec_sebesseg=820; //muszaj hogy levegyuk, hogy bevegye a kanyart
 					start_tick_lassito=0;
 					fekeztunk_mar=true;
 				}
