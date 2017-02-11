@@ -638,7 +638,7 @@ bool stop_deadman = false;
 bool stop_drone = false;
 bool stop_gyalogos = false;
 bool stop_cel = false;
-volatile bool stop_radios_modulra_var = false; ////
+volatile bool stop_radios_modulra_var = true; ////
 volatile uint8_t radios_uart_vevo = 0;
 int32_t motorpulsePWM;
 volatile uint32_t timestamp = 0;
@@ -700,6 +700,7 @@ void oldal_objektum_eszeleles();
 void WMAfilter(int32_t* filteredval, int32_t* newelement, int32_t* array, uint32_t filter_depth);
 void send16bitdecimal_to_uart(UART_HandleTypeDef* huart, uint16_t* data,uint32_t Timeout);
 void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* sebesseg, uint32_t* PWMeredmeny);
+void sebessegszabalyozo(int32_t mmpersec);
 void vonal_objektum_eszleles_ugyessegi (uint8_t vonaltipus, uint8_t* objektumtipus);
 void celfigyeles(uint8_t vonaltipus);
 
@@ -845,7 +846,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  motorpulsePWM = 7252;
+  //motorpulsePWM = 7252;
 
   while (1)
   {
@@ -877,7 +878,7 @@ int main(void)
 		  stop_deadman = true;
 	  else
 		  stop_deadman = false;
-	  if (stop_deadman || stop_drone || stop_gyalogos || stop_radios_modulra_var || stop_hordo || stop_cel )
+	  if (stop_drone || stop_gyalogos || stop_radios_modulra_var || stop_hordo || stop_cel )
 		  stop = true;
 	  else
 		  stop = false;
@@ -1728,6 +1729,49 @@ void allapotteres_szabalyozo(uint16_t* pozicio, int16_t* orientacio, int32_t* se
 
 	//*PWMeredmeny = (uint32_t) ( -3.1667*((float)*pozicio)/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+(-0.855-0.00063*((float)*sebesseg))*arctaneredmeny/((0.00038889*((float)*sebesseg)+1.0556)*(0.00038889*((float)*sebesseg)+1.0556))+6763.5);
 }
+void sebessegszabalyozo(int32_t mmpersec)
+{
+
+	// Belso valtozok
+	int32_t alapjel = mmpersec;
+	static int32_t elozo_alapjel = 0;
+	static float beavatkozo_jel = 0;
+	static float elozo_beavatkozo_jel = 0;
+	static float pozitiv_visszacsatolas = 0;
+	float FOXBORO_bemeno_jel = 0;
+
+	// Szabalyozas
+	// Szabalyozasi algoritmus
+	pozitiv_visszacsatolas = 0.99288*pozitiv_visszacsatolas+0.0071168*beavatkozo_jel;
+	FOXBORO_bemeno_jel = 0.9029*(mmpersec-velocity)+pozitiv_visszacsatolas;
+	// Beavatkozo szerv telites kezelese
+	if(FOXBORO_bemeno_jel > 1500)
+		beavatkozo_jel = 1500;
+	else if(FOXBORO_bemeno_jel < -4000)
+		beavatkozo_jel = -4000;
+	else
+		beavatkozo_jel = FOXBORO_bemeno_jel;
+	// Inverz statikus nemlinearitas
+	if(beavatkozo_jel > 0)
+	{
+		if((0 < beavatkozo_jel) && (beavatkozo_jel <= 112.0907))
+			beavatkozo_jel = 200+0.89213*beavatkozo_jel;
+		else if((112.0907 < beavatkozo_jel) && (beavatkozo_jel <= 350.2835))
+			beavatkozo_jel = 300+0.41983*(beavatkozo_jel-112.0907);
+		else if((350.2835 < beavatkozo_jel) && (beavatkozo_jel <= 560.4536))
+			beavatkozo_jel = 400+0.47581*(beavatkozo_jel-350.2835);
+		else if((560.4536 < beavatkozo_jel) && (beavatkozo_jel <= 756.6123))
+			beavatkozo_jel = 500+0.50979*(beavatkozo_jel-560.4536);
+		else if((756.6123 < beavatkozo_jel) && (beavatkozo_jel <= 910.737))
+			beavatkozo_jel = 600+0.64883*(beavatkozo_jel-756.6123);
+	}
+	// Beavatkozo jel kiadasa
+	motorpulsePWM = (uint32_t) (beavatkozo_jel+6932);
+	// Integratorok feltoltese
+	elozo_alapjel = alapjel;
+	elozo_beavatkozo_jel = beavatkozo_jel;
+}
+
 /* USER CODE END 4 */
 
 /**
