@@ -680,6 +680,8 @@ volatile bool vonalat_ignoraljuk=false;
 volatile bool oldalobjektumfigyelest_ignoraljuk=false;
 bool voltmarkorforgo=false;
 
+bool sebszab = true;
+
 //UART, vonalszenzor
 volatile bool vonalszenzor_uzenetjott=false;
 /* USER CODE END PV */
@@ -953,6 +955,9 @@ int main(void)
 			  uartcsomagokszama_vonalszenzor=0;
 			  utvalaszto_encoder_start=0;
 		  }
+
+		  if(sebszab)
+		  	  sebessegszabalyozo(800);
 
 		  tick = false;
 	  }
@@ -1231,6 +1236,7 @@ void hordo()
 
 	if(hordostart==0)
 	{
+		sebszab = false;
 		hordostart=encoder1;
 		motorpulsePWM=7800; //gyorsitas
 	}
@@ -1258,6 +1264,7 @@ void hordo()
 		kormanyzas_elvetel=false;
 		fekezes_kezdete=0;
 		hordostart=0;
+		sebszab = true;
 	}
 
 }
@@ -1286,7 +1293,7 @@ void libikoka()
 	static int32_t encoder_libikoka_lejto=0;
 	static uint32_t libikoka_stop_kezdete=0;
 
-	motorpulsePWM=7500;
+	//motorpulsePWM=7500;
 	if(encoder_libikoka_start==0)
 	{
 		velocity_start=velocity;
@@ -1739,7 +1746,8 @@ void sebessegszabalyozo(int32_t mmpersec)
 	static float elozo_beavatkozo_jel = 0;
 	static float pozitiv_visszacsatolas = 0;
 	float FOXBORO_bemeno_jel = 0;
-
+	if(alapjel-elozo_alapjel > 1)
+		alapjel = elozo_alapjel+1;
 	// Szabalyozas
 	// Szabalyozasi algoritmus
 	pozitiv_visszacsatolas = 0.99288*pozitiv_visszacsatolas+0.0071168*beavatkozo_jel;
