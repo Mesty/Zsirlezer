@@ -7,7 +7,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.96"
+    ComputedModelVersion    "1.97"
     NumModelReferences	    0
     NumTestPointedSignals   0
     NumProvidedFunctions    0
@@ -43,7 +43,7 @@ Model {
       $ObjectID		      3
       $ClassName	      "Simulink.WindowInfo"
       IsActive		      [1]
-      Location		      [-8.0, -8.0, 1382.0, 744.0]
+      Location		      [-8.0, -8.0, 1936.0, 1056.0]
       Object {
 	$PropName		"ModelBrowserInfo"
 	$ObjectID		4
@@ -67,9 +67,9 @@ Model {
 	IsActive		[1]
 	ViewObjType		"SimulinkSubsys"
 	LoadSaveID		"39"
-	Extents			[1332.0, 569.0]
-	ZoomFactor		[1.7488683989941325]
-	Offset			[-8.6301763803680842, 34.82337998466258]
+	Extents			[1886.0, 881.0]
+	ZoomFactor		[2.4918692372170996]
+	Offset			[-6.2432723358450062, 20.725074004305696]
       }
     }
   }
@@ -79,9 +79,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "Mester Ádám"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Fri Feb 10 00:58:03 2017"
-  RTWModifiedTimeStamp	  408588085
-  ModelVersionFormat	  "1.%<AutoIncrement:96>"
+  LastModifiedDate	  "Fri Feb 17 21:46:31 2017"
+  RTWModifiedTimeStamp	  409268787
+  ModelVersionFormat	  "1.%<AutoIncrement:97>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -2068,7 +2068,7 @@ Model {
       Variant		      off
       System {
 	Name			"Szenzor + feldolgozas"
-	Location		[-8, -8, 1374, 736]
+	Location		[-8, -8, 1928, 1048]
 	Open			on
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
@@ -2080,7 +2080,7 @@ Model {
 	TiledPaperMargins	[1.270000, 1.270000, 1.270000, 1.270000]
 	TiledPageScale		1
 	ShowPageBoundaries	off
-	ZoomFactor		"175"
+	ZoomFactor		"249"
 	Block {
 	  BlockType		  Inport
 	  Name			  "delta"
@@ -2225,7 +2225,8 @@ Model {
 	  NumberOfTableDimensions "1"
 	  BreakpointsForDimension1 "[min(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa):max(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa)]"
 	  Table			  "L*(SERVO_BAL-SERVO_JOBB)*atan((2*p_1s*[min(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa):max(p_1TCRTa-p_2TCRTb,p_"
-	  "1TCRTb-p_2TCRTa)]/(p_1TCRTb-p_1TCRTa)-p_1s+p_2s)/L_sensor)/(2*fi_m*(L+d))"
+	  "1TCRTb-p_2TCRTa)]/(p_1TCRTb-p_1TCRTa)-p_1s*(p_1TCRTb+p_1TCRTa)/(p_1TCRTb-p_1TCRTa)+p_2s*(p_2TCRTb+p_2TCRTa)/(p_2TCR"
+	  "Tb-p_2TCRTa))/L_sensor)/(2*fi_m*(L+d))"
 	  InterpMethod		  "Nearest"
 	  InternalRulePriority	  "Speed"
 	  RndMeth		  "Simplest"
@@ -2257,7 +2258,7 @@ Model {
 	  NumberOfTableDimensions "1"
 	  BreakpointsForDimension1 "[min(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa):max(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa)]"
 	  Table			  "atan((2*p_1s*[min(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa):max(p_1TCRTa-p_2TCRTb,p_1TCRTb-p_2TCRTa)]/(p_1TCR"
-	  "Tb-p_1TCRTa)-p_1s+p_2s)/L_sensor)"
+	  "Tb-p_1TCRTa)-p_1s*(p_1TCRTb+p_1TCRTa)/(p_1TCRTb-p_1TCRTa)+p_2s*(p_2TCRTb+p_2TCRTa)/(p_2TCRTb-p_2TCRTa))/L_sensor)"
 	  InterpMethod		  "Nearest"
 	  InternalRulePriority	  "Speed"
 	  RndMeth		  "Simplest"
